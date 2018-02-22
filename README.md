@@ -12,7 +12,7 @@ Install [Anaconda python 3](https://www.anaconda.com/download/)
 * click the arrow and select open in terminal
 
 ### dependencies installation
-open terminal and type the following command
+in terminal and type the following command
 
 #### qt installation
 ```
@@ -23,6 +23,13 @@ conda install -c anaconda pyqt
 conda install -c conda-forge vtk
 ```
 
+### Usage
+in terminal cd to the folder with main.py and type the following command.
+
+note: if you did the optional step and closed the terminal after installing everything. You must redo the last bullet point.
+```
+python main.py
+```
 
 
 
