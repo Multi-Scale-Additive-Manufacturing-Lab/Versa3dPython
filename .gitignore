@@ -23,3 +23,6 @@ spyder_crash.log
 
 # git .orig files
 *.orig
+
+# visual code ignore
+.vscode/
