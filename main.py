@@ -3,18 +3,18 @@
 import sys
 from PyQt5 import QtWidgets
 import vtk
-from ui_MainWindow import Ui_MainWindow
+from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         
-        self.ui = Ui_MainWindow()
+        self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
         
         self.ren = vtk.vtkRenderer()
-        self.ui.qvtkWidget.GetRenderWindow().AddRenderer(self.ren)
-        self.Iren = self.ui.qvtkWidget.GetRenderWindow().GetInteractor()
+        self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
+        self.Iren = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
         
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
         self.Iren.Initialize()
