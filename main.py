@@ -6,6 +6,10 @@ import vtk
 from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
+from GUI.command import stlImportCommand
+
+from collections import deque
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
@@ -26,38 +30,37 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.slice_viewer.GetRenderWindow().AddRenderer(self.StlRenderer)
         self.ui.ImageInteractor = self.ui.slice_viewer.GetRenderWindow().GetInteractor()
 
-        self.importedObject = []
+        self.undoStack = deque(maxlen=10)
+        self.redoStack = deque(maxlen=10)
                 
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
         self.ui.SliceButton.clicked.connect(self.slice_stl)
+        self.ui.actionUndo.triggered.connect(self.undo)
+        self.ui.actionRedo.triggered.connect(self.redo)
+
         self.StlInteractor.Initialize()
     
     def import_stl(self):
-        
-        fileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open stl' ,"", "stl (*.stl)")
-        
-        reader = vtk.vtkSTLReader()
-        
-        reader.SetFileName(fileName[0])
-        reader.Update()
+        importer = stlImportCommand(self.StlRenderer,self)
+        importer.execute()
 
-        self.importedObject.append(reader.GetOutput())
-        
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(reader.GetOutputPort())
-        
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        
-        self.StlRenderer.AddActor(actor)
-        
-        self.StlRenderer.ResetCamera()
+        self.undoStack.append(importer)
+
+    def undo(self):
+        if(len(self.undoStack)>0):
+            command = self.undoStack.pop()
+            command.undo()
+            self.redoStack.append(command)
+
+    def redo(self):
+        if(len(self.undoStack)>0):
+            command = self.redoStack.pop()
+            command.redo()
+            self.undoStack.append(command)   
     
     def slice_stl(self):
 
         print("start \n")
-
-
 
 
 

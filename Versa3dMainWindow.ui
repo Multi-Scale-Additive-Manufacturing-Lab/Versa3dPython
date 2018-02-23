@@ -263,7 +263,19 @@
     </property>
     <addaction name="actionImport_STL"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actioncopy"/>
+    <addaction name="actionpaste"/>
+    <addaction name="actiondelete"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -277,6 +289,31 @@
   <action name="actionImport_STL">
    <property name="text">
     <string>Import stl</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actioncopy">
+   <property name="text">
+    <string>cut</string>
+   </property>
+  </action>
+  <action name="actionpaste">
+   <property name="text">
+    <string>copy</string>
+   </property>
+  </action>
+  <action name="actiondelete">
+   <property name="text">
+    <string>paste</string>
    </property>
   </action>
  </widget>
