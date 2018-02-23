@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 
 import sys
-from qtpy import QtWidgets
+from PyQt5 import QtWidgets
 import vtk
-from ui_MainWindow import Ui_MainWindow
+from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         
-        self.ui = Ui_MainWindow()
+        self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
         
         self.ren = vtk.vtkRenderer()
-        self.ui.qvtkWidget.GetRenderWindow().AddRenderer(self.ren)
-        self.Iren = self.ui.qvtkWidget.GetRenderWindow().GetInteractor()
+        self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
+        self.Iren = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
         
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
-        
-        self.show()
+        self.ui.SliceButton.clicked.connect(self.slice_stl)
         self.Iren.Initialize()
     
     def import_stl(self):
@@ -44,11 +38,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ren.AddActor(actor)
         
         self.ren.ResetCamera()
+    
+    def slice_stl(self):
+
+        print("start \n")
+
+        
+
         
         
 if __name__ == "__main__":
-    app =QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     
     window = MainWindow()
+    window.show()
     
     sys.exit(app.exec_())
