@@ -74,7 +74,7 @@
                <enum>Qt::LeftToRight</enum>
               </property>
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="slice_tab">
                <attribute name="title">
@@ -92,24 +92,6 @@
                   <property name="autoFillBackground">
                    <bool>false</bool>
                   </property>
-                  <widget class="QLabel" name="thicknessLabel">
-                   <property name="geometry">
-                    <rect>
-                     <x>180</x>
-                     <y>0</y>
-                     <width>121</width>
-                     <height>20</height>
-                    </rect>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Layer Thickness:</string>
-                   </property>
-                  </widget>
                  </widget>
                 </item>
                </layout>
