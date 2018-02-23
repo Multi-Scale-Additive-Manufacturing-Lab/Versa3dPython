@@ -17,6 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Iren = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
         
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
+        self.ui.SliceButton.clicked.connect(self.slice_stl)
         self.Iren.Initialize()
     
     def import_stl(self):
@@ -37,6 +38,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ren.AddActor(actor)
         
         self.ren.ResetCamera()
+    
+    def slice_stl(self):
+
+        print("start \n")
+
+        
+
         
         
 if __name__ == "__main__":
