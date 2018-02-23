@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 
 import sys
-from qtpy import QtWidgets
+from PyQt5 import QtWidgets
 import vtk
 from ui_MainWindow import Ui_MainWindow
 
@@ -22,8 +17,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Iren = self.ui.qvtkWidget.GetRenderWindow().GetInteractor()
         
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
-        
-        self.show()
         self.Iren.Initialize()
     
     def import_stl(self):
@@ -47,8 +40,9 @@ class MainWindow(QtWidgets.QMainWindow):
         
         
 if __name__ == "__main__":
-    app =QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     
     window = MainWindow()
+    window.show()
     
     sys.exit(app.exec_())
