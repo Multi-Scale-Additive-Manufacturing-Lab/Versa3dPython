@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import configparser
+import copy
 
-FillDict = {'Black': 'ImtechBlack', 'CheckerBoard': 'ImtechCheckerBoard'}
+FillEnum = ['Black', 'CheckerBoard']
+Default_Slice_Setting = {'Fill': FillEnum[0], 'layer_thickness': 0.1}
+Default_Printer_Setting = {'PrintBedSize': [10,10]}
+Default_Versa3d_Setting = {'Unit':'mm'}
 
-class config(object):
-    pass
-
-class configParser():
+class config():
     
     def __init__(self, FilePath):
         
         self._FilePath = FilePath
-        self.config = config()
-        
+
+        self.SlicingSettings = {}
+        self.Versa3dSettings ={}
+        self.PrinterSettings = {}
+
         try:
             self.readConfigFile()
         except IOError:
@@ -24,8 +28,9 @@ class configParser():
         self._configParse = configparser.ConfigParser()
         self.setDefaultValue()
 
-        self._configParse['Versa3dSetting'] = {'Unit': self.config.Unit}        
-        self._configParse['Slicing_Config'] = {'Fill': self.config.Fill,'layer_thickness': self.config.layer_thickness}
+        self._configParse['Versa3dSettings'] = self.Versa3dSettings      
+        self._configParse['SlicingSettings'] = self.SlicingSettings
+        self._configParse['PrinterSettings'] = self.PrinterSettings
         
         with open(self._FilePath, 'w') as self._configFile:
             self._configParse.write(self._configFile)
@@ -33,27 +38,22 @@ class configParser():
         self._configFile.close()
         
     def setDefaultValue(self):
-        setattr(self.config,'Unit','mm')
-        setattr(self.config,'Fill',FillDict['Black'])
-        setattr(self.config,'layer_thickness',0.1)
+        self.SlicingSettings = copy.deepcopy(Default_Slice_Setting)
+        self.Versa3dSettings = copy.deepcopy(Default_Versa3d_Setting)
+        self.PrinterSettings = copy.deepcopy(Default_Printer_Setting)
     
     def readConfigFile(self):
         self._configFile = open(self._FilePath, 'r')
         self._configParse = configparser.ConfigParser()
         
         self._configParse.read_file(self._configFile)
-        
+
         for section in self._configParse.sections():
             for key in self._configParse[section]:
-                setattr(self.config,key,self._configParse[section][key])
-                
-                
+                configdic = getattr(self, section)
+                configdic[key] = self._configParse[section][key]
+
         self._configFile.close() 
     
-        
 
-if __name__ == "__main__":
-    test = configParser('test.ini')
-    config = test.config
     
-    print(config.Unit)
