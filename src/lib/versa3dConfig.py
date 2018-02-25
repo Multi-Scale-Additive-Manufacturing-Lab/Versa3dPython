@@ -56,7 +56,15 @@ class config():
         self._configFile.close() 
     
     def getValue(self,configKey):
-        pass
+        
+        if(configKey in self.Versa3dSettings.keys()):
+            return self.Versa3dSettings[configKey]
+        elif(configKey in self.PrinterSettings.keys()):
+            return self.PrinterSettings[configKey]
+        elif(configKey in self.SlicingSettings.keys()):
+            return self.SlicingSettings[configKey]
+        else:
+            return ''
 
     def setValue(self, configKey,value):
         pass

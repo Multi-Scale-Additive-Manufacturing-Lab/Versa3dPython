@@ -17,9 +17,18 @@ class TestConfig(unittest.TestCase):
     
     def test_ConfigGetValue(self):
         configObject = config(self.testFileName)
-        value = configObject.getValue('Unit')
+        UnitValue = configObject.getValue('Unit')
+        self.assertEqual('mm',UnitValue)
 
-        self.assertEqual('mm',value)
+        printBedValue = configObject.getValue('PrintBedSize')
+        self.assertEqual([10,10], printBedValue)
+
+        FillValue = configObject.getValue('Fill')
+        self.assertEqual('Black', FillValue)
+
+        NullValue = configObject.getValue('')
+        self.assertEqual('',NullValue)
+
     
     def test_ModifyConfig(self):
         configObject = config(self.testFileName)
