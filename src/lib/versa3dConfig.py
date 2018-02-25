@@ -3,10 +3,10 @@
 import configparser
 import copy
 
-FillEnum = ['Black', 'CheckerBoard']
-Default_Slice_Setting = {'Fill': FillEnum[0], 'layer_thickness': 0.1}
-Default_Printer_Setting = {'PrintBedSize': [10,10]}
-Default_Versa3d_Setting = {'Unit':'mm'}
+FillEnum = ['black', 'checker_board']
+Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1}
+Default_Printer_Setting = {'printbedsize': [10,10]}
+Default_Versa3d_Setting = {'unit':'mm'}
 
 class config():
     
@@ -18,6 +18,8 @@ class config():
         self.Versa3dSettings ={}
         self.PrinterSettings = {}
 
+        self._configFile = None
+        self._configParse = None
         try:
             self.readConfigFile()
         except IOError:

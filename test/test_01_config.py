@@ -17,14 +17,14 @@ class TestConfig(unittest.TestCase):
     
     def test_ConfigGetValue(self):
         configObject = config(self.testFileName)
-        UnitValue = configObject.getValue('Unit')
+        UnitValue = configObject.getValue('unit')
         self.assertEqual('mm',UnitValue)
 
-        printBedValue = configObject.getValue('PrintBedSize')
+        printBedValue = configObject.getValue('printbedsize')
         self.assertEqual([10,10], printBedValue)
 
-        FillValue = configObject.getValue('Fill')
-        self.assertEqual('Black', FillValue)
+        FillValue = configObject.getValue('fill')
+        self.assertEqual('black', FillValue)
 
         NullValue = configObject.getValue('')
         self.assertEqual('',NullValue)
@@ -32,27 +32,31 @@ class TestConfig(unittest.TestCase):
     
     def test_ModifyConfig(self):
         configObject = config(self.testFileName)
-        configObject.setValue('Unit', 'inch')
+        configObject.setValue('unit', 'inch')
 
-        value = configObject.getValue('Unit')
+        value = configObject.getValue('unit')
 
         self.assertEqual('inch', value)
 
     def test_SaveConfig(self):
         configObject = config(self.testFileName)
-        configObject.setValue('Unit', 'inch')
+        configObject.setValue('unit', 'inch')
 
         configObject.saveConfig()
 
         configObject2 = config(self.testFileName)
-        value = configObject2.getValue('Unit')
+        value = configObject2.getValue('unit')
         self.assertEqual('inch', value)
 
     def tearDown(self):
         os.remove(self.testFileName)
-    
 
-if __name__ == '__main__':
-    unittest.main()
+def suite():
+    suite = unittest.TestSuite()
+
+    suite.addTest(TestConfig)
+    return suite
+
+
 
 
