@@ -7,7 +7,7 @@ from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
 from GUI.command import stlImportCommand
-from lib.versa3dConfig import config
+from lib.versa3dConfig import config , FillEnum
 
 from collections import deque
 
@@ -42,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionRedo.triggered.connect(self.redo)
 
         self.StlInteractor.Initialize()
+
+        self.populateComboBox(FillEnum, self.ui.inFillComboBox)
     
     def import_stl(self):
         importer = stlImportCommand(self.StlRenderer,self)
@@ -59,7 +61,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if(len(self.undoStack)>0):
             command = self.redoStack.pop()
             command.redo()
-            self.undoStack.append(command)   
+            self.undoStack.append(command)
+
+    def populateComboBox(self,list,combobox):
+        combobox.addItems(list)
     
     def slice_stl(self):
 
