@@ -45,7 +45,7 @@ class TestConfig(unittest.TestCase):
         configObject.saveConfig()
 
         configObject2 = config(self.testFileName)
-        value = configObject.getValue('Unit')
+        value = configObject2.getValue('Unit')
         self.assertEqual('inch', value)
 
     def tearDown(self):

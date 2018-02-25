@@ -24,18 +24,9 @@ class config():
             self.createConfigFile()
             
     def createConfigFile(self):
-        #create config
-        self._configParse = configparser.ConfigParser()
+        #create config        
         self.setDefaultValue()
-
-        self._configParse['Versa3dSettings'] = self.Versa3dSettings      
-        self._configParse['SlicingSettings'] = self.SlicingSettings
-        self._configParse['PrinterSettings'] = self.PrinterSettings
-        
-        with open(self._FilePath, 'w') as self._configFile:
-            self._configParse.write(self._configFile)
-        
-        self._configFile.close()
+        self.saveConfig()
         
     def setDefaultValue(self):
         self.SlicingSettings = copy.deepcopy(Default_Slice_Setting)
@@ -67,10 +58,29 @@ class config():
             return ''
 
     def setValue(self, configKey,value):
-        pass
+        if(configKey in self.Versa3dSettings.keys()):
+            self.Versa3dSettings[configKey] = value
+            return self.Versa3dSettings[configKey] 
+        elif(configKey in self.PrinterSettings.keys()):
+            self.PrinterSettings[configKey] = value
+            return self.PrinterSettings[configKey]
+        elif(configKey in self.SlicingSettings.keys()):
+            self.SlicingSettings[configKey] = value
+            return self.SlicingSettings[configKey]
+        else:
+            return ''
     
     def saveConfig(self):
-        pass
+        self._configParse = configparser.ConfigParser()
+
+        self._configParse['Versa3dSettings'] = self.Versa3dSettings      
+        self._configParse['SlicingSettings'] = self.SlicingSettings
+        self._configParse['PrinterSettings'] = self.PrinterSettings
+        
+        with open(self._FilePath, 'w') as self._configFile:
+            self._configParse.write(self._configFile)
+        
+        self._configFile.close()
     
 
     
