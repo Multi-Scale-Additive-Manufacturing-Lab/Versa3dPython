@@ -7,6 +7,7 @@ from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
 from GUI.command import stlImportCommand
+from lib.versa3dConfig import config
 
 from collections import deque
 
@@ -14,6 +15,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         
+        self._config = config('./config/versa3dConfig.ini')
+
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
         
