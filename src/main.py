@@ -3,7 +3,7 @@
 import sys
 from PyQt5 import QtWidgets
 import vtk
-from uiPythonFile.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
+from GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
 from GUI.command import stlImportCommand
