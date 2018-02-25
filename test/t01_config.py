@@ -1,6 +1,5 @@
 import unittest
-import lib
-from lib.versa3dConfig import config
+from src.lib.versa3dConfig import config
 from pathlib import Path
 import os
 

@@ -55,5 +55,16 @@ class config():
 
         self._configFile.close() 
     
+    def getValue(self,configKey):
+        pass
+
+    def setValue(self, configKey,value):
+        pass
+    
+    def saveConfig(self):
+        pass
+    
+
+    
 
     
