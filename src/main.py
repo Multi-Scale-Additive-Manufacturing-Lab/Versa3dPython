@@ -6,7 +6,7 @@ import vtk
 from GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
-from GUI.command import stlImportCommand
+from lib.command import stlImportCommand
 from lib.versa3dConfig import config , FillEnum
 
 from collections import deque
