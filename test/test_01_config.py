@@ -23,13 +23,16 @@ class TestConfig(unittest.TestCase):
         printBedValue = configObject.getValue('printbedsize')
         self.assertEqual([10,10], printBedValue)
 
-        FillValue = configObject.getValue('fill')
-        self.assertEqual('black', FillValue)
+        FillValue = configObject.getValue('layer_thickness')
+        self.assertEqual(0.1, FillValue)
+
+        PrintBedArray = configObject.getValue('printbedsize')
+        self.assertEqual(10, PrintBedArray[0])
+        self.assertEqual(10, PrintBedArray[1])
 
         NullValue = configObject.getValue('')
         self.assertEqual('',NullValue)
-
-    
+ 
     def test_ModifyConfig(self):
         configObject = config(self.testFileName)
         configObject.setValue('unit', 'inch')

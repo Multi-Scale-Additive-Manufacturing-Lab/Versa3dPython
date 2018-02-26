@@ -5,7 +5,7 @@ import copy
 
 FillEnum = ['black', 'checker_board']
 Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1}
-Default_Printer_Setting = {'printbedsize': [10,10]}
+Default_Printer_Setting = {'printbedsize': [10,10], 'buildheight':20}
 Default_Versa3d_Setting = {'unit':'mm'}
 
 class config():
