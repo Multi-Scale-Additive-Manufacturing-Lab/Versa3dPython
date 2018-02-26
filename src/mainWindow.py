@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import sys
 from PyQt5 import QtWidgets
 import vtk
-from GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
-from GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
+from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
+from src.GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
-from lib.command import stlImportCommand
-from lib.versa3dConfig import config , FillEnum
+from src.lib.command import stlImportCommand
+from src.lib.versa3dConfig import config , FillEnum
 
 from collections import deque
 import numpy as np
@@ -128,11 +127,3 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
-        
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    
-    window = MainWindow()
-    window.show()
-    
-    sys.exit(app.exec_())
