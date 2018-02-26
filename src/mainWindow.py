@@ -29,9 +29,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.StlInteractor.SetInteractorStyle(style)
         
-        self.ImageRenderer = vtk.vtkRenderer()
-        self.ui.slice_viewer.GetRenderWindow().AddRenderer(self.StlRenderer)
-        self.ui.ImageInteractor = self.ui.slice_viewer.GetRenderWindow().GetInteractor()
+        #Commented image slicer renderer going to try implement later created Shader error on windows
+        #self.ImageRenderer = vtk.vtkRenderer()
+        #self.ui.slice_viewer.GetRenderWindow().AddRenderer(self.StlRenderer)
+        #self.ui.ImageInteractor = self.ui.slice_viewer.GetRenderWindow().GetInteractor()
 
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
@@ -51,9 +52,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def import_stl(self):
         importer = stlImportCommand(self.StlRenderer,self)
         importer.execute()
-
         self.undoStack.append(importer)
-
+        
     def undo(self):
         if(len(self.undoStack)>0):
             command = self.undoStack.pop()
