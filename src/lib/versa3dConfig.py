@@ -2,10 +2,11 @@
 
 import configparser
 import copy
+import re
 
 FillEnum = ['black', 'checker_board']
 Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1}
-Default_Printer_Setting = {'printbedsize': [10,10]}
+Default_Printer_Setting = {'printbedsize': [200.0,200.0], 'buildheight':200.0}
 Default_Versa3d_Setting = {'unit':'mm'}
 
 class config():
@@ -44,10 +45,45 @@ class config():
         for section in self._configParse.sections():
             for key in self._configParse[section]:
                 configdic = getattr(self, section)
-                configdic[key] = self._configParse[section][key]
+                configdic[key] = self._unpackStr(self._configParse[section][key])
 
-        self._configFile.close() 
+        self._configFile.close()
     
+    def _unpackStr(self,configString):
+        if(self._is_number(configString)):
+            return float(configString)
+        elif(self._is_array(configString)):
+            return self._convertStrArray(configString)
+        else:
+            return configString
+
+    def _is_number(self,num):
+        try:
+            float(num)
+            return True
+        except ValueError:
+            return False
+
+    def _is_array(self,arrayStr):
+        p = re.compile('^\[.*\]')
+        if(p.match(arrayStr)!= None):
+            return True
+        else:
+            return False
+    
+    def _convertStrArray(self,Str):
+        strippedStr = Str[1:-1]
+        StrArray = strippedStr.split(",")
+
+        newArray = []
+        for element in StrArray:
+            if(self._is_number(element)):
+                newArray.append(float(element))
+            else:
+                newArray.append(element)
+        
+        return newArray
+
     def getValue(self,configKey):
         
         if(configKey in self.Versa3dSettings.keys()):

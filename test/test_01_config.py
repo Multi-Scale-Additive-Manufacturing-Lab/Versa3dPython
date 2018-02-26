@@ -6,7 +6,7 @@ import os
 class TestConfig(unittest.TestCase):
 
     def setUp(self):
-        self.testFileName = 'test.ini'
+        self.testFileName = 'config/test.ini'
 
     def test_ConfigCreation(self):
         configObject = config(self.testFileName)
@@ -23,13 +23,12 @@ class TestConfig(unittest.TestCase):
         printBedValue = configObject.getValue('printbedsize')
         self.assertEqual([10,10], printBedValue)
 
-        FillValue = configObject.getValue('fill')
-        self.assertEqual('black', FillValue)
+        FillValue = configObject.getValue('layer_thickness')
+        self.assertEqual(0.1, FillValue)
 
         NullValue = configObject.getValue('')
         self.assertEqual('',NullValue)
-
-    
+ 
     def test_ModifyConfig(self):
         configObject = config(self.testFileName)
         configObject.setValue('unit', 'inch')
@@ -43,10 +42,17 @@ class TestConfig(unittest.TestCase):
         configObject.setValue('unit', 'inch')
 
         configObject.saveConfig()
+        del configObject
 
         configObject2 = config(self.testFileName)
         value = configObject2.getValue('unit')
         self.assertEqual('inch', value)
+
+        FillValue = configObject2.getValue('layer_thickness')
+        self.assertEqual(0.1, FillValue)
+
+        PrintBedArray = configObject2.getValue('printbedsize')
+        self.assertEqual([10,10], PrintBedArray)
 
     def tearDown(self):
         os.remove(self.testFileName)

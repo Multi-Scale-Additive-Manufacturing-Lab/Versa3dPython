@@ -74,7 +74,7 @@
                <enum>Qt::LeftToRight</enum>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="slice_tab">
                <attribute name="title">
@@ -109,7 +109,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="comboBox"/>
+                 <widget class="QComboBox" name="inFillComboBox"/>
                 </item>
                </layout>
               </widget>
