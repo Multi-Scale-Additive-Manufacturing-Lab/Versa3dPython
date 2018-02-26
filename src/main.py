@@ -85,21 +85,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             Increment = 10.0
         
-        #create xy plane
-        xyPlane = vtk.vtkPlaneSource()
-        xyPlane.SetOrigin(0.0,0.0,0.0)
-        xyPlane.SetPoint1(printBedSize[0],0,0)
-        xyPlane.SetPoint2(0,printBedSize[1],0)
-        
-        xyPlaneMapper = vtk.vtkPolyDataMapper()
-        xyPlaneMapper.SetInputConnection(xyPlane.GetOutputPort())
-
-        xyPlaneActor = vtk.vtkActor()
-        xyPlaneActor.SetMapper(xyPlaneMapper)
-        xyPlaneActor.SetPickable(False)
-        xyPlaneActor.SetDragable(False)
-        xyPlaneActor.GetProperty().SetColor(0.2,0.29,0.7)
-        
         #create grid
         for i in np.arange(0, printBedSize[0], Increment):
             line = vtk.vtkLineSource()
@@ -133,7 +118,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.StlRenderer.AddActor(lineActor)
 
-        self.StlRenderer.AddActor(xyPlaneActor)
         self.StlRenderer.AddActor(axesActor)
 
         self.StlRenderer.ResetCamera()
