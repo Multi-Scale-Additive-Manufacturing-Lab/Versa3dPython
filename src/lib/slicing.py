@@ -12,17 +12,16 @@ def slicerFactory(type):
 
 class FullBlackImageSlicer():
 
-    def __init__(self):
-        pass
+    def __init__(self, thickness = 0.1):
+        self._thickness = 0.1
+        self._listOfShape = []
     
     def addShape(self, shape):
-        pass
+        self._listOfShape.append(shape)
 
     def slice(self):
-        pass
-
-    def preview(self):
-        pass
+        for geometry in self._listOfShape:
+            pass
     
     def exportImage(self):
         pass
