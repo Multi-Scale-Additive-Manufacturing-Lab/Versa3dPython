@@ -21,7 +21,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual('mm',UnitValue)
 
         printBedValue = configObject.getValue('printbedsize')
-        self.assertEqual([10,10], printBedValue)
+        self.assertEqual([200,200], printBedValue)
 
         FillValue = configObject.getValue('layer_thickness')
         self.assertEqual(0.1, FillValue)
@@ -52,7 +52,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0.1, FillValue)
 
         PrintBedArray = configObject2.getValue('printbedsize')
-        self.assertEqual([10,10], PrintBedArray)
+        self.assertEqual([200,200], PrintBedArray)
 
     def tearDown(self):
         os.remove(self.testFileName)
