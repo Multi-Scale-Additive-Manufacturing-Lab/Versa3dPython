@@ -274,8 +274,14 @@
     <addaction name="actionpaste"/>
     <addaction name="actiondelete"/>
    </widget>
+   <widget class="QMenu" name="menuSelection">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuSelection"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -284,6 +290,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionSelection_Mode"/>
+   <addaction name="actionCamera_Mode"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionImport_STL">
@@ -314,6 +322,16 @@
   <action name="actiondelete">
    <property name="text">
     <string>paste</string>
+   </property>
+  </action>
+  <action name="actionSelection_Mode">
+   <property name="text">
+    <string>Selection Mode</string>
+   </property>
+  </action>
+  <action name="actionCamera_Mode">
+   <property name="text">
+    <string>Camera Mode</string>
    </property>
   </action>
  </widget>

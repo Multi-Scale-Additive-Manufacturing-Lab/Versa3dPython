@@ -24,8 +24,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.StlRenderer)
         self.StlInteractor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
 
-        style = MouseInteractorHighLightActor()
-        style.SetDefaultRenderer(self.StlRenderer)
+        style = vtk.vtkInteractorStyleSwitch()
+        style.SetCurrentRenderer(self.StlRenderer)
+        style.SetCurrentStyleToTrackballCamera()
 
         self.StlInteractor.SetInteractorStyle(style)
         
@@ -41,7 +42,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.SliceButton.clicked.connect(self.slice_stl)
         self.ui.actionUndo.triggered.connect(self.undo)
         self.ui.actionRedo.triggered.connect(self.redo)
-
+        self.ui.actionCamera_Mode.triggered.connect(self.SetCameraMode)
+        self.ui.actionSelection_Mode.triggered.connect(self.SetSelectionMode)
+        
         self.setUpScene()
 
         self.StlInteractor.Initialize()
@@ -120,6 +123,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.StlRenderer.AddActor(axesActor)
 
         self.StlRenderer.ResetCamera()
+    
+    def SetCameraMode(self):
+        style = self.StlInteractor.GetInteractorStyle()
+        style.SetCurrentStyleToTrackballCamera()
+    
+    def SetSelectionMode(self):
+        style = self.StlInteractor.GetInteractorStyle()
+        style.SetCurrentStyleToTrackballActor()
             
     def slice_stl(self):
 
