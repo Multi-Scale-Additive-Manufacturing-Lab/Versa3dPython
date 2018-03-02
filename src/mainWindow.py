@@ -3,7 +3,6 @@
 from PyQt5 import QtWidgets
 import vtk
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
-from src.GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
 from src.lib.command import stlImportCommand
 from src.lib.versa3dConfig import config , FillEnum
