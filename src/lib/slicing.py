@@ -29,14 +29,16 @@ class VoxelSlicer():
         for i in range(0,3):
             SampleDim[i] =int(math.ceil((boundingBox[2*i+1]-boundingBox[2*i])/ar[i]+1))
 
-        voxelizer = vtk.vtkVoxelModeller()
+        voxelizer = vtk.vtkImplicitModeller()
         voxelizer.SetSampleDimensions(SampleDim)
         voxelizer.SetMaximumDistance(tol)
         voxelizer.SetModelBounds(boundingBox)
         voxelizer.SetInputData(PolyData)
-        voxelizer.SetScalarTypeToUnsignedChar()
-        voxelizer.SetForegroundValue(255)
-        voxelizer.SetBackgroundValue(0)
+        voxelizer.AdjustBoundsOn()
+        voxelizer.SetAdjustDistance(tol)
+        voxelizer.SetProcessModeToPerVoxel()
+        voxelizer.SetOutputScalarTypeToUnsignedChar()
+        voxelizer.SetNumberOfThreads(3)
         voxelizer.Update()
 
         voxelGeometry = voxelizer.GetOutput()
