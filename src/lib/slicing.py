@@ -34,8 +34,8 @@ class VoxelSlicer():
         voxelizer.SetMaximumDistance(tol)
         voxelizer.SetModelBounds(boundingBox)
         voxelizer.SetInputData(PolyData)
-        voxelizer.SetScalarTypeToBit()
-        voxelizer.SetForegroundValue(1)
+        voxelizer.SetScalarTypeToUnsignedChar()
+        voxelizer.SetForegroundValue(255)
         voxelizer.SetBackgroundValue(0)
         voxelizer.Update()
 
@@ -52,12 +52,7 @@ class VoxelSlicer():
         for IndividualSlice in self._ListOfSlice:
             bmpWriter.SetFileName(FolderPath+"/"+ImageNameMnemonic+"_"+str(count)+".bmp")
 
-            imgStenc = vtk.vtkImageStencil()
-            imgStenc.SetInputData(IndividualSlice)
-            imgStenc.SetBackgroundValue(0)
-            imgStenc.Update()
-
-            bmpWriter.SetInputDataObject(imgStenc.GetOutput())
+            bmpWriter.SetInputData(IndividualSlice)
             bmpWriter.Write()
             count = count+1
 
