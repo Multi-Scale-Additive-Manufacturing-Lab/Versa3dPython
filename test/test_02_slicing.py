@@ -70,28 +70,38 @@ class TestSlicer(unittest.TestCase):
         testSphere = vtk.vtkPSphereSource()
         testSphere.SetPhiResolution(50)
         testSphere.SetThetaResolution(50)
-        testSphere.SetRadius(10)
+        testSphere.SetRadius(20)
         testSphere.Update()
+
+        testSphere2 = vtk.vtkPSphereSource()
+        testSphere2.SetPhiResolution(50)
+        testSphere2.SetThetaResolution(50)
+        testSphere2.SetRadius(10)
+        testSphere2.Update()
 
         sphereMapper = vtk.vtkPolyDataMapper()
         sphereMapper.SetInputData(testSphere.GetOutput())
         sphereMapper.Update()
 
+        sphereMapper2 = vtk.vtkPolyDataMapper()
+        sphereMapper2.SetInputData(testSphere2.GetOutput())
+        sphereMapper2.Update()
+
         sphereActor = vtk.vtkActor()
         sphereActor.SetPosition(40,40,20)
         sphereActor.SetMapper(sphereMapper)
+
+        sphereActor2 = vtk.vtkActor()
+        sphereActor2.SetPosition(80,80,30)
+        sphereActor2.SetMapper(sphereMapper2)
         
         test_config = config("test.ini")
         
         blackSlicer = FullBlackImageSlicer(test_config)
         blackSlicer.addActor(sphereActor)
-        listOfSlice = blackSlicer.slice()
+        blackSlicer.addActor(sphereActor2)
+        BuildVtkImage = blackSlicer.slice()
 
-        self.assertEqual(200,len(listOfSlice))
-
-        for EachSlice in listOfSlice:
-            self.assertNotEqual(0, EachSlice.GetNumberOfPoints())
-        
         os.remove("test.ini")
 
         #uncomment if you want to visual check
@@ -99,11 +109,18 @@ class TestSlicer(unittest.TestCase):
         Renderer = vtk.vtkRenderer()
         RendererWindow = vtk.vtkRenderWindow()
         RendererWindow.AddRenderer(Renderer)
-        
-        for EachSlice in listOfSlice:
+
+        (xMin,xMax,yMin,yMax,zMin,zMax) = BuildVtkImage.GetExtent()
+
+        for z in range(zMin,zMax):
+            slicer = vtk.vtkExtractVOI()
+            slicer.SetVOI(xMin,xMax,yMin,yMax,z,z)
+            slicer.SetSampleRate(1,1,1)
+            slicer.SetInputData(BuildVtkImage)
+            slicer.Update()
 
             voxelSurface = vtk.vtkContourFilter()
-            voxelSurface.SetInputData(EachSlice)
+            voxelSurface.SetInputData(slicer.GetOutput())
             voxelSurface.SetValue(0,254.99)
 
             voxelMapper = vtk.vtkPolyDataMapper()
