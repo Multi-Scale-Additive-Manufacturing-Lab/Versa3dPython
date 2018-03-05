@@ -20,6 +20,15 @@ class VoxelSlicer():
         self._buildHeight = config.getValue('buildheight')
         self._thickness = config.getValue('layer_thickness')
         self._XYVoxelSize = config.getValue('xy_resolution')
+
+        self._BuildVolumeVox = vtk.vtkImageData()
+        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
+        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
+        zDim = int(self._buildHeight/self._thickness)
+        self._BuildVolumeVox.SetSpacing(self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness)
+        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
+        self._BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
+        self._BuildVolumeVox.GetPointData().GetScalars().Fill(255)
     
     def voxelize(self, Actor, tol=0.5):
         PolyData = Actor.GetMapper().GetInput()
@@ -87,15 +96,7 @@ class FullBlackImageSlicer(VoxelSlicer):
             listOfVoxShape.append(VoxelizedShape)
             listOfPosition.append(Position)
 
-        
-        BuildVolumeVox = vtk.vtkImageData()
-        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
-        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
-        zDim = int(self._buildHeight/self._thickness)
-        BuildVolumeVox.SetSpacing(self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness)
-        BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
-        BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
-        BuildVolumeVox.GetPointData().GetScalars().Fill(255)
+        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
         
         for i in range(0,len(listOfVoxShape)):
             VoxShape = listOfVoxShape[i]
@@ -114,9 +115,9 @@ class FullBlackImageSlicer(VoxelSlicer):
                  targetExtent.append(Min+indexOffset)
                  targetExtent.append(Max+indexOffset)
             
-            self.spliceVtkImage(BuildVolumeVox,VoxShape,targetExtent)
+            self.spliceVtkImage(self._BuildVolumeVox,VoxShape,targetExtent)
         
-        return BuildVolumeVox
+        return self._BuildVolumeVox
             
     
 
