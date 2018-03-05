@@ -72,13 +72,19 @@ class VoxelSlicer():
 
     def exportImage(self,FolderPath,ImageNameMnemonic):
         bmpWriter = vtk.vtkBMPWriter()
-        count = 0
-        for IndividualSlice in self._ListOfSlice:
-            bmpWriter.SetFileName(FolderPath+"/"+ImageNameMnemonic+"_"+str(count)+".bmp")
+        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
 
-            bmpWriter.SetInputData(IndividualSlice)
+        for z in range(0,zDim):
+            bmpWriter.SetFileName(FolderPath+"/"+ImageNameMnemonic+"_"+str(z)+".bmp")
+
+            slicer = vtk.vtkExtractVOI()
+            slicer.SetVOI(0,xDim-1,0,yDim-1,z,z)
+            slicer.SetSampleRate(1,1,1)
+            slicer.SetInputData(self._BuildVolumeVox)
+            slicer.Update()
+
+            bmpWriter.SetInputData(slicer.GetOutput())
             bmpWriter.Write()
-            count = count+1
 
 
 
