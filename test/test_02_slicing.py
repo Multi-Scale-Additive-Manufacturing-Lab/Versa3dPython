@@ -104,8 +104,21 @@ class TestSlicer(unittest.TestCase):
 
         os.remove("test.ini")
 
-        #uncomment if you want to visual check
+        vtkImageStat = vtk.vtkImageAccumulate()
+        vtkImageStat.DebugOn()
+        vtkImageStat.SetComponentSpacing(1,0,0)
+        vtkImageStat.SetComponentExtent(0,255,0,0,0,0)
+        vtkImageStat.SetComponentOrigin(0,0,0)
+        vtkImageStat.SetInputData(BuildVtkImage)
+        vtkImageStat.Update()
         
+
+        totalVoxel = vtkImageStat.GetVoxelCount()
+        self.assertNotEqual(0,totalVoxel)
+        
+
+        #uncomment if you want to visual check
+        '''
         Renderer = vtk.vtkRenderer()
         RendererWindow = vtk.vtkRenderWindow()
         RendererWindow.AddRenderer(Renderer)
@@ -139,7 +152,7 @@ class TestSlicer(unittest.TestCase):
         Interactor.Initialize()
         RendererWindow.Render()
         Interactor.Start()
-        
+        '''
 
     def test_BMPExport(self):
         testSphere = vtk.vtkPSphereSource()

@@ -22,11 +22,7 @@ class VoxelSlicer():
         self._XYVoxelSize = config.getValue('xy_resolution')
 
         self._BuildVolumeVox = vtk.vtkImageData()
-        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
-        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
-        zDim = int(self._buildHeight/self._thickness)
         self._BuildVolumeVox.SetSpacing(self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness)
-        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
         self._BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
         self._BuildVolumeVox.GetPointData().GetScalars().Fill(255)
     
@@ -85,7 +81,18 @@ class VoxelSlicer():
 
             bmpWriter.SetInputData(slicer.GetOutput())
             bmpWriter.Write()
+        
+    def convertCartesionToVoxelCoord(self,cartCoord):
 
+        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
+        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
+        zDim = int(self._buildHeight/self._thickness)
+
+        VoxPosition = [int(cartCoord[0]/self._buildBedSizeXY[0]*xDim),
+                                 int(cartCoord[1]/self._buildBedSizeXY[1]*yDim),
+                                 int(cartCoord[2]/self._buildHeight*zDim)]
+
+        return VoxPosition
 
 
 class FullBlackImageSlicer(VoxelSlicer):
@@ -95,22 +102,16 @@ class FullBlackImageSlicer(VoxelSlicer):
         
     def slice(self):
         listOfVoxShape = []
-        listOfPosition= []
+        listOftargetExtent = []
+
+        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
+        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
+
         for actor in self._listOfActors:
             VoxelizedShape = self.voxelize(actor)
             Position = actor.GetPosition()
-            listOfVoxShape.append(VoxelizedShape)
-            listOfPosition.append(Position)
-
-        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
-        
-        for i in range(0,len(listOfVoxShape)):
-            VoxShape = listOfVoxShape[i]
-            ActorPosition = listOfPosition[i]
-            extent = VoxShape.GetExtent()
-            VoxTargetPosition = [int(ActorPosition[0]/self._buildBedSizeXY[0]*xDim),
-                                 int(ActorPosition[1]/self._buildBedSizeXY[1]*yDim),
-                                 int(ActorPosition[2]/self._buildHeight*zDim)]
+            extent = VoxelizedShape.GetExtent()
+            VoxTargetPosition = self.convertCartesionToVoxelCoord(Position)
             
             targetExtent = []
             for i in range(0,3):
@@ -120,6 +121,21 @@ class FullBlackImageSlicer(VoxelSlicer):
                  indexOffset = int(VoxTargetPosition[i]-center)
                  targetExtent.append(Min+indexOffset)
                  targetExtent.append(Max+indexOffset)
+
+            listOfVoxShape.append(VoxelizedShape)
+            listOftargetExtent.append(targetExtent)
+
+        zDim = 0
+        for eachExtent in listOftargetExtent:
+            curz = eachExtent[5]+1
+            if(zDim < curz):
+                zDim = curz
+        
+        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
+                      
+        for i in range(0,len(listOfVoxShape)):
+            VoxShape = listOfVoxShape[i]
+            targetExtent = listOftargetExtent[i]
             
             self.spliceVtkImage(self._BuildVolumeVox,VoxShape,targetExtent)
         
