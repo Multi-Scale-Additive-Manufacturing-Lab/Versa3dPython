@@ -21,8 +21,13 @@ class VoxelSlicer():
         self._thickness = config.getValue('layer_thickness')
         self._XYVoxelSize = config.getValue('xy_resolution')
 
+        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
+        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
+        zDim = int(self._buildHeight/self._thickness)
+
         self._BuildVolumeVox = vtk.vtkImageData()
         self._BuildVolumeVox.SetSpacing(self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness)
+        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
         self._BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
         self._BuildVolumeVox.GetPointData().GetScalars().Fill(255)
     
@@ -104,8 +109,7 @@ class FullBlackImageSlicer(VoxelSlicer):
         listOfVoxShape = []
         listOftargetExtent = []
 
-        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
-        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
+        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
 
         for actor in self._listOfActors:
             VoxelizedShape = self.voxelize(actor)
@@ -125,20 +129,19 @@ class FullBlackImageSlicer(VoxelSlicer):
             listOfVoxShape.append(VoxelizedShape)
             listOftargetExtent.append(targetExtent)
 
-        zDim = 0
+        zMax = 0
         for eachExtent in listOftargetExtent:
-            curz = eachExtent[5]+1
-            if(zDim < curz):
-                zDim = curz
-        
-        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
+            curz = eachExtent[5]
+            if(zMax < curz):
+                zMax = curz
                       
         for i in range(0,len(listOfVoxShape)):
             VoxShape = listOfVoxShape[i]
             targetExtent = listOftargetExtent[i]
             
             self.spliceVtkImage(self._BuildVolumeVox,VoxShape,targetExtent)
-        
+
+        self._BuildVolumeVox.Crop([0,xDim-1,0,yDim-1,0,zMax])
         return self._BuildVolumeVox
             
     

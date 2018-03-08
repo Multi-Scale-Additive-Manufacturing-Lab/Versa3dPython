@@ -3,6 +3,7 @@ import vtk
 import re
 import os
 import fnmatch
+import shutil
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer,CheckerBoardImageSlicer , VoxelSlicer
 from src.lib.versa3dConfig import FillEnum , config
 
@@ -107,15 +108,16 @@ class TestSlicer(unittest.TestCase):
         vtkImageStat = vtk.vtkImageAccumulate()
         vtkImageStat.DebugOn()
         vtkImageStat.SetComponentSpacing(1,0,0)
-        vtkImageStat.SetComponentExtent(0,255,0,0,0,0)
+        vtkImageStat.SetComponentExtent(0,1,0,0,0,0)
         vtkImageStat.SetComponentOrigin(0,0,0)
         vtkImageStat.SetInputData(BuildVtkImage)
         vtkImageStat.Update()
         
 
         totalVoxel = vtkImageStat.GetVoxelCount()
-        self.assertNotEqual(0,totalVoxel)
-        
+        meanArray = vtkImageStat.GetMean()
+        self.assertEqual(64160000,totalVoxel)
+        self.assertLessEqual(0.95,meanArray[0]/255)
 
         #uncomment if you want to visual check
         '''
@@ -192,11 +194,16 @@ class TestSlicer(unittest.TestCase):
 
         os.remove("test.ini")
 
+        (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
+
+        shutil.rmtree('./test/testOutput/FullBlack/')
+        os.mkdir('./test/testOutput/FullBlack/')
+
         blackSlicer.exportImage('./test/testOutput/FullBlack/','testImage')
         count = 0
-        for file in os.listdir('.'):
-            if fnmatch.fnmatch(file,'./test/testOutput/FullBlack/testImage_*.bmp'):
+        for file in os.listdir('./test/testOutput/FullBlack/'):
+            if fnmatch.fnmatch(file,'testImage_*.bmp'):
                 count = count + 1
         
         self.assertNotEqual(count, 0)
-        self.assertEqual(count,200)
+        self.assertEqual(count,zDim)
