@@ -3,6 +3,8 @@
 import configparser
 import copy
 import re
+import vtk
+from vtk.util import keys
 
 FillEnum = ['black', 'checker_board']
 Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'xy_resolution': [0.5,0.5]}
@@ -19,12 +21,20 @@ class config():
         self.Versa3dSettings ={}
         self.PrinterSettings = {}
 
+        self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
+
         self._configFile = None
         self._configParse = None
         try:
             self.readConfigFile()
         except IOError:
             self.createConfigFile()
+    
+    def getKey(self,Name,Class):
+        if(Name =="Type" and Class == "Actor"):
+            return self.ActorKey
+        else:
+            return None
             
     def createConfigFile(self):
         #create config        
