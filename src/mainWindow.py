@@ -34,11 +34,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ImageInteractor = self.ui.Image_SliceViewer.GetRenderWindow().GetInteractor()
         ImageInteractorStyle = vtk.vtkInteractorStyleImage()
         self.ImageInteractor.SetInteractorStyle(ImageInteractorStyle)
-        
-        #Commented image slicer renderer going to try implement later created Shader error on windows
-        #self.ImageRenderer = vtk.vtkRenderer()
-        #self.ui.slice_viewer.GetRenderWindow().AddRenderer(self.StlRenderer)
-        #self.ui.ImageInteractor = self.ui.slice_viewer.GetRenderWindow().GetInteractor()
 
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
