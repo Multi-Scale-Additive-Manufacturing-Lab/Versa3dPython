@@ -127,35 +127,26 @@ class TestSlicer(unittest.TestCase):
 
         (xMin,xMax,yMin,yMax,zMin,zMax) = BuildVtkImage.GetExtent()
 
-        for z in range(zMin,zMax):
-            slicer = vtk.vtkExtractVOI()
-            slicer.SetVOI(xMin,xMax,yMin,yMax,z,z)
-            slicer.SetSampleRate(1,1,1)
-            slicer.SetInputData(BuildVtkImage)
-            slicer.Update()
+        imageMapper = vtk.vtkImageSliceMapper()
+        imageMapper.SetInputData(BuildVtkImage)
+        imageMapper.BackgroundOn()
+        imageMapper.SetOrientationToZ()
+        imageMapper.SetSliceNumber(333)
 
-            voxelSurface = vtk.vtkContourFilter()
-            voxelSurface.SetInputData(slicer.GetOutput())
-            voxelSurface.SetValue(0,254.99)
+        imageActor = vtk.vtkImageSlice()
+        imageActor.SetMapper(imageMapper)
 
-            voxelMapper = vtk.vtkPolyDataMapper()
-            voxelMapper.SetInputConnection(voxelSurface.GetOutputPort())
-
-            voxelActor = vtk.vtkActor()
-            voxelActor.SetMapper(voxelMapper)
-            Renderer.AddActor(voxelActor)
-        
+        Renderer.AddActor(imageActor)
         Renderer.ResetCamera()
 
         Interactor = vtk.vtkRenderWindowInteractor()
-        Interactor.SetInteractorStyle(vtk.vtkInteractorStyleSwitch())
+        Interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
         Interactor.SetRenderWindow(RendererWindow)
-
         Interactor.Initialize()
         RendererWindow.Render()
         Interactor.Start()
         '''
-
+        
     def test_BMPExport(self):
         testSphere = vtk.vtkPSphereSource()
         testSphere.SetPhiResolution(50)
