@@ -23,6 +23,9 @@ class TestConfig(unittest.TestCase):
         printBedValue = configObject.getValue('printbedsize')
         self.assertEqual([200,200], printBedValue)
 
+        buffersizeLimit = configObject.getValue('BufferSizeLimit')
+        self.assertEqual([150,-1], buffersizeLimit)
+
         FillValue = configObject.getValue('layer_thickness')
         self.assertEqual(0.1, FillValue)
 

@@ -7,7 +7,7 @@ import vtk
 from vtk.util import keys
 
 FillEnum = ['black', 'checker_board']
-Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'xy_resolution': [0.5,0.5]}
+Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'dpi': [600,600],'BufferSizeLimit': [150,-1]}
 Default_Printer_Setting = {'printbedsize': [200.0,200.0], 'buildheight':200.0}
 Default_Versa3d_Setting = {'unit':'mm'}
 
