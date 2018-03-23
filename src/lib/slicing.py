@@ -11,65 +11,57 @@ def slicerFactory(type, config):
         return CheckerBoardImageSlicer(config)
     else:
         return None
-
+ 
 class VoxelSlicer():
     def __init__(self, config):
         self._listOfActors = []
-
+        
         self._buildBedSizeXY = config.getValue('printbedsize')
+
         self._buildHeight = config.getValue('buildheight')
         self._thickness = config.getValue('layer_thickness')
-        self._XYVoxelSize = config.getValue('xy_resolution')
-
-        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
-        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
-        zDim = int(self._buildHeight/self._thickness)
+        dpi = config.getValue('dpi')
+        self.listOfVoxShape = []
+        self._buildBedVolPixel = [0]*3
+        self._XYVoxelSize = [0]*2
+        for i in range(0,2):
+            self._buildBedVolPixel[i] = int(math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
+            self._XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
+        
+        self._buildBedVolPixel[2] = math.ceil(self._buildHeight/self._thickness)
 
         self._BuildVolumeVox = vtk.vtkImageData()
         self._BuildVolumeVox.SetSpacing(self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness)
-        self._BuildVolumeVox.SetDimensions(xDim,yDim,zDim)
+        self._BuildVolumeVox.SetDimensions(self._buildBedVolPixel)
         self._BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
         self._BuildVolumeVox.GetPointData().GetScalars().Fill(255)
     
-    def voxelize(self, Actor, tol=0.5):
+    
+    def voxelize(self, Actor, tol=0.05):
         PolyData = Actor.GetMapper().GetInput()
         boundingBox = PolyData.GetBounds()
-        
-        SampleDim = [0]*3
-        ar = [self._XYVoxelSize[0],self._XYVoxelSize[1],self._thickness]
-        for i in range(0,3):
-            SampleDim[i] =int(math.ceil((boundingBox[2*i+1]-boundingBox[2*i])/ar[i]+1))
+        Extent = Actor.GetBounds()
+
+        RealDim = [Extent[1]-Extent[0],Extent[3]-Extent[2],Extent[5]-Extent[4]]
+        sampleDim = [x+1 for x in self.convertCartesionToVoxelCoord(RealDim)]
 
         voxelizer = vtk.vtkImplicitModeller()
-        voxelizer.SetSampleDimensions(SampleDim)
+        voxelizer.SetSampleDimensions(sampleDim)
         voxelizer.SetMaximumDistance(tol)
-        voxelizer.SetModelBounds(boundingBox)
         voxelizer.SetInputData(PolyData)
-        voxelizer.AdjustBoundsOn()
-        voxelizer.SetAdjustDistance(tol)
+        voxelizer.SetModelBounds(boundingBox)
         voxelizer.SetProcessModeToPerVoxel()
         voxelizer.SetOutputScalarTypeToUnsignedChar()
-        voxelizer.SetNumberOfThreads(3)
+        voxelizer.SetNumberOfThreads(8)
         voxelizer.Update()
 
         voxelGeometry = voxelizer.GetOutput()
+        voxelGeometry.SetOrigin(Extent[0],Extent[2],Extent[4])        
 
         return voxelGeometry
 
     def addActor(self, actor):
         self._listOfActors.append(actor)
-
-    def spliceVtkImage(self,TargetImage,InputImage,Extent):
-        (x_dim, y_dim,z_dim) = InputImage.GetDimensions()
-        xExtent = range(Extent[0],Extent[1]+1)
-        yExtent = range(Extent[2],Extent[3]+1)
-        zExtent = range(Extent[4],Extent[5]+1)
-
-        for x in range(0,x_dim):
-            for y in range(0,y_dim):
-                for z in range(0,z_dim):
-                    val = InputImage.GetScalarComponentAsFloat(x,y,z,0)
-                    TargetImage.SetScalarComponentFromFloat(xExtent[x],yExtent[y],zExtent[z],0, val)
 
     def exportImage(self,FolderPath,ImageNameMnemonic):
         bmpWriter = vtk.vtkBMPWriter()
@@ -86,18 +78,29 @@ class VoxelSlicer():
 
             bmpWriter.SetInputData(slicer.GetOutput())
             bmpWriter.Write()
-        
+              
     def convertCartesionToVoxelCoord(self,cartCoord):
 
-        xDim = int(self._buildBedSizeXY[0]/self._XYVoxelSize[0])
-        yDim = int(self._buildBedSizeXY[1]/self._XYVoxelSize[1])
-        zDim = int(self._buildHeight/self._thickness)
-
-        VoxPosition = [int(cartCoord[0]/self._buildBedSizeXY[0]*xDim),
-                                 int(cartCoord[1]/self._buildBedSizeXY[1]*yDim),
-                                 int(cartCoord[2]/self._buildHeight*zDim)]
+        VoxPosition = [int(cartCoord[0]/self._XYVoxelSize[0]),
+                    int(cartCoord[1]/self._XYVoxelSize[1]),
+                    int(cartCoord[2]/self._thickness)]
 
         return VoxPosition
+
+    def spliceVtkImage(self,InputImage):
+        (x_dim, y_dim,z_dim) = InputImage.GetDimensions()
+        origin = InputImage.GetOrigin()
+        originVox = self.convertCartesionToVoxelCoord(origin)
+
+        xExtent = range(originVox[0],originVox[0]+x_dim)
+        yExtent = range(originVox[1],originVox[1]+y_dim)
+        zExtent = range(originVox[2],originVox[2]+z_dim)
+
+        for x in range(0,x_dim):
+            for y in range(0,y_dim):
+                for z in range(0,z_dim):
+                    val = InputImage.GetScalarComponentAsFloat(x,y,z,0)
+                    self._BuildVolumeVox.SetScalarComponentFromFloat(xExtent[x],yExtent[y],zExtent[z],0, val)
 
 
 class FullBlackImageSlicer(VoxelSlicer):
@@ -106,42 +109,13 @@ class FullBlackImageSlicer(VoxelSlicer):
         super().__init__(config)
         
     def slice(self):
-        listOfVoxShape = []
-        listOftargetExtent = []
-
-        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
-
+        listOfTargetExtent = []
         for actor in self._listOfActors:
             VoxelizedShape = self.voxelize(actor)
-            Position = actor.GetPosition()
-            extent = VoxelizedShape.GetExtent()
-            VoxTargetPosition = self.convertCartesionToVoxelCoord(Position)
-            
-            targetExtent = []
-            for i in range(0,3):
-                 Min=extent[2*i]
-                 Max=extent[2*i+1]
-                 center = (Max-Min)/2
-                 indexOffset = int(VoxTargetPosition[i]-center)
-                 targetExtent.append(Min+indexOffset)
-                 targetExtent.append(Max+indexOffset)
+            (xDim,yDim,zDim) = VoxelizedShape.GetDimensions()
+            self.listOfVoxShape.append(VoxelizedShape)
+            self.spliceVtkImage(VoxelizedShape)
 
-            listOfVoxShape.append(VoxelizedShape)
-            listOftargetExtent.append(targetExtent)
-
-        zMax = 0
-        for eachExtent in listOftargetExtent:
-            curz = eachExtent[5]
-            if(zMax < curz):
-                zMax = curz
-                      
-        for i in range(0,len(listOfVoxShape)):
-            VoxShape = listOfVoxShape[i]
-            targetExtent = listOftargetExtent[i]
-            
-            self.spliceVtkImage(self._BuildVolumeVox,VoxShape,targetExtent)
-
-        self._BuildVolumeVox.Crop([0,xDim-1,0,yDim-1,0,zMax])
         return self._BuildVolumeVox
             
     

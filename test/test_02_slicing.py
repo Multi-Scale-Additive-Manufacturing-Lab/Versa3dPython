@@ -4,13 +4,43 @@ import re
 import os
 import fnmatch
 import shutil
+import math
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer,CheckerBoardImageSlicer , VoxelSlicer
 from src.lib.versa3dConfig import FillEnum , config
 
 class TestSlicer(unittest.TestCase):
 
     def setUp(self):
-        pass
+        reader = vtk.vtkSTLReader()
+        reader.SetFileName('./test/testFile/3DBenchySmall.stl')
+        reader.Update()
+
+        self.test_config = config("test.ini")
+
+        self.stlPolyData = reader.GetOutput()
+
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(reader.GetOutputPort())
+
+        self.stlActor = vtk.vtkActor()
+        self.stlActor.SetMapper(mapper)
+
+        printBedSize = self.test_config.getValue("printbedsize")
+        zRange = self.stlActor.GetZRange()
+
+        newPosition = [0]*3
+
+        oldPosition = self.stlActor.GetPosition()
+        newPosition[0] = printBedSize[0]/2
+        newPosition[1] = printBedSize[1]/2
+
+        if(zRange[0]<0):
+            newPosition[2] = oldPosition[2]-zRange[0]
+        else:
+            newPosition[2] = oldPosition[2]
+        
+        self.stlActor.SetPosition(newPosition)
+
     
     def test_slicerFactory(self):
         AllBlackSlicer = slicerFactory('black')
@@ -22,88 +52,11 @@ class TestSlicer(unittest.TestCase):
         NullCase = slicerFactory(None)
         self.assertEqual(None,NullCase)
 
-    def test_voxel(self):
-        ren1 = vtk.vtkRenderer()
-        renWin = vtk.vtkRenderWindow()
-        renWin.AddRenderer(ren1)
-        iren = vtk.vtkRenderWindowInteractor()
-        iren.SetRenderWindow(renWin)
-
-        sphereModel = vtk.vtkSphereSource()
-        sphereModel.SetThetaResolution(10)
-        sphereModel.SetPhiResolution(10)
-        sphereModel.Update()
-
-        sphereMapper = vtk.vtkPolyDataMapper()
-        sphereMapper.SetInputData(sphereModel.GetOutput())
-        sphereMapper.Update()
-
-        sphereActor = vtk.vtkActor()
-        sphereActor.SetMapper(sphereMapper)
-
-        voxelModel = vtk.vtkVoxelModeller()
-        voxelModel.SetInputData(sphereActor.GetMapper().GetInput())
-        voxelModel.SetSampleDimensions(50, 50, 50)
-        voxelModel.SetModelBounds(-1.5, 1.5, -1.5, 1.5, -1.5, 1.5)
-        voxelModel.SetScalarTypeToBit()
-        voxelModel.SetForegroundValue(1)
-        voxelModel.SetBackgroundValue(0)
-        voxelModel.Update()
-
-        voxelSurface = vtk.vtkContourFilter()
-        voxelSurface.SetInputData(voxelModel.GetOutput())
-        voxelSurface.SetValue(0, .999)
-
-        voxelMapper = vtk.vtkPolyDataMapper()
-        voxelMapper.SetInputConnection(voxelSurface.GetOutputPort())
-
-        voxelActor = vtk.vtkActor()
-        voxelActor.SetMapper(voxelMapper)
-
-        ren1.AddActor(voxelActor)
-        ren1.SetBackground(.1, .2, .4)
-        ren1.ResetCamera()
-        iren.Initialize()
-        iren.Start()
-
     def test_blackSlicing(self):
         
-        testSphere = vtk.vtkPSphereSource()
-        testSphere.SetPhiResolution(50)
-        testSphere.SetThetaResolution(50)
-        testSphere.SetRadius(20)
-        testSphere.Update()
-
-        testSphere2 = vtk.vtkPSphereSource()
-        testSphere2.SetPhiResolution(50)
-        testSphere2.SetThetaResolution(50)
-        testSphere2.SetRadius(10)
-        testSphere2.Update()
-
-        sphereMapper = vtk.vtkPolyDataMapper()
-        sphereMapper.SetInputData(testSphere.GetOutput())
-        sphereMapper.Update()
-
-        sphereMapper2 = vtk.vtkPolyDataMapper()
-        sphereMapper2.SetInputData(testSphere2.GetOutput())
-        sphereMapper2.Update()
-
-        sphereActor = vtk.vtkActor()
-        sphereActor.SetPosition(40,40,20)
-        sphereActor.SetMapper(sphereMapper)
-
-        sphereActor2 = vtk.vtkActor()
-        sphereActor2.SetPosition(80,80,30)
-        sphereActor2.SetMapper(sphereMapper2)
-        
-        test_config = config("test.ini")
-        
-        blackSlicer = FullBlackImageSlicer(test_config)
-        blackSlicer.addActor(sphereActor)
-        blackSlicer.addActor(sphereActor2)
+        blackSlicer = FullBlackImageSlicer(self.test_config)
+        blackSlicer.addActor(self.stlActor)
         BuildVtkImage = blackSlicer.slice()
-
-        os.remove("test.ini")
 
         vtkImageStat = vtk.vtkImageAccumulate()
         vtkImageStat.DebugOn()
@@ -113,77 +66,60 @@ class TestSlicer(unittest.TestCase):
         vtkImageStat.SetInputData(BuildVtkImage)
         vtkImageStat.Update()
         
-
         totalVoxel = vtkImageStat.GetVoxelCount()
         meanArray = vtkImageStat.GetMean()
-        self.assertEqual(64160000,totalVoxel)
+        
+        BuildBedSize = self.test_config.getValue('printbedsize')
+        dpi = self.test_config.getValue('dpi')
+        thickness = self.test_config.getValue('layer_thickness')
+        BuildHeight = self.test_config.getValue('buildheight')
+
+        BuildBedVoxSize = [0]*3
+        for i in range(0,2):
+            BuildBedVoxSize[i]=int(math.ceil(BuildBedSize[i]*dpi[i]/(0.0254*1000)))
+
+        BuildBedVoxSize[2] = math.ceil(BuildHeight/thickness)
+
+        theoreticalNumberOfVoxel = BuildBedVoxSize[0]*BuildBedVoxSize[1]*BuildBedVoxSize[2]
+        #check number of voxel
+        self.assertEqual(theoreticalNumberOfVoxel,totalVoxel)
+        #check blackness
         self.assertLessEqual(0.95,meanArray[0]/255)
 
         #uncomment if you want to visual check
-        '''
+        
         Renderer = vtk.vtkRenderer()
         RendererWindow = vtk.vtkRenderWindow()
         RendererWindow.AddRenderer(Renderer)
 
         (xMin,xMax,yMin,yMax,zMin,zMax) = BuildVtkImage.GetExtent()
 
-        imageMapper = vtk.vtkImageSliceMapper()
-        imageMapper.SetInputData(BuildVtkImage)
-        imageMapper.BackgroundOn()
-        imageMapper.SetOrientationToZ()
-        imageMapper.SetSliceNumber(333)
+        voxelSurface = vtk.vtkContourFilter()
+        voxelSurface.SetInputData(BuildVtkImage)
+        voxelSurface.SetValue(0,254.99)
 
-        imageActor = vtk.vtkImageSlice()
-        imageActor.SetMapper(imageMapper)
+        voxelMapper = vtk.vtkPolyDataMapper()
+        voxelMapper.SetInputConnection(voxelSurface.GetOutputPort())
 
-        Renderer.AddActor(imageActor)
+        voxelActor = vtk.vtkActor()
+        voxelActor.SetMapper(voxelMapper)
+        Renderer.AddActor(voxelActor)
+
         Renderer.ResetCamera()
 
         Interactor = vtk.vtkRenderWindowInteractor()
-        Interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
+        #Interactor.SetInteractorStyle(vtk.vtkInteractorStyleImage())
         Interactor.SetRenderWindow(RendererWindow)
         Interactor.Initialize()
         RendererWindow.Render()
         Interactor.Start()
-        '''
+        
         
     def test_BMPExport(self):
-        testSphere = vtk.vtkPSphereSource()
-        testSphere.SetPhiResolution(50)
-        testSphere.SetThetaResolution(50)
-        testSphere.SetRadius(20)
-        testSphere.Update()
 
-        testSphere2 = vtk.vtkPSphereSource()
-        testSphere2.SetPhiResolution(50)
-        testSphere2.SetThetaResolution(50)
-        testSphere2.SetRadius(10)
-        testSphere2.Update()
-
-        sphereMapper = vtk.vtkPolyDataMapper()
-        sphereMapper.SetInputData(testSphere.GetOutput())
-        sphereMapper.Update()
-
-        sphereMapper2 = vtk.vtkPolyDataMapper()
-        sphereMapper2.SetInputData(testSphere2.GetOutput())
-        sphereMapper2.Update()
-
-        sphereActor = vtk.vtkActor()
-        sphereActor.SetPosition(40,40,20)
-        sphereActor.SetMapper(sphereMapper)
-
-        sphereActor2 = vtk.vtkActor()
-        sphereActor2.SetPosition(80,80,30)
-        sphereActor2.SetMapper(sphereMapper2)
-        
-        test_config = config("test.ini")
-        
-        blackSlicer = FullBlackImageSlicer(test_config)
-        blackSlicer.addActor(sphereActor)
-        blackSlicer.addActor(sphereActor2)
+        blackSlicer = FullBlackImageSlicer(self.test_config)
+        blackSlicer.addActor(self.stlActor)
         BuildVtkImage = blackSlicer.slice()
-
-        os.remove("test.ini")
 
         (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
 
@@ -198,3 +134,6 @@ class TestSlicer(unittest.TestCase):
         
         self.assertNotEqual(count, 0)
         self.assertEqual(count,zDim)
+
+    def tearDown(self):
+        os.remove("test.ini")
