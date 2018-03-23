@@ -133,7 +133,8 @@ class TestSlicer(unittest.TestCase):
                 count = count + 1
         
         self.assertNotEqual(count, 0)
-        self.assertEqual(count,zDim)
+        #check if number of image is smaller than build vox
+        self.assertTrue(count <= zDim)
 
     def tearDown(self):
         os.remove("test.ini")

@@ -35,6 +35,8 @@ class VoxelSlicer():
         self._BuildVolumeVox.SetDimensions(self._buildBedVolPixel)
         self._BuildVolumeVox.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
         self._BuildVolumeVox.GetPointData().GetScalars().Fill(255)
+
+        self._ceiling = 0
     
     
     def voxelize(self, Actor, tol=0.05):
@@ -76,8 +78,10 @@ class VoxelSlicer():
             slicer.SetInputData(self._BuildVolumeVox)
             slicer.Update()
 
-            bmpWriter.SetInputData(slicer.GetOutput())
-            bmpWriter.Write()
+            if (z <= self._ceiling ):
+                bmpWriter.SetInputData(slicer.GetOutput())
+                bmpWriter.Write()
+            
               
     def convertCartesionToVoxelCoord(self,cartCoord):
 
@@ -110,11 +114,19 @@ class FullBlackImageSlicer(VoxelSlicer):
         
     def slice(self):
         listOfTargetExtent = []
+        maxZ = 0
         for actor in self._listOfActors:
             VoxelizedShape = self.voxelize(actor)
             (xDim,yDim,zDim) = VoxelizedShape.GetDimensions()
             self.listOfVoxShape.append(VoxelizedShape)
             self.spliceVtkImage(VoxelizedShape)
+
+            actorMaxZ = actor.GetBounds()[5]
+
+            if(actorMaxZ > maxZ):
+                maxZ = actorMaxZ
+        
+        self._ceiling = math.ceil(maxZ/self._thickness)
 
         return self._BuildVolumeVox
             
