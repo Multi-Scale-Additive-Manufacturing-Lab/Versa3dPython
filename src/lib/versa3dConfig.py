@@ -8,7 +8,9 @@ from vtk.util import keys
 
 FillEnum = ['black', 'checker_board']
 Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'dpi': [600,600],'BufferSizeLimit': [150,-1]}
-Default_Printer_Setting = {'printbedsize': [30.0,30.0], 'buildheight':50.0}
+Default_Printer_Setting = {'printbedsize': [30.0,30.0], 'buildheight':50.0, 'gcodeFlavor':'VlaseaBM', 'PrintHead':'ImTech_Mark'}
+Default_BinderJetPrint_Setting = {'gantryXYVelocity':[100.0,100.0],'ZVelocity':[10.0,10.0],'CarriageVelocity':20, 
+                                'feedBedVelocity':10.0,'buildBedVelocity':10.0,'rollerVelocity':50, 'NPrintSwathe':1, 'PrintHeadVelocity':25.4}
 Default_Versa3d_Setting = {'unit':'mm'}
 
 class config():
@@ -18,8 +20,9 @@ class config():
         self._FilePath = FilePath
 
         self.SlicingSettings = {}
-        self.Versa3dSettings ={}
+        self.Versa3dSettings = {}
         self.PrinterSettings = {}
+        self.BinderJetSettings = {}
 
         self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
 
@@ -45,6 +48,7 @@ class config():
         self.SlicingSettings = copy.deepcopy(Default_Slice_Setting)
         self.Versa3dSettings = copy.deepcopy(Default_Versa3d_Setting)
         self.PrinterSettings = copy.deepcopy(Default_Printer_Setting)
+        self.BinderJetSettings = copy.deepcopy(Default_BinderJetPrint_Setting)
     
     def readConfigFile(self):
         self._configFile = open(self._FilePath, 'r')
@@ -102,6 +106,8 @@ class config():
             return self.PrinterSettings[configKey]
         elif(configKey in self.SlicingSettings.keys()):
             return self.SlicingSettings[configKey]
+        elif(configKey in self.BinderJetSettings.keys()):
+            return self.BinderJetSettings[configKey]
         else:
             return ''
 
@@ -115,6 +121,9 @@ class config():
         elif(configKey in self.SlicingSettings.keys()):
             self.SlicingSettings[configKey] = value
             return self.SlicingSettings[configKey]
+        elif(configKey in self.BinderJetSettings.keys()):
+            self.BinderJetSettings[configKey] = value
+            return self.BinderJetSettings[configKey]
         else:
             return ''
     
@@ -124,6 +133,7 @@ class config():
         self._configParse['Versa3dSettings'] = self.Versa3dSettings      
         self._configParse['SlicingSettings'] = self.SlicingSettings
         self._configParse['PrinterSettings'] = self.PrinterSettings
+        self._configParse['BinderJetSettings'] = self.BinderJetSettings
         
         with open(self._FilePath, 'w') as self._configFile:
             self._configParse.write(self._configFile)

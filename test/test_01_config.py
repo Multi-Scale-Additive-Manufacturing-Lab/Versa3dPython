@@ -21,13 +21,16 @@ class TestConfig(unittest.TestCase):
         self.assertEqual('mm',UnitValue)
 
         printBedValue = configObject.getValue('printbedsize')
-        self.assertEqual([200,200], printBedValue)
+        self.assertEqual([30,30], printBedValue)
 
         buffersizeLimit = configObject.getValue('BufferSizeLimit')
         self.assertEqual([150,-1], buffersizeLimit)
 
         FillValue = configObject.getValue('layer_thickness')
         self.assertEqual(0.1, FillValue)
+
+        gantryXYVelocity = configObject.getValue('gantryXYVelocity')
+        self.assertEqual([100,100],gantryXYVelocity)
 
         NullValue = configObject.getValue('')
         self.assertEqual('',NullValue)
@@ -50,13 +53,7 @@ class TestConfig(unittest.TestCase):
         configObject2 = config(self.testFileName)
         value = configObject2.getValue('unit')
         self.assertEqual('inch', value)
-
-        FillValue = configObject2.getValue('layer_thickness')
-        self.assertEqual(0.1, FillValue)
-
-        PrintBedArray = configObject2.getValue('printbedsize')
-        self.assertEqual([200,200], PrintBedArray)
-
+        
     def tearDown(self):
         os.remove(self.testFileName)
 
