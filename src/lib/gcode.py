@@ -56,15 +56,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listOfChoice = ["Home","Jog","Move Height","Move Carriage to Feed Bed"]
         return self.ew("Function",listOfChoice,Val)
 
-<<<<<<< HEAD
-    def ewPrintHead2Function(self,Val):
-        listOfChoice = ["Initialize","Load Image","Set Default Buffer","Switch VPP",
-                        "Printhead Parameters","Restart Imprint"]
-=======
     def ewImtechFunction(self,Val):
         listOfChoice = ["Initialize","Load Image","Set Default Buffer","Switch VPP",
                         "Printhead Parameters","Print Now","Restart Imprint"]
->>>>>>> test
         return self.ew("Function",listOfChoice,Val)
     
     def ewSyringeFunction(self,Val):
