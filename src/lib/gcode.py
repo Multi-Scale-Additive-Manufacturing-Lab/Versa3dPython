@@ -31,72 +31,115 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Function_Dict = {"Init":0,"txt_to_print":1,
                                 "Set_Default_Buffer":2,"Switch_vpp":3,
                                 "Printhead_param":4,"Print_Now":5}
-    
-    def ewModule(self,Val):
-        root = (E.EW(
-                    E.Name("Module"),
-                    E.Choice("Gantry Axis"),
-                    E.Choice("Z Axis"),
-                    E.Choice("Material Handling Axes"),
-                    E.Choice("Porogen Insertion"),
-                    E.Choice("Syringe Injection"),
-                    E.Choice("Printhead"),
-                    E.Choice("Roller"),
-                    E.Choice("Syringe 2"),
-                    E.Choice("Printhead 2"),
-                    E.Val(str(Val))
-                )
-            )
+    def ew(self,Name,listOfChoice,Val):
+        root = etree.Element("EW")
+        root.append(E.Name(Name))
 
-        return page
-    
-    def ewFunction(self,Val):
-
-        root = ( E.EW(
-                    E.Name("Function"),
-                    E.Choice("Initialise"),
-                    E.Choice("Text to Print"),
-                    E.Choice("Set Default Buffer"),
-                    E.Choice("Switch VPP"),
-                    E.Choice("Printhead Parameters"),
-                    E.Choice("Print Now"),
-                    E.Val(str(Val))
-                )
-            )
+        for ChoiceTxt in listOfChoice:
+            root.append(E.Choice(ChoiceTxt))
         
+        root.append(E.Val(str(Val)))
+
         return root
 
-    def cluster(self,Name,NumElts):
+    def ewModule(self,Val):
+        listOfChoice = ["Gantry Axis","Z Axis","Material Handling Axes","Porogen Insertion",
+                        "Syringe Injection","Printhead","Roller","Syringe 2","Printhead 2"]
+        return self.ew("Module",listOfChoice,Val)
+    
+    def ewPrintHeadFunction(self,Val):
+        listOfChoice = ["Initialisation","Set Roller Velocity", "Sweep X Axis"]
+
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewPrintMatHandlingFunction(self,Val):
+        listOfChoice = ["Home","Jog","Move Height","Move Carriage to Feed Bed"]
+        return self.ew("Function",listOfChoice,Val)
+
+    def ewPrintHead2Function(self,Val):
+        listOfChoice = ["Initialise","Text to Print","Set Default Buffer","Switch VPP",
+                        "Printhead Parameters","Print Now"]
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewSyringe2Function(self,Val):
+        listOfChoice = ["Initialize","Syringe Control","Set Pressure","Set Vacuum"]
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewMotorZ(self,Val):
+        listOfChoice = ["Z1","Z2"]
+        return self.ew("Z Motor",listOfChoice,Val)
+    
+    def ewGantryFunction(self,Val):
+        listOfChoice = ["Home","Jog","Run Program","Move to Coordinates"]
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewZAxis(self,Val):
+        listOfChoice = ["Home","Jog","Move to Coordinates"]
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewEquation(self,Val):
+        listOfChoice = ["Use Height","H + T + S","H - T","-(H  + W)","+W"]
+        return self.ew("Equation",listOfChoice,Val)
+    
+    def ewMotionControl(self,Val):
+        listOfChoice = ["Incremental","Absolute","Continuous"]
+        return self.ew("Motion Control",listOfChoice,Val)
+    
+    def ewBedSelection(self,Val):
+        listOfChoice = ["Feed Bed 1","Feed Bed 2","Feed Bed 3","Build Bed","Material Box Carriage"]
+        return self.ew("Bed Selection",listOfChoice,Val)
+
+    def Cluster(self,Name,NumElts):
 
         root = (E.Cluster(
                     E.Name(Name),
-                    E.NumElts(NumElts)
+                    E.NumElts(str(NumElts))
                 )
             )
             
         return root
-
-    def PrintHeadSetUp(self,Bool_Imtech_Printer,Module,Function,Voltage,pulse_width,Buffer_Number, VPP_On_Off,Imtech_txtStr,PrintHeadAddr, img_path):
-        root = etree.parse("./src/lib/gcode_template/printHeadCluster.xml")
-
-        root.find("/Boolean/Val").text = str(Bool_Imtech_Printer)
-
-        EWElems = root.findall("EW")
-        EWElems[0].find("Val").text = str(Module)
-        EWElems[1].find("Val").text = str(Function)
-
-        DBLElemList = root.findall("//DBL")
-        DBLElemList[0].find("Val").text = str(Voltage)
-        DBLElemList[1].find("Val").text = str(pulse_width)
+    
+    def _TypeNameVal(self,type,Name,Val):
         
-        I16ElemList = root.findall("//I16")
-        I16ElemList[0].find("Val").text = str(Buffer_Number)
-        I16ElemList[1].find("Val").text = str(PrintHeadAddr)
+        root = etree.Element(type)
+        root.append(E.Name(Name))
+        root.append(E.Val(str(Val)))
 
-        root.find("/Cluster/Boolean/Val").text = str(VPP_On_Off)
-        root.find("/Cluster/String/Val").text = Imtech_txtStr
-        root.find("/Cluster/Path/Val").text = img_path
+        return root
+
+    def Boolean(self,Name,Val):
+        return self._TypeNameVal("Boolean",Name,Val)
+    
+    def DBL(self,Name,Val):
+        return self._TypeNameVal("DBL",Name,Val)
+    
+    def I16(self,Name,Val):
+        return self._TypeNameVal("I16",Name,Val)
+    
+    def Path(self,Name,Val):
+        return self._TypeNameVal("Path", Name,Val)
+    
+    def String(self,Name,Val):
+        return self._TypeNameVal("String", Name,Val)
+
+    def PrintHead2SetUp(self,Bool_Imtech_Printer,Module,Function,Voltage,pulse_width,Buffer_Number, VPP_On_Off,Imtech_txtStr,PrintHeadAddr, img_path):
+        root = self.Cluster("Printhead 2",4)
         
+        root.append(self.Boolean("Imtech Printer",Bool_Imtech_Printer))
+        root.append(self.ewModule(Module))
+
+        root.append(self.ewPrintHead2Function(Function))
+
+        configCluster = self.Cluster("Imtech 610 Config",7)
+        configCluster.append(self.DBL("Vpp Voltage (V)",Voltage))
+        configCluster.append(self.DBL("Pulse Width (ms)",pulse_width))
+        configCluster.append(self.I16("Buffer Number",Buffer_Number))
+        configCluster.append(self.Boolean("Vpp On/Off",VPP_On_Off))
+        configCluster.append(self.String("Text to Print",Imtech_txtStr))
+        configCluster.append(self.I16("Printhead Address",PrintHeadAddr))
+        configCluster.append(self.Path("Image Path",img_path))
+
+        root.append(configCluster)
         return root
 
         

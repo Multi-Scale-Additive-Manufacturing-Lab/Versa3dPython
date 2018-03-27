@@ -3,7 +3,6 @@ import os
 from src.lib.versa3dConfig import config
 from src.lib.gcode import gcodeWriterVlaseaBM
 from lxml import etree
-from lxml.builder import E
 
 class gcodeTest(unittest.TestCase):
 
@@ -24,8 +23,10 @@ class gcodeTest(unittest.TestCase):
         VPP_On_Off = 0
         PrintHeadAddr = 1
         Path = "./rel.png"
-        resultRoot = gcodewriter.PrintHeadSetUp(Bool_Imtech,Module,Function,Voltage,pulse_width,Buffer_Number,
+        resultRoot = gcodewriter.PrintHead2SetUp(Bool_Imtech,Module,Function,Voltage,pulse_width,Buffer_Number,
                                             VPP_On_Off,default_txt_str,PrintHeadAddr,Path)
+
+        etree.tostring(resultRoot, pretty_print=True)
 
         ImtechElem = resultRoot.find("Boolean")
         self.assertEqual(ImtechElem.find("Val").text,str(Bool_Imtech))
