@@ -9,7 +9,7 @@ class gcodeTest(unittest.TestCase):
     def setUp(self):
         self.test_config = config("test.ini")
 
-    def test_bmWriter(self):
+    def test_ImtechPrintHead(self):
         gcodewriter = gcodeWriterVlaseaBM(self.test_config)
 
         default_txt_str = "T%01A"
