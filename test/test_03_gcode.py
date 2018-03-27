@@ -3,6 +3,7 @@ import os
 from src.lib.versa3dConfig import config
 from src.lib.gcode import gcodeWriterVlaseaBM
 from lxml import etree
+from lxml.builder import E
 
 class gcodeTest(unittest.TestCase):
 
@@ -46,6 +47,8 @@ class gcodeTest(unittest.TestCase):
         self.assertEqual(resultRoot.find("/Cluster/String/Val").text, default_txt_str)
 
         self.assertEqual(resultRoot.find("/Cluster/Path/Val").text, Path)
+
+        
 
     def tearDown(self):
         os.remove("test.ini")

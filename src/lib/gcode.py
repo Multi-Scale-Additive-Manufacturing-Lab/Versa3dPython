@@ -1,6 +1,7 @@
 import vtk
 from src.lib.versa3dConfig import config
 from lxml import etree
+from lxml.builder import E
 
 def gcodeFactory(type, config):
     
@@ -30,6 +31,50 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Function_Dict = {"Init":0,"txt_to_print":1,
                                 "Set_Default_Buffer":2,"Switch_vpp":3,
                                 "Printhead_param":4,"Print_Now":5}
+    
+    def ewModule(self,Val):
+        root = (E.EW(
+                    E.Name("Module"),
+                    E.Choice("Gantry Axis"),
+                    E.Choice("Z Axis"),
+                    E.Choice("Material Handling Axes"),
+                    E.Choice("Porogen Insertion"),
+                    E.Choice("Syringe Injection"),
+                    E.Choice("Printhead"),
+                    E.Choice("Roller"),
+                    E.Choice("Syringe 2"),
+                    E.Choice("Printhead 2"),
+                    E.Val(str(Val))
+                )
+            )
+
+        return page
+    
+    def ewFunction(self,Val):
+
+        root = ( E.EW(
+                    E.Name("Function"),
+                    E.Choice("Initialise"),
+                    E.Choice("Text to Print"),
+                    E.Choice("Set Default Buffer"),
+                    E.Choice("Switch VPP"),
+                    E.Choice("Printhead Parameters"),
+                    E.Choice("Print Now"),
+                    E.Val(str(Val))
+                )
+            )
+        
+        return root
+
+    def cluster(self,Name,NumElts):
+
+        root = (E.Cluster(
+                    E.Name(Name),
+                    E.NumElts(NumElts)
+                )
+            )
+            
+        return root
 
     def PrintHeadSetUp(self,Bool_Imtech_Printer,Module,Function,Voltage,pulse_width,Buffer_Number, VPP_On_Off,Imtech_txtStr,PrintHeadAddr, img_path):
         root = etree.parse("./src/lib/gcode_template/printHeadCluster.xml")
