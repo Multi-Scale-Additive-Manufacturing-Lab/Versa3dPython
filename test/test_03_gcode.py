@@ -23,7 +23,7 @@ class gcodeTest(unittest.TestCase):
         VPP_On_Off = 0
         PrintHeadAddr = 1
         Path = "./rel.png"
-        resultRoot = gcodewriter.PrintHead2SetUp(Bool_Imtech,Module,Function,Voltage,pulse_width,Buffer_Number,
+        resultRoot = gcodewriter.ImtechPrintHead(Bool_Imtech,Module,Function,Voltage,pulse_width,Buffer_Number,
                                             VPP_On_Off,default_txt_str,PrintHeadAddr,Path)
 
         etree.tostring(resultRoot, pretty_print=True)
