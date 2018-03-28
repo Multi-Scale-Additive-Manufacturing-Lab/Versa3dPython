@@ -105,7 +105,12 @@ class VoxelSlicer():
                 for z in range(0,z_dim):
                     val = InputImage.GetScalarComponentAsFloat(x,y,z,0)
                     self._BuildVolumeVox.SetScalarComponentFromFloat(xExtent[x],yExtent[y],zExtent[z],0, val)
-
+    
+    def getBuildVolume(self):
+        return self._BuildVolumeVox
+    
+    def getCeiling(self):
+        return self._ceiling
 
 class FullBlackImageSlicer(VoxelSlicer):
 

@@ -20,8 +20,17 @@ class gcodeWriter():
 
 class gcodeWriterVlaseaBM(gcodeWriter):
 
-    def __init__(self,config):
+    def __init__(self,config, FolderPath):
+        """gcodeWriterVlaseaBM Constructor
+        
+        :param config: config class
+        :type config: config object
+        :param FolderPath: Gcode Output Folder
+        :type FolderPath: String
+        """
         super().__init__(config)
+        self._Folderpath = FolderPath
+        self._Slicer = None
 
         self._Module_Dict = {"Gantry_axis":0, "Z_Axis":1,
                             "Material_Handling_Axis":2 , "Porogen_Insertion":3,
@@ -31,6 +40,52 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Function_Dict = {"Init":0,"txt_to_print":1,
                                 "Set_Default_Buffer":2,"Switch_vpp":3,
                                 "Printhead_param":4,"Print_Now":5}
+
+    def SetInput(self,slicer):
+        """Set Input slicer
+        
+        :param slicer: slicer class
+        :type slicer: VoxelSlicer object
+        """
+        self._Slicer = slicer   
+
+    def generateGCode(self):
+        bmpWriter = vtk.vtkBMPWriter()
+        BuildVtkImage = self._Slicer.getBuildVolume()
+        (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
+        
+        imageFolder = os.path.join(self._Folderpath,"Image")
+        os.mkdir(imageFolder)
+
+        for z in range(0,zDim):
+            fileName = "slice_"+str(z)+".bmp"
+            FullPath = os.path.join(imageFolder,fileName)
+            bmpWriter.SetFileName(FullPath)
+            slicer = vtk.vtkExtractVOI()
+            slicer.SetVOI(0,xDim-1,0,yDim-1,z,z)
+            slicer.SetSampleRate(1,1,1)
+            slicer.SetInputData(BuildVtkImage)
+            slicer.Update()
+
+            if (z <= self._Slicer.getCeiling()):
+                bmpWriter.SetInputData(slicer.GetOutput())
+                bmpWriter.Write()
+                self.generateGCodeLayer(FullPath)
+    
+    def generateGCodeLayer(self,imgPath):
+        
+        pass
+        
+    def step(self,GantryXML,ZAxisXML,MatHandlingXML,SyringeXML,XaarXML,RollerXML,Syringe2XML,ImtechXML):
+        root = etree.Element("Cluster 4",8)
+        
+        listOfCluster = [GantryXML,ZAxisXML,MatHandlingXML,SyringeXML,XaarXML,RollerXML,Syringe2XML,ImtechXML]
+        
+        for cluster in listOfCluster:
+            root.append(cluster)
+        
+        return root
+
     def ew(self,Name,listOfChoice,Val):
         root = etree.Element("EW")
         root.append(E.Name(Name))
@@ -43,6 +98,14 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         return root
 
     def ewModule(self,Val):
+        """Function Generates Module xml tree
+        
+        :param Val: Tag Value
+        :type Val: Int
+        :return: lxml tree
+        :rtype: etree.Element
+        """
+
         listOfChoice = ["Gantry Axis","Z Axis","Material Handling Axes","Porogen Insertion",
                         "Syringe Injection","Printhead","Roller","Syringe 2","Printhead 2"]
         return self.ew("Module",listOfChoice,Val)
@@ -63,6 +126,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     
     def ewSyringeFunction(self,Val):
         listOfChoice = ["Initialize","Syringe Control","Extrusion ON/OFF","Kill Syringe Motor"]
+        return self.ew("Function",listOfChoice,Val)
+    
+    def ewSyringe2Function(self,Val):
+        listOfChoice = ["Initialize","Syringe Control", "Set Pressure","Set Vacuum"]
         return self.ew("Function",listOfChoice,Val)
     
     def ewMotorZ(self,Val):
@@ -178,6 +245,24 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         root.append(syringeConfig)
 
+        return root
+    
+    def Syringe2(self,Bool_Syringe, Module,Function,Pressure_Units,Pressure,Vacuum_Units,Vacuum,Start_Stop):
+        root = self.Cluster("Syringe 2",2)
+        root.append(self.Boolean("Syringe 2",Bool_Syringe))
+
+        root.append(self.ewModule(Module))
+        root.append(self.ewSyringe2Function(Function))
+
+        syringe2Config = self.Cluster("Syringe 2",5)
+        root.append(syringe2Config)
+
+        syringe2Config.append(self.I16("Pressure Units",Pressure_Units))
+        syringe2Config.append(self.DBL("Pressure",Pressure))
+        syringe2Config.append(self.I16("Vacuum_Units",Vacuum_Units))
+        syringe2Config.append(self.DBL("Vacuum",Vacuum))
+        syringe2Config.append(self.Boolean("Start/Stop",Start_Stop))
+        
         return root
 
     def Gantry(self, Bool_Gantry, Module,Function,XYCoord,Motor,MotorVelocity,file_path):
