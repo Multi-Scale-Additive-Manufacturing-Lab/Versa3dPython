@@ -74,6 +74,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     
     def generateGCodeLayer(self,imgPath):
         
+        #defaultGantryXML = 
         pass
         
     def step(self,GantryXML,ZAxisXML,MatHandlingXML,SyringeXML,XaarXML,RollerXML,Syringe2XML,ImtechXML):
@@ -83,7 +84,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         for cluster in listOfCluster:
             root.append(cluster)
-        
         return root
 
     def ew(self,Name,listOfChoice,Val):

@@ -7,11 +7,45 @@ import vtk
 from vtk.util import keys
 
 FillEnum = ['black', 'checker_board']
-Default_Slice_Setting = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'dpi': [600,600],'BufferSizeLimit': [150,-1]}
-Default_Printer_Setting = {'printbedsize': [30.0,30.0], 'buildheight':50.0, 'gcodeFlavor':'VlaseaBM', 'PrintHead':'ImTech_Mark'}
-Default_BinderJetPrint_Setting = {'gantryXYVelocity':[100.0,100.0],'ZVelocity':[10.0,10.0],'CarriageVelocity':20, 
-                                'feedBedVelocity':10.0,'buildBedVelocity':10.0,'rollerVelocity':50, 'NPrintSwathe':1, 'PrintHeadVelocity':25.4}
-Default_Versa3d_Setting = {'unit':'mm'}
+
+class setting():
+    def __init__(self):
+        self._SettingDic = {}
+ 
+    def getSetting(self,tag):
+        return self._SettingDic[tag]
+
+class Versa3d_Setting():
+    def __init__(self):
+        super().__init__()
+        self._SettingDic = {'unit':'mm'}
+
+class Slice_Setting(setting):
+    def __init__(self,):
+        super().__init__()
+        self._SettingDic = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'dpi': [600,600],'BufferSizeLimit': [150,-1]}
+
+class Printer_Setting(setting):
+    def __init__(self):
+        super().__init__()
+        self._SettingDic =  {'printbedsize': [30.0,30.0], 'buildheight':50.0,'Printer':'VlaseaBM','gcodeFlavor':'VlaseaBM'}
+
+class BMVlasea_Setting(setting):
+    def __init__(self):
+        super().__init__()
+        self._SettingDic = {'gantryXYVelocity':[100.0,100.0],'ZVelocity':[10.0,10.0],'CarriageVelocity':20,
+                            'feedBedVelocity':10.0, 'buildBedVelocity':10.0, 'rollerVelocity':50, 'PrintHeadVelocity':25.4,
+                            'Work_Distance_Roller_Substrate':1.1,'Printing_Height_Offset':0.05,'DefaultFeedBed':1,'DefaultPrinthead':1}
+class Syringe_Setting(setting):
+    def __init__(self):
+        super().__init__()
+        self._SettingDic = {'Syringe_Motor_Velocity':5,'SyringePressure':20,'SyringeVacuum':3,
+                            'SyringeLinearVelocity':1,'SyringeWorkDistance':1}
+class Imtech_Setting(setting):
+    def __init__(self):
+        super().__init__()
+        self._SettingDic =  {'PrinheadVPPVoltage':1,'PrintheadPulseWidth':1,
+                             'PrintheadVelocity':25.4,'NPrintSwathe':1}
 
 class config():
     
@@ -19,10 +53,10 @@ class config():
         
         self._FilePath = FilePath
 
-        self.SlicingSettings = {}
-        self.Versa3dSettings = {}
-        self.PrinterSettings = {}
-        self.BinderJetSettings = {}
+        self.SlicingSettings = Slice_Setting()
+        self.Versa3dSettings = Versa3d_Setting()
+        self.PrinterSettings = []
+        self.PrintHeadSettings = []
 
         self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
 
