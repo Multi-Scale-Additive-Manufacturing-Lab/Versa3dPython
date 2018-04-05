@@ -81,7 +81,8 @@ class setting():
 class Versa3d_Settings(setting):
     def __init__(self,FilePath):
         super().__init__(FilePath)
-        self.Versa3d = {'unit':'mm'}
+        self.Versa3d = {'unit':'mm', 'Machine':'BMVlasea','PrintHead':'Imtech',
+                        'MachineType':'BinderJet','gcodeFlavor':'BMVlasea'}
 
     def saveConfig(self):
 
@@ -184,17 +185,24 @@ class config():
 
     def getPrinterHeadSettings(self):
         return self.PrintHeadSettings
+
     def saveConfig(self):
         self.Versa3dSettings.saveConfig()
         self.SlicingSettings.saveConfig()
         self.PrinterSettings.saveConfig()
         self.PrintHeadSettings.saveConfig()
-
     
-
-
+    def getMachineSetting(self,tag):
+        MachineName = self.Versa3dSettings.getSettingValue('Versa3d','Machine')
+        return self.PrinterSettings.getSettingValue(MachineName,tag)
     
-
+    def getPrintHeadSetting(self,tag):
+        Printhead = self.Versa3dSettings.getSettingValue('Versa3d','PrintHead')
+        return self.PrintHeadSettings.getSettingValue(Printhead,tag)
     
+    def getSlicingSetting(self,tag):
+        ProcessType = self.Versa3dSettings.getSettingValue('Versa3d','MachineType')
+        return self.SlicingSettings.getSettingValue(ProcessType,tag)
+           
 
     

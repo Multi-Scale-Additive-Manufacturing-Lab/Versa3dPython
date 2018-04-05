@@ -45,6 +45,9 @@ class TestConfig(unittest.TestCase):
 
         gantryXYVelocity = printerSetting.getSettingValue('BMVlasea','gantryXYVelocity')
         self.assertEqual([100,100],gantryXYVelocity)
+
+        printBedValue = configObject.getMachineSetting('printbedsize')
+        self.assertEqual([30,30], printBedValue)
  
     def test_ModifyConfig(self):
         configObject = vc.config(self.testFileFolder)

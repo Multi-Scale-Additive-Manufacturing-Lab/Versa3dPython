@@ -6,7 +6,7 @@ import fnmatch
 import shutil
 import math
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer,CheckerBoardImageSlicer , VoxelSlicer
-from src.lib.versa3dConfig import FillEnum , config
+from src.lib.versa3dConfig import config
 
 class TestSlicer(unittest.TestCase):
 
@@ -15,7 +15,9 @@ class TestSlicer(unittest.TestCase):
         reader.SetFileName('./test/testFile/3DBenchySmall.stl')
         reader.Update()
 
-        self.test_config = config("test.ini")
+        self.testFileFolder = './configtest'
+        os.mkdir(self.testFileFolder)
+        self.test_config = config(self.testFileFolder)
 
         self.stlPolyData = reader.GetOutput()
 
@@ -25,7 +27,7 @@ class TestSlicer(unittest.TestCase):
         self.stlActor = vtk.vtkActor()
         self.stlActor.SetMapper(mapper)
 
-        printBedSize = self.test_config.getValue("printbedsize")
+        printBedSize = self.test_config.getMachineSetting("printbedsize")
         zRange = self.stlActor.GetZRange()
 
         newPosition = [0]*3
@@ -43,13 +45,10 @@ class TestSlicer(unittest.TestCase):
 
     
     def test_slicerFactory(self):
-        AllBlackSlicer = slicerFactory('black')
+        AllBlackSlicer = slicerFactory('black',self.test_config)
         self.assertEqual(FullBlackImageSlicer, type(AllBlackSlicer))
 
-        CheckBoardSlicer = slicerFactory('checker_board')
-        self.assertEqual(CheckerBoardImageSlicer, type(CheckBoardSlicer))
-
-        NullCase = slicerFactory(None)
+        NullCase = slicerFactory(None,None)
         self.assertEqual(None,NullCase)
 
     def test_blackSlicing(self):
@@ -69,10 +68,10 @@ class TestSlicer(unittest.TestCase):
         totalVoxel = vtkImageStat.GetVoxelCount()
         meanArray = vtkImageStat.GetMean()
         
-        BuildBedSize = self.test_config.getValue('printbedsize')
-        dpi = self.test_config.getValue('dpi')
-        thickness = self.test_config.getValue('layer_thickness')
-        BuildHeight = self.test_config.getValue('buildheight')
+        BuildBedSize = self.test_config.getMachineSetting('printbedsize')
+        dpi = self.test_config.getPrintHeadSetting('dpi')
+        thickness = self.test_config.getSlicingSetting('layer_thickness')
+        BuildHeight = self.test_config.getMachineSetting('buildheight')
 
         BuildBedVoxSize = [0]*3
         for i in range(0,2):
@@ -137,4 +136,4 @@ class TestSlicer(unittest.TestCase):
         self.assertTrue(count <= zDim)
 
     def tearDown(self):
-        os.remove("test.ini")
+        shutil.rmtree(self.testFileFolder)

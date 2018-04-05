@@ -16,11 +16,11 @@ class VoxelSlicer():
     def __init__(self, config):
         self._listOfActors = []
         
-        self._buildBedSizeXY = config.getValue('printbedsize')
+        self._buildBedSizeXY = config.getMachineSetting('printbedsize')
 
-        self._buildHeight = config.getValue('buildheight')
-        self._thickness = config.getValue('layer_thickness')
-        dpi = config.getValue('dpi')
+        self._buildHeight = config.getMachineSetting('buildheight')
+        self._thickness = config.getSlicingSetting('layer_thickness')
+        dpi = config.getPrintHeadSetting('dpi')
         self.listOfVoxShape = []
         self._buildBedVolPixel = [0]*3
         self._XYVoxelSize = [0]*2
