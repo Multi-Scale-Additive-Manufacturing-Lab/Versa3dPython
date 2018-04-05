@@ -4,98 +4,41 @@ import configparser
 import copy
 import re
 import vtk
+import os
 from vtk.util import keys
 
 FillEnum = ['black', 'checker_board']
 
+Versa3dIniFileName = "versa3dConfig.ini"
+SliceIniFileName = "sliceConfig.ini"
+PrinterIniFileName = "PrinterConfig.ini"
+PrintHeadIniFileName = "PrintHeadConfig.ini"
+
 class setting():
-    def __init__(self):
-        self._SettingDic = {}
- 
-    def getSetting(self,tag):
-        return self._SettingDic[tag]
 
-class Versa3d_Setting():
-    def __init__(self):
-        super().__init__()
-        self._SettingDic = {'unit':'mm'}
-
-class Slice_Setting(setting):
-    def __init__(self,):
-        super().__init__()
-        self._SettingDic = {'fill': FillEnum[0], 'layer_thickness': 0.1, 'dpi': [600,600],'BufferSizeLimit': [150,-1]}
-
-class Printer_Setting(setting):
-    def __init__(self):
-        super().__init__()
-        self._SettingDic =  {'printbedsize': [30.0,30.0], 'buildheight':50.0,'Printer':'VlaseaBM','gcodeFlavor':'VlaseaBM'}
-
-class BMVlasea_Setting(setting):
-    def __init__(self):
-        super().__init__()
-        self._SettingDic = {'gantryXYVelocity':[100.0,100.0],'ZVelocity':[10.0,10.0],'CarriageVelocity':20,
-                            'feedBedVelocity':10.0, 'buildBedVelocity':10.0, 'rollerVelocity':50, 'PrintHeadVelocity':25.4,
-                            'Work_Distance_Roller_Substrate':1.1,'Printing_Height_Offset':0.05,'DefaultFeedBed':1,'DefaultPrinthead':1}
-class Syringe_Setting(setting):
-    def __init__(self):
-        super().__init__()
-        self._SettingDic = {'Syringe_Motor_Velocity':5,'SyringePressure':20,'SyringeVacuum':3,
-                            'SyringeLinearVelocity':1,'SyringeWorkDistance':1}
-class Imtech_Setting(setting):
-    def __init__(self):
-        super().__init__()
-        self._SettingDic =  {'PrinheadVPPVoltage':1,'PrintheadPulseWidth':1,
-                             'PrintheadVelocity':25.4,'NPrintSwathe':1}
-
-class config():
-    
-    def __init__(self, FilePath):
-        
+    def __init__(self,FilePath):
         self._FilePath = FilePath
 
-        self.SlicingSettings = Slice_Setting()
-        self.Versa3dSettings = Versa3d_Setting()
-        self.PrinterSettings = []
-        self.PrintHeadSettings = []
-
-        self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
-
-        self._configFile = None
-        self._configParse = None
-        try:
-            self.readConfigFile()
-        except IOError:
-            self.createConfigFile()
+    def getSettingValue(self,Section,tag):
+        dic = getattr(self,Section)
+        return dic[tag]
     
-    def getKey(self,Name,Class):
-        if(Name =="Type" and Class == "Actor"):
-            return self.ActorKey
-        else:
-            return None
-            
-    def createConfigFile(self):
-        #create config        
-        self.setDefaultValue()
-        self.saveConfig()
-        
-    def setDefaultValue(self):
-        self.SlicingSettings = copy.deepcopy(Default_Slice_Setting)
-        self.Versa3dSettings = copy.deepcopy(Default_Versa3d_Setting)
-        self.PrinterSettings = copy.deepcopy(Default_Printer_Setting)
-        self.BinderJetSettings = copy.deepcopy(Default_BinderJetPrint_Setting)
-    
+    def setSettingValue(self,Section,tag,value):
+        dic = getattr(self,Section)
+        dic[tag] = value
+
     def readConfigFile(self):
-        self._configFile = open(self._FilePath, 'r')
-        self._configParse = configparser.ConfigParser()
+        configFile = open(self._FilePath, 'r')
+        configParse = configparser.ConfigParser()
         
-        self._configParse.read_file(self._configFile)
+        configParse.read(self._FilePath)
 
-        for section in self._configParse.sections():
-            for key in self._configParse[section]:
+        for section in configParse.sections():
+            for key in configParse[section]:
                 configdic = getattr(self, section)
-                configdic[key] = self._unpackStr(self._configParse[section][key])
+                configdic[key] = self._unpackStr(configParse[section][key])
 
-        self._configFile.close()
+        configFile.close()
     
     def _unpackStr(self,configString):
         if(self._is_number(configString)):
@@ -131,48 +74,125 @@ class config():
                 newArray.append(element)
         
         return newArray
-
-    def getValue(self,configKey):
-        
-        if(configKey in self.Versa3dSettings.keys()):
-            return self.Versa3dSettings[configKey]
-        elif(configKey in self.PrinterSettings.keys()):
-            return self.PrinterSettings[configKey]
-        elif(configKey in self.SlicingSettings.keys()):
-            return self.SlicingSettings[configKey]
-        elif(configKey in self.BinderJetSettings.keys()):
-            return self.BinderJetSettings[configKey]
-        else:
-            return ''
-
-    def setValue(self, configKey,value):
-        if(configKey in self.Versa3dSettings.keys()):
-            self.Versa3dSettings[configKey] = value
-            return self.Versa3dSettings[configKey] 
-        elif(configKey in self.PrinterSettings.keys()):
-            self.PrinterSettings[configKey] = value
-            return self.PrinterSettings[configKey]
-        elif(configKey in self.SlicingSettings.keys()):
-            self.SlicingSettings[configKey] = value
-            return self.SlicingSettings[configKey]
-        elif(configKey in self.BinderJetSettings.keys()):
-            self.BinderJetSettings[configKey] = value
-            return self.BinderJetSettings[configKey]
-        else:
-            return ''
     
     def saveConfig(self):
-        self._configParse = configparser.ConfigParser()
+        pass
 
-        self._configParse['Versa3dSettings'] = self.Versa3dSettings      
-        self._configParse['SlicingSettings'] = self.SlicingSettings
-        self._configParse['PrinterSettings'] = self.PrinterSettings
-        self._configParse['BinderJetSettings'] = self.BinderJetSettings
+class Versa3d_Settings(setting):
+    def __init__(self,FilePath):
+        super().__init__(FilePath)
+        self.Versa3d = {'unit':'mm'}
+
+    def saveConfig(self):
+
+        configFile = open(self._FilePath, 'w')
+        configParse = configparser.ConfigParser()
+
+        configParse['Versa3d'] = self.Versa3d
+        configParse.write(configFile)
+        configFile.close()
+
+
+class Slice_Settings(setting):
+    def __init__(self,FilePath):
+        super().__init__(FilePath)
+        self.BinderJet = {'fill': FillEnum[0], 'layer_thickness': 0.1}
+    
+    def saveConfig(self):
+
+        configFile = open(self._FilePath, 'w')
+        configParse = configparser.ConfigParser()
+
+        configParse['BinderJet'] = self.BinderJet
+
+        configParse.write(configFile)
+        configFile.close()
+
+class Printers_Settings(setting):
+    def __init__(self,FilePath):
+        super().__init__(FilePath)
+
+        self.BMVlasea = {'printbedsize': [30.0,30.0], 'buildheight':50.0,'gcodeFlavor':'VlaseaBM',
+                         'gantryXYVelocity':[100.0,100.0],'ZVelocity':[10.0,10.0],'CarriageVelocity':20,
+                         'feedBedVelocity':10.0, 'buildBedVelocity':10.0, 'rollerVelocity':50, 'PrintHeadVelocity':25.4,
+                         'Work_Distance_Roller_Substrate':1.1,'Printing_Height_Offset':0.05,'DefaultFeedBed':1,'DefaultPrinthead':1}
+    def saveConfig(self):
+
+        configFile = open(self._FilePath, 'w')
+        configParse = configparser.ConfigParser()
+
+        configParse['BMVlasea'] = self.BMVlasea
+
+        configParse.write(configFile)
+        configFile.close()
+
+class Printheads_Settings(setting):
+    def __init__(self,FilePath):
+        super().__init__(FilePath)
+
         
-        with open(self._FilePath, 'w') as self._configFile:
-            self._configParse.write(self._configFile)
-        
-        self._configFile.close()
+        self.Syringe = {'Syringe_Motor_Velocity':5,'SyringePressure':20,'SyringeVacuum':3,
+                            'SyringeLinearVelocity':1,'SyringeWorkDistance':1}
+
+        self.Imtech =  {'PrinheadVPPVoltage':1,'PrintheadPulseWidth':1,
+                        'PrintheadVelocity':25.4,'NPrintSwathe':1,'BufferSizeLimit': [150,-1],'dpi': [600,600]}
+    
+    def saveConfig(self):
+
+        configFile = open(self._FilePath, 'w')
+        configParse = configparser.ConfigParser()
+
+        configParse['Syringe'] = self.Syringe
+        configParse['Imtech'] = self.Imtech
+
+        configParse.write(configFile)
+        configFile.close()
+
+
+class config():
+    
+    def __init__(self,ConfigFolderPath):
+
+        self.Versa3dSettings = Versa3d_Settings(os.path.join(ConfigFolderPath,Versa3dIniFileName))
+        self.SlicingSettings = Slice_Settings(os.path.join(ConfigFolderPath,SliceIniFileName))
+        self.PrinterSettings = Printers_Settings(os.path.join(ConfigFolderPath,PrinterIniFileName))
+        self.PrintHeadSettings = Printheads_Settings(os.path.join(ConfigFolderPath,PrintHeadIniFileName))
+
+        self._listOfSetting = [self.Versa3dSettings,self.SlicingSettings,self.PrinterSettings,self.PrintHeadSettings]
+        self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
+
+        for setting in self._listOfSetting:
+            try:
+                setting.readConfigFile()
+            except IOError:
+                setting.saveConfig()
+    
+    def getKey(self,Name,Class):
+        if(Name =="Type" and Class == "Actor"):
+            return self.ActorKey
+        else:
+            return None
+    
+    def getVersa3dSettings(self):
+        return self.Versa3dSettings
+    
+    def getSlicingSettings(self):
+        return self.SlicingSettings
+    
+    def getPrinterSettings(self):
+        return self.PrinterSettings
+
+    def getPrinterHeadSettings(self):
+        return self.PrintHeadSettings
+    def saveConfig(self):
+        self.Versa3dSettings.saveConfig()
+        self.SlicingSettings.saveConfig()
+        self.PrinterSettings.saveConfig()
+        self.PrintHeadSettings.saveConfig()
+
+    
+
+
     
 
     
