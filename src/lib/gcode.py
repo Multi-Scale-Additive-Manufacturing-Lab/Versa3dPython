@@ -2,6 +2,8 @@ import vtk
 from src.lib.versa3dConfig import config
 from lxml import etree
 from lxml.builder import E
+from copy import deepcopy
+import os
 
 def gcodeFactory(type, config):
     
@@ -32,6 +34,25 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Folderpath = FolderPath
         self._Slicer = None
 
+        self.gantryXYVelocity = config.getMachineSetting('gantryXYVelocity')
+        self.H = config.getMachineSetting('Work_Distance_Roller_Substrate')
+        self.S = config.getMachineSetting('Powder_Loss')
+        self.W = config.getMachineSetting('Printing_Height_Offset')
+        self.feedBedVelocity = config.getMachineSetting('feedBedVelocity')
+        self.buildBedVelocity = config.getMachineSetting('buildBedVelocity')
+        self.DefaultPrintHead = config.getMachineSetting('DefaultPrinthead')
+        self.DefaultPrintVelocity = config.getMachineSetting('PrintHeadVelocity')
+        self.DefaultTxtToPrint = "%T01A"
+        self.DefaultPrintHeadAddr = config.getMachineSetting('DefaultPrintHeadAddr')
+
+        self.FeedBedSel = config.getMachineSetting('FeedBedSel')
+
+        self.rollerLinVel = config.getMachineSetting('RollerLinVel')
+        self.rollerRotVel = config.getMachineSetting('RollerRotVel')
+        
+        self.Thickness = config.getSlicingSetting('layer_thickness')
+
+
         self._Module_Dict = {"Gantry_axis":0, "Z_Axis":1,
                             "Material_Handling_Axis":2 , "Porogen_Insertion":3,
                             "Syringe_Injection":4,"Printhead":5,
@@ -58,9 +79,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         os.mkdir(imageFolder)
 
         for z in range(0,zDim):
-            fileName = "slice_"+str(z)+".bmp"
-            FullPath = os.path.join(imageFolder,fileName)
-            bmpWriter.SetFileName(FullPath)
+            imgfileName = "slice_"+str(z)+".bmp"
+            imgFullPath = os.path.join(imageFolder,imgfileName)
+            bmpWriter.SetFileName(imgFullPath)
             slicer = vtk.vtkExtractVOI()
             slicer.SetVOI(0,xDim-1,0,yDim-1,z,z)
             slicer.SetSampleRate(1,1,1)
@@ -70,15 +91,150 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             if (z <= self._Slicer.getCeiling()):
                 bmpWriter.SetInputData(slicer.GetOutput())
                 bmpWriter.Write()
-                self.generateGCodeLayer(FullPath)
+                self.XMLRoot = self.BuildSequenceCluster(0)
+                self.generateGCodeLayer(imgFullPath)
+
+                output = etree.tostring(self.XMLRoot,pretty_print=True)
+                xmlFileName = "layer_"+str(z)+".xml"
+                xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
+
+                tree = etree.ElementTree(self.XMLRoot)
+                tree.write(xmlFullPath, pretty_print=True)
+
+
+    
+    def BuildSequenceCluster(self,Dimsize):
+        root = (E.Array(
+                    E.Name("Build Sequence"),
+                    E.Dimsize(str(Dimsize))
+                )
+            )
+        
+        return root
     
     def generateGCodeLayer(self,imgPath):
+
+        defaultStep = self.create_default_Step()
+
+        #step 0 - turn ON printhead and get ready to print buffer 0
+        step0 = self.ImtechPrintHead(1,8,1,0,0,0,0,self.DefaultTxtToPrint,self.DefaultPrintHeadAddr,imgPath)
+        self.makeStep(defaultStep,step0)
+
+        #step 1 - move gantry to X1 = 0 
+        step1 = self.Gantry(1,0,3,[0,0],0,self.gantryXYVelocity[0],"")
+        self.makeStep(defaultStep,step1)
+
+        #step 2 - move to Y = 0
+        step2 = self.Gantry(1,0,3,[0,0],2,self.gantryXYVelocity[1],"")
+        self.makeStep(defaultStep,step2)
+
+        #step 3 - turn on roller
+        step3 = self.Roller(1,6,1,self.rollerRotVel)
+        self.makeStep(defaultStep,step3)
         
-        #defaultGantryXML = 
-        pass
+        #step 4 - material handling raise feed bed by = H+T+S
+        step4 = self.MaterialHandling(1,2,2,self.H+self.Thickness+self.S,self.FeedBedSel,self.feedBedVelocity,0,0)
+        self.makeStep(defaultStep,step4)
+
+        #step 5 - material handling raise build bed by = H-T
+        step5 = self.MaterialHandling(1,2,2,self.H-self.Thickness,self.FeedBedSel,self.feedBedVelocity,0,0)
+        self.makeStep(defaultStep,step5)
+
+        #step 6 - spread the powder by moving in X-coordinate 300
+        step6 = self.Gantry(1,0,3,[300,0],0,self.rollerLinVel,"")
+        self.makeStep(defaultStep,step6)
+
+        #step 7 - turn off roller
+        step7 = self.Roller(1,6,1,0)
+        self.makeStep(defaultStep,step7)
+
+        #step 8 - lower build bed by -(H+W)
+        step8 = self.MaterialHandling(1,2,2,(-2)*(self.H+self.W),3, self.buildBedVelocity,0,0)
+        self.makeStep(defaultStep,step8)
+
+        #step 9 allign printhead with the printing area - move to Y=37
+        step9 = self.Gantry(1,0,3,[0,37],2,self.gantryXYVelocity[1],"")
+        self.makeStep(defaultStep,step9)
+
+        #step 10 allign printhead with the printing area - move to X=10
+        step10 = self.Gantry(1,0,3,[10,0],0,self.gantryXYVelocity[0],"")
+        self.makeStep(defaultStep,step10)
+
+        #step 11 turn ON printhead and get ready to print buffer 0
+        step11 = self.ImtechPrintHead(1,8,5,0,0,0,0,0,0,self.DefaultPrintHeadAddr)
+        self.makeStep(defaultStep,step11)
+
+        #step 12 execute printing motion in Y direction - move to Y=67
+        step12 = self.Gantry(1,0,3,[0,67],2,self.DefaultPrintVelocity,"")
+        self.makeStep(defaultStep,step12)
         
+        #step 13 move back to origin in Y -direction Y=0(former step 16)
+        step13 = self.Gantry(1,0,3,[0,0],2,self.gantryXYVelocity[1],"")
+        self.makeStep(defaultStep,step13)
+
+        #step 14 move back to origin in X-direction X=0 (former stp 18)
+        step14 = self.Gantry(1,0,3,[0,0],0,self.gantryXYVelocity[0],"")
+        self.makeStep(defaultStep,step14)
+        
+        #step 15 raise build bed
+        step15 = self.MaterialHandling(1,2,2,2*self.W, 3,self.buildBedVelocity, 0,0)
+        self.makeStep(defaultStep,step15)
+
+
+    
+    def makeStep(self, default_step, Command):
+        NameNode = Command.find("Name")
+        Name = NameNode.text
+
+        newStep = deepcopy(default_step)
+        count = int(self.XMLRoot.find("Dimsize").text)
+
+        if(Name == "Gantry"):
+            newStep[2] = Command
+        elif(Name == "Z Axis"):
+            newStep[3] = Command
+        elif(Name == "Material Handling"):
+            newStep[4] = Command
+        elif(Name == "Syringe"):
+            newStep[5] = Command
+        elif(Name == "Printhead"):
+            newStep[6]= Command
+        elif(Name == "Roller"):
+            newStep[7] = Command
+        elif (Name == "Syringe 2"):
+            newStep[8] = Command
+        elif(Name == "Printhead 2"):
+            newStep[9] = Command
+        else:
+            return None
+
+        self.XMLRoot.append(newStep)
+        count = int(self.XMLRoot.find("Dimsize").text)
+        count = count + 1
+        self.XMLRoot.find("Dimsize").text = str(count)
+
+        return count
+
+
+
+    def create_default_Step(self):
+        default_gantry_cluster = self.Gantry()
+        default_zaxis_cluster = self.ZAxis()
+        default_Material_Handling_cluster = self.MaterialHandling()
+        default_Syringe_Cluster = self.Syringe()
+        default_XAAR_Printhead_Cluster = self.XaarPrinthead()
+        default_Roller_Cluster = self.Roller()
+        default_Syringe2_Cluster = self.Syringe2()
+        default_Imtech_Cluster = self.ImtechPrintHead()
+
+        step = self.step(default_gantry_cluster,default_zaxis_cluster,
+                         default_Material_Handling_cluster,default_Syringe_Cluster,
+                         default_XAAR_Printhead_Cluster,default_Roller_Cluster,
+                         default_Syringe2_Cluster,default_Imtech_Cluster)
+        return step
+
     def step(self,GantryXML,ZAxisXML,MatHandlingXML,SyringeXML,XaarXML,RollerXML,Syringe2XML,ImtechXML):
-        root = etree.Element("Cluster 4",8)
+        root = self.Cluster("Cluster 4",8)
         
         listOfCluster = [GantryXML,ZAxisXML,MatHandlingXML,SyringeXML,XaarXML,RollerXML,Syringe2XML,ImtechXML]
         
@@ -144,11 +300,11 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listOfChoice = ["Initialize","Set Roller Velocity","Sweep X Axis"]
         return self.ew("Function",listOfChoice,Val)
     
-    def ewGantryMotor(self,Val):
+    def ewGantryMotorFunction(self,Val):
         listOfChoice = ["X1","X2","Y"]
         return self.ew("Motor",listOfChoice,Val)
     
-    def ewZAxis(self,Val):
+    def ewZAxisFunction(self,Val):
         listOfChoice = ["Home","Jog","Move to Coordinates"]
         return self.ew("Function",listOfChoice,Val)
     
@@ -197,7 +353,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def String(self,Name,Val):
         return self._TypeNameVal("String", Name,Val)
 
-    def XaarPrinthead(self,Bool_Xaar,Module,Function,Img_Path,Start_Stop_Print):
+    def XaarPrinthead(self,Bool_Xaar=0,Module=0,Function=0,Img_Path="",Start_Stop_Print=0):
         root = self.Cluster("Printhead",4)
         root.append(self.Boolean("Printhead",Bool_Xaar))
 
@@ -207,12 +363,12 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         xaarConfig = self.Cluster("Print head Config",2)
         root.append(xaarConfig)
 
-        xaarConfig.append(self.Path(Img_Path))
+        xaarConfig.append(self.Path("Image File",Img_Path))
         xaarConfig.append(self.Boolean("Start Stop Print", Start_Stop_Print))
 
         return root
         
-    def ImtechPrintHead(self,Bool_Imtech,Module,Function,Voltage,pulse_width,Buffer_Number, VPP_On_Off,Imtech_txtStr,PrintHeadAddr, img_path):
+    def ImtechPrintHead(self,Bool_Imtech=0,Module=0,Function=0,Voltage=0,pulse_width=0,Buffer_Number=0, VPP_On_Off=0,Imtech_txtStr=0,PrintHeadAddr=0, img_path=""):
         root = self.Cluster("Printhead 2",4)
         
         root.append(self.Boolean("Imtech Printer",Bool_Imtech))
@@ -232,7 +388,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         root.append(ImtechConfig)
         return root
     
-    def Syringe(self,Bool_Syringe,Module,Function,Bool_Extrusion,Syringe_Velocity):
+    def Syringe(self,Bool_Syringe=0,Module=0,Function=0,Bool_Extrusion=0,Syringe_Velocity=0):
         root = self.Cluster("Syringe",4)
         root.append(self.Boolean("Syringe",Bool_Syringe))
 
@@ -247,7 +403,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         return root
     
-    def Syringe2(self,Bool_Syringe, Module,Function,Pressure_Units,Pressure,Vacuum_Units,Vacuum,Start_Stop):
+    def Syringe2(self,Bool_Syringe=0, Module=0,Function=0,Pressure_Units=0,Pressure=0,Vacuum_Units=0,Vacuum=0,Start_Stop=0):
         root = self.Cluster("Syringe 2",2)
         root.append(self.Boolean("Syringe 2",Bool_Syringe))
 
@@ -265,7 +421,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
 
-    def Gantry(self, Bool_Gantry, Module,Function,XYCoord,Motor,MotorVelocity,file_path):
+    def Gantry(self, Bool_Gantry=0, Module=0,Function=0,XYCoord=[0,0],Motor=0,MotorVelocity=0,file_path="FilePath"):
 
         root = self.Cluster("Gantry",4)
 
@@ -279,13 +435,13 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         gantryConfigCluster.append(self.DBL("X Coordinate",XYCoord[0]))
         gantryConfigCluster.append(self.DBL("Y Coordinate",XYCoord[1]))
-        gantryConfigCluster.append(self.ewGantryMotor(Motor))
+        gantryConfigCluster.append(self.ewGantryMotorFunction(Motor))
         gantryConfigCluster.append(self.DBL("Motor Velocity",MotorVelocity))
         gantryConfigCluster.append(self.Path("Down Load File Path",file_path))
 
         return root
     
-    def Roller(self,Bool_Roller,Module,Function,Roller_Velocity):
+    def Roller(self,Bool_Roller=0,Module=0,Function=0,Roller_Velocity=0):
         root = self.Cluster("Roller",4)
         root.append(self.Boolean("Roller",Bool_Roller))
 
@@ -299,7 +455,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         return root
 
-    def MaterialHandling(self,Bool_Mat, Module,Function,Height,Bed_Selection,Motor_Velocity,Motion_Control, Equation):
+    def MaterialHandling(self,Bool_Mat=0, Module=0,Function=0,Height=0,Bed_Selection=0,Motor_Velocity=0,Motion_Control=0, Equation=0):
         root = self.Cluster("Material Handling",4)
         root.append(self.Boolean("Material Handling",Bool_Mat))
 
@@ -317,6 +473,20 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         return root
     
-        
+    def ZAxis(self,Bool_ZAxis = 0 , Module = 0, Function = 0, Z_Coord = 0, Motor_Selection = 0, Motor_Velocity = 0):
 
+        root = self.Cluster("Z Axis",4)
+        root.append(self.Boolean("Z Axis",Bool_ZAxis))
+
+        root.append(self.ewModule(Module))
+        root.append(self.ewZAxisFunction(Function))
+
+        Z_config_cluster = self.Cluster("Z Axis Config",3)
+        root.append(Z_config_cluster)
+
+        Z_config_cluster.append(self.DBL("Z Coordinate",Z_Coord))
+        Z_config_cluster.append(self.ewMotorZ(Motor_Selection))
+        Z_config_cluster.append(self.DBL("Motor Velocity",Motor_Velocity))
+
+        return root    
         
