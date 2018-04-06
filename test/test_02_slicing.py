@@ -112,28 +112,6 @@ class TestSlicer(unittest.TestCase):
         Interactor.Initialize()
         RendererWindow.Render()
         Interactor.Start()
-        
-        
-    def test_BMPExport(self):
-
-        blackSlicer = FullBlackImageSlicer(self.test_config)
-        blackSlicer.addActor(self.stlActor)
-        BuildVtkImage = blackSlicer.slice()
-
-        (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
-
-        shutil.rmtree('./test/testOutput/FullBlack/')
-        os.mkdir('./test/testOutput/FullBlack/')
-
-        blackSlicer.exportImage('./test/testOutput/FullBlack/','testImage')
-        count = 0
-        for file in os.listdir('./test/testOutput/FullBlack/'):
-            if fnmatch.fnmatch(file,'testImage_*.bmp'):
-                count = count + 1
-        
-        self.assertNotEqual(count, 0)
-        #check if number of image is smaller than build vox
-        self.assertTrue(count <= zDim)
 
     def tearDown(self):
         shutil.rmtree(self.testFileFolder)

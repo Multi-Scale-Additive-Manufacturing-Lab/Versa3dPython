@@ -64,24 +64,6 @@ class VoxelSlicer():
 
     def addActor(self, actor):
         self._listOfActors.append(actor)
-
-    def exportImage(self,FolderPath,ImageNameMnemonic):
-        bmpWriter = vtk.vtkBMPWriter()
-        (xDim,yDim,zDim) = self._BuildVolumeVox.GetDimensions()
-
-        for z in range(0,zDim):
-            bmpWriter.SetFileName(FolderPath+"/"+ImageNameMnemonic+"_"+str(z)+".bmp")
-
-            slicer = vtk.vtkExtractVOI()
-            slicer.SetVOI(0,xDim-1,0,yDim-1,z,z)
-            slicer.SetSampleRate(1,1,1)
-            slicer.SetInputData(self._BuildVolumeVox)
-            slicer.Update()
-
-            if (z <= self._ceiling ):
-                bmpWriter.SetInputData(slicer.GetOutput())
-                bmpWriter.Write()
-            
               
     def convertCartesionToVoxelCoord(self,cartCoord):
 
