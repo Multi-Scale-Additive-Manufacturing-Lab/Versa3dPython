@@ -15,7 +15,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         
-        self._config = config('./config/versa3dConfig.ini')
+        self._config = config('./config')
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
@@ -82,8 +82,9 @@ class MainWindow(QtWidgets.QMainWindow):
         axesActor = vtk.vtkAxesActor()
         axesActor.SetShaftTypeToLine()
         axesActor.SetTipTypeToCone()
-        printBedSize = self._config.getValue('printbedsize')
-        buildBedHeight = self._config.getValue('buildheight')
+        
+        printBedSize = self._config.getMachineSetting('printbedsize')
+        buildBedHeight = self._config.getMachineSetting('buildheight')
         axesActor.SetTotalLength(printBedSize[0],printBedSize[1],buildBedHeight)
 
         if(printBedSize[0] <50 or  printBedSize[1] <50):
