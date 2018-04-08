@@ -10,14 +10,14 @@ import vtk
 class gcodeTest(unittest.TestCase):
 
     def setUp(self):
-        self.testFileFolder = './configtest'
+        self.testConfigFolder = './configtest'
         self.OutputFolder = './test/testOutput/Gcode'
 
         shutil.rmtree(self.OutputFolder)
 
-        os.mkdir(self.testFileFolder)
+        os.mkdir(self.testConfigFolder)
         os.mkdir(self.OutputFolder)
-        self.test_config = config(self.testFileFolder)
+        self.test_config = config(self.testConfigFolder)
 
         reader = vtk.vtkSTLReader()
         reader.SetFileName('./test/testFile/3DBenchySmall.stl')
@@ -97,4 +97,4 @@ class gcodeTest(unittest.TestCase):
         
 
     def tearDown(self):
-        shutil.rmtree(self.testFileFolder)
+        shutil.rmtree(self.testConfigFolder)

@@ -137,7 +137,7 @@ class Printheads_Settings(setting):
                             'SyringeLinearVelocity':1,'SyringeWorkDistance':1}
 
         self.Imtech =  {'PrinheadVPPVoltage':1,'PrintheadPulseWidth':1,
-                        'PrintheadVelocity':25.4,'NPrintSwathe':1,'BufferSizeLimit': [150,-1],'dpi': [600,600]}
+                        'PrintheadVelocity':25.4,'NPrintSwathe':1,'BufferNumber':16,'BufferSizeLimit': [150,-1],'dpi': [600,600]}
     
     def saveConfig(self):
 
