@@ -161,7 +161,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step10)
 
         #step 11 turn ON printhead and get ready to print buffer 0
-        step11 = self.ImtechPrintHead(1,8,5,0,0,0,0,0,0,self.DefaultPrintHeadAddr)
+        step11 = self.ImtechPrintHead(1,8,5,0,0,0,0,self.DefaultTxtToPrint,self.DefaultPrintHeadAddr,imgPath)
         self.makeStep(defaultStep,step11)
 
         #step 12 execute printing motion in Y direction - move to Y=67
