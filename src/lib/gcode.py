@@ -99,7 +99,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                     bmpWriter.SetInputData(slicer.GetOutput())
                     bmpWriter.Write()
-                    listOfImg.append(imgFullPath)
+                    baseFolder = os.path.join("./",os.path.basename(self._Folderpath))
+
+                    listOfImg.append(os.path.join(baseFolder,imgfileName))
                     yStart = yEnd+1
 
                 self.XMLRoot = self.BuildSequenceCluster(0)
@@ -127,15 +129,16 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         defaultStep = self.create_default_Step()
         BNumber = 0
-        listOfAlphabet = list(string.ascii_lowercase)
+        listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
         for imgPath in imgPathList:
             #step 0 - turn ON printhead and get ready to print buffer 0
             textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
-            step0 = self.ImtechPrintHead(1,8,1,0,0,0,BNumber,textStr,self.DefaultPrintHeadAddr,imgPath)
+            step0 = self.ImtechPrintHead(1,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step0)
             BNumber = BNumber + 1
+            fontNumber = fontNumber + 1
             listTxtToPrint.append(textStr)
 
         #step 1 - move gantry to X1 = 0 
@@ -180,7 +183,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             self.makeStep(defaultStep,step10)
 
             #step 11 turn ON printhead and get ready to print buffer 0
-            step11 = self.ImtechPrintHead(1,8,5,0,0,0,i,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
+            step11 = self.ImtechPrintHead(1,8,5,0,0,i,0,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step11)
 
             #step 12 execute printing motion in Y direction - move to Y=67
