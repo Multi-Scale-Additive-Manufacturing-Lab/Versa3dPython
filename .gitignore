@@ -11,6 +11,7 @@ nppBackup/
 build/
 dist/
 bin/
+test/testOutput/
 spyder.egg-info/
 Thumbs.db
 .DS_Store/

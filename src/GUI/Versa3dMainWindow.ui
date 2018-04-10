@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Versa3dMainWindow</class>
+ <widget class="QMainWindow" name="Versa3dMainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1004</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1004</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <layout class="QHBoxLayout" name="main_horizontal_layout">
+      <item>
+       <widget class="QTabWidget" name="ViewerTab">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="Model_ViewerTab">
+         <attribute name="title">
+          <string>Model Viewer</string>
+         </attribute>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QVTKRenderWindowInteractor" name="vtkWidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>600</width>
+              <height>500</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="Slice_ViewerTab">
+         <attribute name="title">
+          <string>Slice Viewer</string>
+         </attribute>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QVTKRenderWindowInteractor" name="Image_SliceViewer" native="true"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="sliderGroup">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetMaximumSize</enum>
+            </property>
+            <item>
+             <widget class="QLabel" name="NumLayerLabel">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Layer #</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="NumLayerSpinBox">
+              <property name="minimumSize">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSlider" name="NumLayerSlider">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="right_side_vertical_layout">
+        <item>
+         <widget class="QPushButton" name="GenerateMachineCodeButton">
+          <property name="text">
+           <string>Generate Machine Code</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="SliceButton">
+          <property name="text">
+           <string>Slice</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSplitter" name="splitter_right_side">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QWidget" name="layoutWidget">
+           <layout class="QHBoxLayout" name="layout_split_right_tab">
+            <item>
+             <widget class="QTabWidget" name="tabWidget">
+              <property name="minimumSize">
+               <size>
+                <width>325</width>
+                <height>100</height>
+               </size>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="currentIndex">
+               <number>1</number>
+              </property>
+              <widget class="QWidget" name="slice_tab">
+               <attribute name="title">
+                <string>Slice</string>
+               </attribute>
+               <layout class="QHBoxLayout" name="horizontalLayout_4"/>
+              </widget>
+              <widget class="QWidget" name="infill_tab">
+               <attribute name="title">
+                <string>Infill</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                 <widget class="QLabel" name="inFilltype_label">
+                  <property name="text">
+                   <string>infill type</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="inFillComboBox"/>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="raster_tab">
+               <attribute name="title">
+                <string>Raster</string>
+               </attribute>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QTabWidget" name="optionTabs">
+           <property name="tabShape">
+            <enum>QTabWidget::Rounded</enum>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <widget class="QWidget" name="machine_tab">
+            <attribute name="title">
+             <string>Machine</string>
+            </attribute>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QLabel" name="systemImage">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <widget class="QLabel" name="machineLabel">
+                 <property name="text">
+                  <string>Machine: MSAM Research Platform</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="processLabel">
+                 <property name="text">
+                  <string>Process: Hybrid Silicone AM </string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="machines_settingstab">
+            <attribute name="title">
+             <string>Machine Settings</string>
+            </attribute>
+           </widget>
+           <widget class="QWidget" name="output_tab">
+            <attribute name="title">
+             <string>Output</string>
+            </attribute>
+           </widget>
+           <widget class="QWidget" name="scripting_tab">
+            <attribute name="title">
+             <string>Scripting</string>
+            </attribute>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1004</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImport_STL"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actioncopy"/>
+    <addaction name="actionpaste"/>
+    <addaction name="actiondelete"/>
+   </widget>
+   <widget class="QMenu" name="menuSelection">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuSelection"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSelection_Mode"/>
+   <addaction name="actionCamera_Mode"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionImport_STL">
+   <property name="text">
+    <string>Import stl</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actioncopy">
+   <property name="text">
+    <string>cut</string>
+   </property>
+  </action>
+  <action name="actionpaste">
+   <property name="text">
+    <string>copy</string>
+   </property>
+  </action>
+  <action name="actiondelete">
+   <property name="text">
+    <string>paste</string>
+   </property>
+  </action>
+  <action name="actionSelection_Mode">
+   <property name="text">
+    <string>Selection Mode</string>
+   </property>
+  </action>
+  <action name="actionCamera_Mode">
+   <property name="text">
+    <string>Camera Mode</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKRenderWindowInteractor</class>
+   <extends>QWidget</extends>
+   <header>vtk.qt.QVTKRenderWindowInteractor</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>optionTabs</tabstop>
+  <tabstop>GenerateMachineCodeButton</tabstop>
+  <tabstop>tabWidget</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

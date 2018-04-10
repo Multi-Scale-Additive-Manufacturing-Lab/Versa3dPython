@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QObject, pyqtSignal,pyqtSlot
 import vtk
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
-from src.GUI.MouseInteractorHighLightActor import MouseInteractorHighLightActor
 
 from src.lib.command import stlImportCommand
 from src.lib.versa3dConfig import config , FillEnum
-
+import src.lib.slicing as sl
 from collections import deque
 import numpy as np
 
@@ -15,7 +15,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         
-        self._config = config('./config/versa3dConfig.ini')
+        self._config = config('./config')
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
@@ -24,15 +24,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.StlRenderer)
         self.StlInteractor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
 
-        style = MouseInteractorHighLightActor()
-        style.SetDefaultRenderer(self.StlRenderer)
-
+        style = vtk.vtkInteractorStyleSwitch()
+        style.SetCurrentRenderer(self.StlRenderer)
+        style.SetCurrentStyleToTrackballCamera()
         self.StlInteractor.SetInteractorStyle(style)
-        
-        #Commented image slicer renderer going to try implement later created Shader error on windows
-        #self.ImageRenderer = vtk.vtkRenderer()
-        #self.ui.slice_viewer.GetRenderWindow().AddRenderer(self.StlRenderer)
-        #self.ui.ImageInteractor = self.ui.slice_viewer.GetRenderWindow().GetInteractor()
+
+        self.ImageRenderer = vtk.vtkRenderer()
+        self.ui.Image_SliceViewer.GetRenderWindow().AddRenderer(self.ImageRenderer)
+        self.ImageInteractor = self.ui.Image_SliceViewer.GetRenderWindow().GetInteractor()
+        ImageInteractorStyle = vtk.vtkInteractorStyleImage()
+        self.ImageInteractor.SetInteractorStyle(ImageInteractorStyle)
 
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
@@ -41,17 +42,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.SliceButton.clicked.connect(self.slice_stl)
         self.ui.actionUndo.triggered.connect(self.undo)
         self.ui.actionRedo.triggered.connect(self.redo)
-
+        self.ui.actionCamera_Mode.triggered.connect(self.SetCameraMode)
+        self.ui.actionSelection_Mode.triggered.connect(self.SetSelectionMode)
+        self.ui.NumLayerSlider.valueChanged.connect(self.ChangeSliceDisplayed)
+        
         self.setUpScene()
+        self._ImageMapper = vtk.vtkImageSliceMapper()
 
         self.StlInteractor.Initialize()
+        self.ImageInteractor.Initialize()
 
         self.populateComboBox(FillEnum, self.ui.inFillComboBox)
 
     
     def import_stl(self):
-        importer = stlImportCommand(self.StlRenderer,self)
+        importer = stlImportCommand(self.StlRenderer,self._config,self)
         importer.execute()
+        self.ui.vtkWidget.GetRenderWindow().Render()
         self.undoStack.append(importer)
         
     def undo(self):
@@ -75,8 +82,9 @@ class MainWindow(QtWidgets.QMainWindow):
         axesActor = vtk.vtkAxesActor()
         axesActor.SetShaftTypeToLine()
         axesActor.SetTipTypeToCone()
-        printBedSize = self._config.getValue('printbedsize')
-        buildBedHeight = self._config.getValue('buildheight')
+        
+        printBedSize = self._config.getMachineSetting('printbedsize')
+        buildBedHeight = self._config.getMachineSetting('buildheight')
         axesActor.SetTotalLength(printBedSize[0],printBedSize[1],buildBedHeight)
 
         if(printBedSize[0] <50 or  printBedSize[1] <50):
@@ -120,10 +128,53 @@ class MainWindow(QtWidgets.QMainWindow):
         self.StlRenderer.AddActor(axesActor)
 
         self.StlRenderer.ResetCamera()
+    
+    def SetCameraMode(self):
+        style = self.StlInteractor.GetInteractorStyle()
+        style.SetCurrentStyleToTrackballCamera()
+    
+    def SetSelectionMode(self):
+        style = self.StlInteractor.GetInteractorStyle()
+        style.SetCurrentStyleToTrackballActor()
+
+    @pyqtSlot(int)
+    def ChangeSliceDisplayed(self,value):
+        self.ui.NumLayerSpinBox.setValue(value)
+        self._ImageMapper.SetSliceNumber(value)
+        self.ui.Image_SliceViewer.GetRenderWindow().Render()
             
     def slice_stl(self):
+        fillSelection = self.ui.inFillComboBox.currentText()
+        slicer = sl.slicerFactory(fillSelection,self._config)
 
-        print("start \n")
+        actors = self.StlRenderer.GetActors()
+        key = self._config.getKey("Type","Actor")
+
+        for i in range(0,actors.GetNumberOfItems()):
+            actor = actors.GetItemAsObject(i)
+            actorInfo = actor.GetProperty().GetInformation()
+            if(actorInfo.Has(key)):
+                slicer.addActor(actor)
+        
+        buildVox = slicer.slice()
+        (xDim,yDim,zDim) = buildVox.GetDimensions()
+
+        self.ui.NumLayerSlider.setMinimum(0)
+        self.ui.NumLayerSlider.setMaximum(zDim-1)
+        
+        self._ImageMapper.SetInputData(buildVox)
+        self._ImageMapper.BackgroundOn()
+        self._ImageMapper.SetOrientationToZ()
+        self._ImageMapper.SetSliceNumber(0)
+        
+        imageActor = vtk.vtkImageSlice()
+        imageActor.SetMapper(self._ImageMapper)
+
+        self.ImageRenderer.AddActor(imageActor)
+        self.ImageRenderer.ResetCamera()
+
+        self.ui.NumLayerSlider.setValue(0)
+        self.ui.ViewerTab.setCurrentIndex(1)
 
 
 

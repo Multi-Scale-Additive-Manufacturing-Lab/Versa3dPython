@@ -1,61 +1,79 @@
 import unittest
-from src.lib.versa3dConfig import config
+import src.lib.versa3dConfig as vc
 from pathlib import Path
 import os
+import shutil
 
 class TestConfig(unittest.TestCase):
 
     def setUp(self):
-        self.testFileName = 'config/test.ini'
+        self.testFileFolder = './configtest'
+        os.mkdir(self.testFileFolder)
 
     def test_ConfigCreation(self):
-        configObject = config(self.testFileName)
+        configObject = vc.config(self.testFileFolder)
 
-        IniFile = Path(self.testFileName)
+        Versa3dIniFile = Path(os.path.join(self.testFileFolder,vc.Versa3dIniFileName))
+        SliceIniFile = Path(os.path.join(self.testFileFolder,vc.SliceIniFileName))
+        PrintheadIniFile= Path(os.path.join(self.testFileFolder,vc.PrintHeadIniFileName))
+        PrinterIniFile = Path(os.path.join(self.testFileFolder,vc.PrinterIniFileName))
         #check if file created
-        self.assertEqual(True, IniFile.is_file())
+        self.assertEqual(True, Versa3dIniFile.is_file())
+        self.assertEqual(True,SliceIniFile.is_file())
+        self.assertEqual(True,PrintheadIniFile.is_file())
+        self.assertEqual(True,PrinterIniFile.is_file())
     
     def test_ConfigGetValue(self):
-        configObject = config(self.testFileName)
-        UnitValue = configObject.getValue('unit')
+        configObject = vc.config(self.testFileFolder)
+
+        versa3dSetting = configObject.getVersa3dSettings()
+        printerSetting = configObject.getPrinterSettings()
+        printheadSetting = configObject.getPrinterHeadSettings()
+        SliceSetting = configObject.getSlicingSettings()
+
+        UnitValue = versa3dSetting.getSettingValue('Versa3d','unit')
         self.assertEqual('mm',UnitValue)
 
-        printBedValue = configObject.getValue('printbedsize')
-        self.assertEqual([10,10], printBedValue)
+        printBedValue = printerSetting.getSettingValue('BMVlasea','printbedsize')
+        self.assertEqual([30,30], printBedValue)
 
-        FillValue = configObject.getValue('layer_thickness')
+        buffersizeLimit = printheadSetting.getSettingValue('Imtech','BufferSizeLimit')
+        self.assertEqual([150,-1], buffersizeLimit)
+
+        FillValue = SliceSetting.getSettingValue('BinderJet','layer_thickness')
         self.assertEqual(0.1, FillValue)
 
-        NullValue = configObject.getValue('')
-        self.assertEqual('',NullValue)
+        gantryXYVelocity = printerSetting.getSettingValue('BMVlasea','gantryXYVelocity')
+        self.assertEqual([100,100],gantryXYVelocity)
+
+        printBedValue = configObject.getMachineSetting('printbedsize')
+        self.assertEqual([30,30], printBedValue)
  
     def test_ModifyConfig(self):
-        configObject = config(self.testFileName)
-        configObject.setValue('unit', 'inch')
+        configObject = vc.config(self.testFileFolder)
 
-        value = configObject.getValue('unit')
+        versa3dSetting = configObject.getVersa3dSettings()
+
+        versa3dSetting.setSettingValue('Versa3d','unit','inch')
+
+        value = versa3dSetting.getSettingValue('Versa3d','unit')
 
         self.assertEqual('inch', value)
 
     def test_SaveConfig(self):
-        configObject = config(self.testFileName)
-        configObject.setValue('unit', 'inch')
+        configObject = vc.config(self.testFileFolder)
+        versa3dSetting = configObject.getVersa3dSettings()
+        versa3dSetting.setSettingValue('Versa3d','unit','inch')
 
         configObject.saveConfig()
-        del configObject
 
-        configObject2 = config(self.testFileName)
-        value = configObject2.getValue('unit')
+        configObject2 = vc.config(self.testFileFolder)
+        versa3dSetting2 = configObject2.getVersa3dSettings()
+        value = versa3dSetting2.getSettingValue('Versa3d','unit')
         self.assertEqual('inch', value)
-
-        FillValue = configObject2.getValue('layer_thickness')
-        self.assertEqual(0.1, FillValue)
-
-        PrintBedArray = configObject2.getValue('printbedsize')
-        self.assertEqual([10,10], PrintBedArray)
-
+        
     def tearDown(self):
-        os.remove(self.testFileName)
+        shutil.rmtree(self.testFileFolder)
 
 def suite():
     suite = unittest.TestSuite()
