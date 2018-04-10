@@ -99,7 +99,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                     bmpWriter.SetInputData(slicer.GetOutput())
                     bmpWriter.Write()
-                    baseFolder = os.path.join("./",os.path.basename(self._Folderpath))
+                    baseFolder = os.path.join("./","image")
 
                     listOfImg.append(os.path.join(baseFolder,imgfileName))
                     yStart = yEnd+1
