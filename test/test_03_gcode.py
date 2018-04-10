@@ -12,11 +12,16 @@ class gcodeTest(unittest.TestCase):
     def setUp(self):
         self.testConfigFolder = './configtest'
         self.OutputFolder = './test/testOutput/Gcode'
-
-        shutil.rmtree(self.OutputFolder)
+        if(not os.path.isdir('./test/testOutput')):
+            os.mkdir('./test/testOutput')
+        
+        if(not os.path.isdir(self.OutputFolder)):
+            os.mkdir(self.OutputFolder)
+        else:
+            shutil.rmtree(self.OutputFolder)
+            os.mkdir(self.OutputFolder)
 
         os.mkdir(self.testConfigFolder)
-        os.mkdir(self.OutputFolder)
         self.test_config = config(self.testConfigFolder)
 
         reader = vtk.vtkSTLReader()
