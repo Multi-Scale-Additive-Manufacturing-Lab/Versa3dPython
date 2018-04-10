@@ -3,7 +3,9 @@ from src.lib.versa3dConfig import config
 from lxml import etree
 from lxml.builder import E
 from copy import deepcopy
+import math
 import os
+import string
 
 def gcodeFactory(type, config):
     
@@ -41,9 +43,11 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.feedBedVelocity = config.getMachineSetting('feedBedVelocity')
         self.buildBedVelocity = config.getMachineSetting('buildBedVelocity')
         self.DefaultPrintHead = config.getMachineSetting('DefaultPrinthead')
-        self.DefaultPrintVelocity = config.getMachineSetting('PrintHeadVelocity')
-        self.DefaultTxtToPrint = "%T01A"
+        self.DefaultPrintVelocity = config.getPrintHeadSetting('PrintheadVelocity')
         self.DefaultPrintHeadAddr = config.getMachineSetting('DefaultPrintHeadAddr')
+
+        self.NumberOfBuffer = config.getPrintHeadSetting('BufferNumber')
+        self.XImageSizeLimit = config.getPrintHeadSetting('BufferSizeLimit')[0]
 
         self.FeedBedSel = config.getMachineSetting('FeedBedSel')
 
@@ -51,16 +55,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.rollerRotVel = config.getMachineSetting('RollerRotVel')
         
         self.Thickness = config.getSlicingSetting('layer_thickness')
-
-
-        self._Module_Dict = {"Gantry_axis":0, "Z_Axis":1,
-                            "Material_Handling_Axis":2 , "Porogen_Insertion":3,
-                            "Syringe_Injection":4,"Printhead":5,
-                            "Roller":6, "Syringe_2":7,"Printhead_2":8}
-        
-        self._Function_Dict = {"Init":0,"txt_to_print":1,
-                                "Set_Default_Buffer":2,"Switch_vpp":3,
-                                "Printhead_param":4,"Print_Now":5}
 
     def SetInput(self,slicer):
         """Set Input slicer
@@ -72,6 +66,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
     def generateGCode(self):
         bmpWriter = vtk.vtkBMPWriter()
+
         BuildVtkImage = self._Slicer.getBuildVolume()
         (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
         
@@ -79,20 +74,36 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         os.mkdir(imageFolder)
 
         for z in range(0,zDim):
-            imgfileName = "slice_"+str(z)+".bmp"
-            imgFullPath = os.path.join(imageFolder,imgfileName)
-            bmpWriter.SetFileName(imgFullPath)
-            slicer = vtk.vtkExtractVOI()
-            slicer.SetVOI(0,xDim-1,0,yDim-1,z,z)
-            slicer.SetSampleRate(1,1,1)
-            slicer.SetInputData(BuildVtkImage)
-            slicer.Update()
-
+            #yDim is actually x axis in printer
+            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
+            
             if (z <= self._Slicer.getCeiling()):
-                bmpWriter.SetInputData(slicer.GetOutput())
-                bmpWriter.Write()
+                
+                yStart = 0
+                listOfImg = []
+                for i in range(0, NumSubImage):
+                    yEnd = yStart+self.XImageSizeLimit
+
+                    if (yDim-1) < yEnd:
+                        yEnd = yDim-1
+
+                    slicer = vtk.vtkExtractVOI()
+                    slicer.SetVOI(0,xDim-1,yStart,yEnd,z,z)
+                    slicer.SetSampleRate(1,1,1)
+                    slicer.SetInputData(BuildVtkImage)
+                    slicer.Update()
+
+                    imgfileName = "slice_"+str(z)+"_"+str(i)+".bmp"
+                    imgFullPath = os.path.join(imageFolder,imgfileName)
+                    bmpWriter.SetFileName(imgFullPath)
+
+                    bmpWriter.SetInputData(slicer.GetOutput())
+                    bmpWriter.Write()
+                    listOfImg.append(imgFullPath)
+                    yStart = yEnd+1
+
                 self.XMLRoot = self.BuildSequenceCluster(0)
-                self.generateGCodeLayer(imgFullPath)
+                self.generateGCodeLayer(listOfImg)
 
                 output = etree.tostring(self.XMLRoot,pretty_print=True)
                 xmlFileName = "layer_"+str(z)+".xml"
@@ -112,13 +123,20 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
     
-    def generateGCodeLayer(self,imgPath):
+    def generateGCodeLayer(self,imgPathList):
 
         defaultStep = self.create_default_Step()
-
-        #step 0 - turn ON printhead and get ready to print buffer 0
-        step0 = self.ImtechPrintHead(1,8,1,0,0,0,0,self.DefaultTxtToPrint,self.DefaultPrintHeadAddr,imgPath)
-        self.makeStep(defaultStep,step0)
+        BNumber = 0
+        listOfAlphabet = list(string.ascii_lowercase)
+        fontNumber = 1
+        listTxtToPrint = []
+        for imgPath in imgPathList:
+            #step 0 - turn ON printhead and get ready to print buffer 0
+            textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
+            step0 = self.ImtechPrintHead(1,8,1,0,0,0,BNumber,textStr,self.DefaultPrintHeadAddr,imgPath)
+            self.makeStep(defaultStep,step0)
+            BNumber = BNumber + 1
+            listTxtToPrint.append(textStr)
 
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(1,0,3,[0,0],0,self.gantryXYVelocity[0],"")
@@ -152,21 +170,22 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         step8 = self.MaterialHandling(1,2,2,(-2)*(self.H+self.W),3, self.buildBedVelocity,0,0)
         self.makeStep(defaultStep,step8)
 
-        #step 9 allign printhead with the printing area - move to Y=37
-        step9 = self.Gantry(1,0,3,[0,37],2,self.gantryXYVelocity[1],"")
-        self.makeStep(defaultStep,step9)
+        for i in range(0,BNumber):
+            #step 9 allign printhead with the printing area - move to Y=37
+            step9 = self.Gantry(1,0,3,[0,37],2,self.gantryXYVelocity[1],"")
+            self.makeStep(defaultStep,step9)
 
-        #step 10 allign printhead with the printing area - move to X=10
-        step10 = self.Gantry(1,0,3,[10,0],0,self.gantryXYVelocity[0],"")
-        self.makeStep(defaultStep,step10)
+            #step 10 allign printhead with the printing area - move to X=10
+            step10 = self.Gantry(1,0,3,[10+i*10,0],0,self.gantryXYVelocity[0],"")
+            self.makeStep(defaultStep,step10)
 
-        #step 11 turn ON printhead and get ready to print buffer 0
-        step11 = self.ImtechPrintHead(1,8,5,0,0,0,0,self.DefaultTxtToPrint,self.DefaultPrintHeadAddr,imgPath)
-        self.makeStep(defaultStep,step11)
+            #step 11 turn ON printhead and get ready to print buffer 0
+            step11 = self.ImtechPrintHead(1,8,5,0,0,0,i,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
+            self.makeStep(defaultStep,step11)
 
-        #step 12 execute printing motion in Y direction - move to Y=67
-        step12 = self.Gantry(1,0,3,[0,67],2,self.DefaultPrintVelocity,"")
-        self.makeStep(defaultStep,step12)
+            #step 12 execute printing motion in Y direction - move to Y=67
+            step12 = self.Gantry(1,0,3,[0,67],2,self.DefaultPrintVelocity,"")
+            self.makeStep(defaultStep,step12)
         
         #step 13 move back to origin in Y -direction Y=0(former step 16)
         step13 = self.Gantry(1,0,3,[0,0],2,self.gantryXYVelocity[1],"")

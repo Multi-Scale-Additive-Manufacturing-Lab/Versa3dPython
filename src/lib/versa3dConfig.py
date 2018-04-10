@@ -115,7 +115,7 @@ class Printers_Settings(setting):
 
         self.BMVlasea = {'printbedsize': [30.0,30.0], 'buildheight':50.0, 'gantryXYVelocity':[100.0,100.0],
                          'Work_Distance_Roller_Substrate':1.1,'Printing_Height_Offset':0.05,'Powder_Loss':0.1,
-                         'feedBedVelocity':10.0, 'buildBedVelocity':10.0, 'PrintHeadVelocity':25.4,
+                         'feedBedVelocity':10.0, 'buildBedVelocity':10.0,
                          'DefaultFeedBed':1,'DefaultPrinthead':1,'DefaultPrintHeadAddr':1,
                          'RollerLinVel':10.0,'RollerRotVel':10.0,'FeedBedSel':0}
     def saveConfig(self):
