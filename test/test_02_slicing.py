@@ -57,16 +57,16 @@ class TestSlicer(unittest.TestCase):
         blackSlicer.addActor(self.stlActor)
         BuildVtkImage = blackSlicer.slice()
 
-        vtkImageStat = vtk.vtkImageAccumulate()
-        vtkImageStat.DebugOn()
-        vtkImageStat.SetComponentSpacing(1,0,0)
-        vtkImageStat.SetComponentExtent(0,1,0,0,0,0)
-        vtkImageStat.SetComponentOrigin(0,0,0)
+        vtkImageStat  = vtk.vtkImageHistogram()
+        vtkImageStat.AutomaticBinningOn()
         vtkImageStat.SetInputData(BuildVtkImage)
         vtkImageStat.Update()
+
+        stats = vtkImageStat.GetHistogram()
+        BlackNum = stats.GetValue(0)
+        WhiteNum = stats.GetValue(255)
         
-        totalVoxel = vtkImageStat.GetVoxelCount()
-        meanArray = vtkImageStat.GetMean()
+        totalVoxel = vtkImageStat.GetTotal()
         
         BuildBedSize = self.test_config.getMachineSetting('printbedsize')
         dpi = self.test_config.getPrintHeadSetting('dpi')
@@ -83,7 +83,7 @@ class TestSlicer(unittest.TestCase):
         #check number of voxel
         self.assertEqual(theoreticalNumberOfVoxel,totalVoxel)
         #check blackness
-        self.assertLessEqual(0.95,meanArray[0]/255)
+        self.assertLessEqual(0.02,BlackNum/totalVoxel)
 
         #uncomment if you want to visual check
         
