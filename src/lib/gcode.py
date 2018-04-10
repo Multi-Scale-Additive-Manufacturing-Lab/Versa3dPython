@@ -55,6 +55,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.rollerRotVel = config.getMachineSetting('RollerRotVel')
         
         self.Thickness = config.getSlicingSetting('layer_thickness')
+        self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('ImgBMVLaseaLocalPath')
 
     def SetInput(self,slicer):
         """Set Input slicer
@@ -99,9 +100,12 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                     bmpWriter.SetInputData(slicer.GetOutput())
                     bmpWriter.Write()
-                    baseFolder = os.path.join("./","image")
-
-                    listOfImg.append(os.path.join(baseFolder,imgfileName))
+                    if(self.AbsPathBMVlaseaComputer):
+                        baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
+                        listOfImg.append(baseFolder+imgfileName)
+                    else:
+                        baseFolder = os.path.join("./","image")
+                        listOfImg.append(os.path.join(baseFolder,imgfileName))
                     yStart = yEnd+1
 
                 self.XMLRoot = self.BuildSequenceCluster(0)
@@ -331,7 +335,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         return self.ew("Function",listOfChoice,Val)
     
     def ewEquation(self,Val):
-        listOfChoice = ["Use Height","H + T + S","H - T","-(H  + W)","+W"]
+        listOfChoice = ["Use Height","H + T + S","H - T","-(H + W)","+W"]
         return self.ew("Equation",listOfChoice,Val)
     
     def ewMotionControl(self,Val):
