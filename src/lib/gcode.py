@@ -66,7 +66,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Slicer = slicer   
 
     def generateGCode(self):
-        bmpWriter = vtk.vtkBMPWriter()
 
         BuildVtkImage = self._Slicer.getBuildVolume()
         (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
@@ -94,24 +93,12 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                     slicer.SetInputData(BuildVtkImage)
                     slicer.Update()
 
-                    imgfileName = "slice_"+str(z)+"_"+str(i)+".bmp"
-                    imgFullPath = os.path.join(imageFolder,imgfileName)
-                    bmpWriter.SetFileName(imgFullPath)
-
-                    bmpWriter.SetInputData(slicer.GetOutput())
-                    bmpWriter.Write()
-                    if(self.AbsPathBMVlaseaComputer):
-                        baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
-                        listOfImg.append(baseFolder+imgfileName)
-                    else:
-                        baseFolder = os.path.join("./","image")
-                        listOfImg.append(os.path.join(baseFolder,imgfileName))
+                    listOfImg.append(slicer.GetOutput())
                     yStart = yEnd+1
 
                 self.XMLRoot = self.BuildSequenceCluster(0)
-                self.generateGCodeLayer(listOfImg)
+                self.generateGCodeLayer(z,listOfImg,imageFolder)
 
-                output = etree.tostring(self.XMLRoot,pretty_print=True)
                 xmlFileName = "layer_"+str(z)+".xml"
                 xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
 
@@ -129,14 +116,34 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
     
-    def generateGCodeLayer(self,imgPathList):
+    def generateGCodeLayer(self,layerNum,imgSliceList,imageFolder):
 
         defaultStep = self.create_default_Step()
         BNumber = 0
         listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
-        for imgPath in imgPathList:
+
+        count = 0
+        for individualSlice in imgSliceList:
+            bmpWriter = vtk.vtkBMPWriter()
+
+            imgfileName = "slice_"+str(layerNum)+"_"+str(count)+".bmp"
+
+            if(self.AbsPathBMVlaseaComputer):
+                baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
+                imgPath = baseFolder+imgfileName
+            else:
+                baseFolder = os.path.join("./","image")
+                imgPath = os.path.join(baseFolder,imgfileName)
+
+            imgFullPath = os.path.join(imageFolder,imgfileName)
+            bmpWriter.SetFileName(imgFullPath)
+            bmpWriter.SetInputData(individualSlice)
+            bmpWriter.Write()
+
+            count = count + 1
+
             #step 0 - turn ON printhead and get ready to print buffer 0
             textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
             step0 = self.ImtechPrintHead(1,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
