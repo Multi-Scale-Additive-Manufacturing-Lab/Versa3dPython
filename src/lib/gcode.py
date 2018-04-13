@@ -123,34 +123,49 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
+        listOfXCoord = []
 
         count = 0
         for individualSlice in imgSliceList:
-            bmpWriter = vtk.vtkBMPWriter()
 
-            imgfileName = "slice_"+str(layerNum)+"_"+str(count)+".bmp"
+            imageStat = vtk.vtkImageHistogram()
+            imageStat.AutomaticBinningOn()
+            imageStat.SetInputData(individualSlice)
+            imageStat.Update()
 
-            if(self.AbsPathBMVlaseaComputer):
-                baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
-                imgPath = baseFolder+imgfileName
-            else:
-                baseFolder = os.path.join("./","image")
-                imgPath = os.path.join(baseFolder,imgfileName)
+            totalpixel = imageStat.GetTotal()
+            results = imageStat.GetHistogram()
+            
+            numberOfBlackPixel = results.GetValue(0)
 
-            imgFullPath = os.path.join(imageFolder,imgfileName)
-            bmpWriter.SetFileName(imgFullPath)
-            bmpWriter.SetInputData(individualSlice)
-            bmpWriter.Write()
+            if(numberOfBlackPixel != 0):
+                bmpWriter = vtk.vtkBMPWriter()
+
+                imgfileName = "slice_"+str(layerNum)+"_"+str(count)+".bmp"
+
+                if(self.AbsPathBMVlaseaComputer):
+                    baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
+                    imgPath = baseFolder+imgfileName
+                else:
+                    baseFolder = os.path.join("./","image")
+                    imgPath = os.path.join(baseFolder,imgfileName)
+
+                imgFullPath = os.path.join(imageFolder,imgfileName)
+                bmpWriter.SetFileName(imgFullPath)
+                bmpWriter.SetInputData(individualSlice)
+                bmpWriter.Write()
+
+                #step 0 - turn ON printhead and get ready to print buffer 0
+                textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
+                step0 = self.ImtechPrintHead(1,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+                self.makeStep(defaultStep,step0)
+                BNumber = BNumber + 1
+                fontNumber = fontNumber + 1
+                listTxtToPrint.append(textStr)
 
             count = count + 1
 
-            #step 0 - turn ON printhead and get ready to print buffer 0
-            textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
-            step0 = self.ImtechPrintHead(1,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-            self.makeStep(defaultStep,step0)
-            BNumber = BNumber + 1
-            fontNumber = fontNumber + 1
-            listTxtToPrint.append(textStr)
+            listOfXCoord.append(10*count+10)
 
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(1,0,3,[0,0],0,self.gantryXYVelocity[0],"")
