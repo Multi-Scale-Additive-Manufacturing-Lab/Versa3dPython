@@ -25,7 +25,7 @@ class stlImportCommand():
             self._actor = vtk.vtkActor()
             self._actor.SetMapper(mapper)
 
-            printBedSize = self._config.getValue("printbedsize")
+            printBedSize = self._config.getMachineSetting('printbedsize')
             zRange = self._actor.GetZRange()
 
             newPosition = [0]*3
