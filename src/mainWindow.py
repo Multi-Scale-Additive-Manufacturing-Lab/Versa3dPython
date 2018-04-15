@@ -3,7 +3,9 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QObject, pyqtSignal,pyqtSlot
 import vtk
+
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
+import src.GUI.Ressource.ui_Ressource
 
 from src.lib.command import stlImportCommand
 from src.lib.versa3dConfig import config , FillEnum
@@ -35,11 +37,13 @@ class MainWindow(QtWidgets.QMainWindow):
         ImageInteractorStyle = vtk.vtkInteractorStyleImage()
         self.ImageInteractor.SetInteractorStyle(ImageInteractorStyle)
 
+        #setting undo Stack size
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
-                
+
+        #connect slot        
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
-        self.ui.SliceButton.clicked.connect(self.slice_stl)
+        self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
         self.ui.actionUndo.triggered.connect(self.undo)
         self.ui.actionRedo.triggered.connect(self.redo)
         self.ui.actionCamera_Mode.triggered.connect(self.SetCameraMode)
@@ -52,7 +56,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.StlInteractor.Initialize()
         self.ImageInteractor.Initialize()
 
-        self.populateComboBox(FillEnum, self.ui.inFillComboBox)
+        self.InitSettingTab()
 
     
     def import_stl(self):
@@ -73,8 +77,40 @@ class MainWindow(QtWidgets.QMainWindow):
             command.redo()
             self.undoStack.append(command)
 
-    def populateComboBox(self,list,combobox):
-        combobox.addItems(list)
+    def InitSettingTab(self):
+        
+        for tabName in ["Print Setting", "PrintHead","Printer"]:
+            page = QtWidgets.QWidget()
+            self.ui.MainViewTab.addTab(page,tabName)
+
+            layout = QtWidgets.QHBoxLayout()
+            leftSide = QtWidgets.QVBoxLayout()
+            rightSide = QtWidgets.QHBoxLayout()
+
+            PageSize = page.size()
+            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32,5)
+            rightSide.addSpacerItem(RightSideSpacer)
+
+            layout.addLayout(leftSide)
+            layout.addLayout(rightSide)
+
+            TopLeftSideLayout = QtWidgets.QHBoxLayout()
+            
+            PresetSelector = QtWidgets.QComboBox()
+            SaveButton = QtWidgets.QToolButton()
+            DeleteButton = QtWidgets.QToolButton()
+
+            TopLeftSideLayout.addWidget(PresetSelector)
+            TopLeftSideLayout.addWidget(SaveButton)
+            TopLeftSideLayout.addWidget(DeleteButton)
+
+            leftSide.addLayout(TopLeftSideLayout)
+
+            CategoryList = QtWidgets.QListWidget()
+            leftSide.addWidget(CategoryList)
+
+            page.setLayout(layout)
+
     
     def setUpScene(self):
 
@@ -144,8 +180,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.Image_SliceViewer.GetRenderWindow().Render()
             
     def slice_stl(self):
-        fillSelection = self.ui.inFillComboBox.currentText()
-        slicer = sl.slicerFactory(fillSelection,self._config)
+        #fillSelection = self.ui.inFillComboBox.currentText()
+        slicer = sl.slicerFactory('black',self._config)
 
         actors = self.StlRenderer.GetActors()
         key = self._config.getKey("Type","Actor")
