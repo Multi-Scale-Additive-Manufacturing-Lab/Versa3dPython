@@ -10,7 +10,7 @@ from vtk.util import keys
 FillEnum = ['black', 'checker_board']
 
 Versa3dIniFileName = "versa3dConfig.ini"
-SliceIniFileName = "sliceConfig.ini"
+SliceIniFileName = "PrintConfig.ini"
 PrinterIniFileName = "PrinterConfig.ini"
 PrintHeadIniFileName = "PrintHeadConfig.ini"
 
