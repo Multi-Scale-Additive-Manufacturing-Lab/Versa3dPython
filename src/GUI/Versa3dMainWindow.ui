@@ -30,7 +30,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="Plater">
        <attribute name="title">
@@ -214,16 +214,19 @@
        <attribute name="title">
         <string>Print Setting</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout"/>
       </widget>
       <widget class="QWidget" name="PrintHeadTab">
        <attribute name="title">
         <string>PrintHead</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_3"/>
       </widget>
       <widget class="QWidget" name="Printer">
        <attribute name="title">
         <string>Printer</string>
        </attribute>
+       <layout class="QGridLayout" name="gridLayout_2"/>
       </widget>
      </widget>
     </item>
