@@ -31,6 +31,9 @@
      <layout class="QHBoxLayout" name="main_horizontal_layout">
       <item>
        <widget class="QTabWidget" name="ViewerTab">
+        <property name="tabPosition">
+         <enum>QTabWidget::South</enum>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -133,127 +136,66 @@
       <item>
        <layout class="QVBoxLayout" name="right_side_vertical_layout">
         <item>
-         <widget class="QPushButton" name="GenerateMachineCodeButton">
-          <property name="text">
-           <string>Generate Machine Code</string>
-          </property>
-         </widget>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="1" column="0">
+           <widget class="QLabel" name="PrintSettingLabel">
+            <property name="text">
+             <string>Print settings: </string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="PrintSettingComboBox"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="PrintHeadLabel">
+            <property name="text">
+             <string>Print Head:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QComboBox" name="PrintHeadComboBox"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="PrinterLabel">
+            <property name="text">
+             <string>Printer:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="PrinterComboBox"/>
+          </item>
+          <item row="4" column="1">
+           <widget class="QPushButton" name="ExportGCodeButton">
+            <property name="text">
+             <string>Export G-Code</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QPushButton" name="SliceButton">
-          <property name="text">
-           <string>Slice</string>
+         <widget class="QTableWidget" name="TableSTL">
+          <property name="columnCount">
+           <number>3</number>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSplitter" name="splitter_right_side">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <widget class="QWidget" name="layoutWidget">
-           <layout class="QHBoxLayout" name="layout_split_right_tab">
-            <item>
-             <widget class="QTabWidget" name="tabWidget">
-              <property name="minimumSize">
-               <size>
-                <width>325</width>
-                <height>100</height>
-               </size>
-              </property>
-              <property name="layoutDirection">
-               <enum>Qt::LeftToRight</enum>
-              </property>
-              <property name="currentIndex">
-               <number>1</number>
-              </property>
-              <widget class="QWidget" name="slice_tab">
-               <attribute name="title">
-                <string>Slice</string>
-               </attribute>
-               <layout class="QHBoxLayout" name="horizontalLayout_4"/>
-              </widget>
-              <widget class="QWidget" name="infill_tab">
-               <attribute name="title">
-                <string>Infill</string>
-               </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout">
-                <item>
-                 <widget class="QLabel" name="inFilltype_label">
-                  <property name="text">
-                   <string>infill type</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="inFillComboBox"/>
-                </item>
-               </layout>
-              </widget>
-              <widget class="QWidget" name="raster_tab">
-               <attribute name="title">
-                <string>Raster</string>
-               </attribute>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QTabWidget" name="optionTabs">
-           <property name="tabShape">
-            <enum>QTabWidget::Rounded</enum>
+          <column>
+           <property name="text">
+            <string>Name</string>
            </property>
-           <property name="currentIndex">
-            <number>0</number>
+          </column>
+          <column>
+           <property name="text">
+            <string>Copies</string>
            </property>
-           <widget class="QWidget" name="machine_tab">
-            <attribute name="title">
-             <string>Machine</string>
-            </attribute>
-            <layout class="QHBoxLayout" name="horizontalLayout">
-             <item>
-              <widget class="QLabel" name="systemImage">
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_4">
-               <item>
-                <widget class="QLabel" name="machineLabel">
-                 <property name="text">
-                  <string>Machine: MSAM Research Platform</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="processLabel">
-                 <property name="text">
-                  <string>Process: Hybrid Silicone AM </string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="machines_settingstab">
-            <attribute name="title">
-             <string>Machine Settings</string>
-            </attribute>
-           </widget>
-           <widget class="QWidget" name="output_tab">
-            <attribute name="title">
-             <string>Output</string>
-            </attribute>
-           </widget>
-           <widget class="QWidget" name="scripting_tab">
-            <attribute name="title">
-             <string>Scripting</string>
-            </attribute>
-           </widget>
-          </widget>
+          </column>
+          <column>
+           <property name="text">
+            <string>Scale</string>
+           </property>
+          </column>
          </widget>
         </item>
        </layout>
@@ -288,14 +230,14 @@
     <addaction name="actionpaste"/>
     <addaction name="actiondelete"/>
    </widget>
-   <widget class="QMenu" name="menuSelection">
+   <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
-   <addaction name="menuSelection"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -357,11 +299,6 @@
    <header>vtk.qt.QVTKRenderWindowInteractor</header>
   </customwidget>
  </customwidgets>
- <tabstops>
-  <tabstop>optionTabs</tabstop>
-  <tabstop>GenerateMachineCodeButton</tabstop>
-  <tabstop>tabWidget</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>
