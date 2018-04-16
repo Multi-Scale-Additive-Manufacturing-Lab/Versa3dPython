@@ -94,7 +94,7 @@ class Versa3d_Settings(setting):
         configFile.close()
 
 
-class Slice_Settings(setting):
+class Print_Settings(setting):
     def __init__(self,FilePath):
         super().__init__(FilePath)
         self.BinderJet = {'fill': FillEnum[0], 'layer_thickness': 0.1}
@@ -156,11 +156,11 @@ class config():
     def __init__(self,ConfigFolderPath):
 
         self.Versa3dSettings = Versa3d_Settings(os.path.join(ConfigFolderPath,Versa3dIniFileName))
-        self.SlicingSettings = Slice_Settings(os.path.join(ConfigFolderPath,SliceIniFileName))
+        self.PrintSettings = Print_Settings(os.path.join(ConfigFolderPath,SliceIniFileName))
         self.PrinterSettings = Printers_Settings(os.path.join(ConfigFolderPath,PrinterIniFileName))
         self.PrintHeadSettings = Printheads_Settings(os.path.join(ConfigFolderPath,PrintHeadIniFileName))
 
-        self._listOfSetting = [self.Versa3dSettings,self.SlicingSettings,self.PrinterSettings,self.PrintHeadSettings]
+        self._listOfSetting = [self.Versa3dSettings,self.PrintSettings,self.PrinterSettings,self.PrintHeadSettings]
         self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
 
         for setting in self._listOfSetting:
@@ -179,7 +179,7 @@ class config():
         return self.Versa3dSettings
     
     def getSlicingSettings(self):
-        return self.SlicingSettings
+        return self.PrintSettings
     
     def getPrinterSettings(self):
         return self.PrinterSettings
@@ -189,7 +189,7 @@ class config():
 
     def saveConfig(self):
         self.Versa3dSettings.saveConfig()
-        self.SlicingSettings.saveConfig()
+        self.PrintSettings.saveConfig()
         self.PrinterSettings.saveConfig()
         self.PrintHeadSettings.saveConfig()
     
@@ -204,9 +204,9 @@ class config():
         Printhead = self.Versa3dSettings.getSettingValue('Versa3d','PrintHead')
         return self.PrintHeadSettings.getSettingValue(Printhead,tag)
     
-    def getSlicingSetting(self,tag):
+    def getPrintSetting(self,tag):
         ProcessType = self.Versa3dSettings.getSettingValue('Versa3d','MachineType')
-        return self.SlicingSettings.getSettingValue(ProcessType,tag)
+        return self.PrintSettings.getSettingValue(ProcessType,tag)
            
 
     

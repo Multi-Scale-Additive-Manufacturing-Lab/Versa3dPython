@@ -70,7 +70,7 @@ class TestSlicer(unittest.TestCase):
         
         BuildBedSize = self.test_config.getMachineSetting('printbedsize')
         dpi = self.test_config.getPrintHeadSetting('dpi')
-        thickness = self.test_config.getSlicingSetting('layer_thickness')
+        thickness = self.test_config.getPrintSetting('layer_thickness')
         BuildHeight = self.test_config.getMachineSetting('buildheight')
 
         BuildBedVoxSize = [0]*3

@@ -54,7 +54,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.rollerLinVel = config.getMachineSetting('RollerLinVel')
         self.rollerRotVel = config.getMachineSetting('RollerRotVel')
         
-        self.Thickness = config.getSlicingSetting('layer_thickness')
+        self.Thickness = config.getPrintSetting('layer_thickness')
         self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('ImgBMVLaseaLocalPath')
 
     def SetInput(self,slicer):

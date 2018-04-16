@@ -19,7 +19,7 @@ class VoxelSlicer():
         self._buildBedSizeXY = config.getMachineSetting('printbedsize')
 
         self._buildHeight = config.getMachineSetting('buildheight')
-        self._thickness = config.getSlicingSetting('layer_thickness')
+        self._thickness = config.getPrintSetting('layer_thickness')
         dpi = config.getPrintHeadSetting('dpi')
         self.listOfVoxShape = []
         self._buildBedVolPixel = [0]*3
