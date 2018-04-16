@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QObject, pyqtSignal,pyqtSlot
 import vtk
 
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
-import src.GUI.Ressource.ui_Ressource
+import src.GUI.res_rc
 
 from src.lib.command import stlImportCommand
 from src.lib.versa3dConfig import config , FillEnum
@@ -99,6 +99,12 @@ class MainWindow(QtWidgets.QMainWindow):
             PresetSelector = QtWidgets.QComboBox()
             SaveButton = QtWidgets.QToolButton()
             DeleteButton = QtWidgets.QToolButton()
+
+            SaveIcon = QtGui.QIcon(":/Icon/save.svg")
+            SaveButton.setIcon(SaveIcon)
+
+            DeleteIcon = QtGui.QIcon(":/Icon/trash.svg")
+            DeleteButton.setIcon(DeleteIcon)
 
             TopLeftSideLayout.addWidget(PresetSelector)
             TopLeftSideLayout.addWidget(SaveButton)

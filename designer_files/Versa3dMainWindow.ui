@@ -309,6 +309,8 @@
    <header>vtk.qt.QVTKRenderWindowInteractor</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../Icons/res.qrc"/>
+ </resources>
  <connections/>
 </ui>

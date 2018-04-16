@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './src/GUI/Versa3dMainWindow.ui'
+# Form implementation generated from reading ui file './designer_files/Versa3dMainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.8.2
 #
@@ -209,3 +209,4 @@ class Ui_Versa3dMainWindow(object):
         self.actionCamera_Mode.setText(_translate("Versa3dMainWindow", "Camera Mode"))
 
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from . import res_rc
