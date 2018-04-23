@@ -10,26 +10,13 @@ class TestConfig(unittest.TestCase):
         self.testFileFolder = './configtest'
         os.mkdir(self.testFileFolder)
 
-    def test_ConfigCreation(self):
-        configObject = vc.config(self.testFileFolder)
-
-        Versa3dIniFile = Path(os.path.join(self.testFileFolder,vc.Versa3dIniFileName))
-        SliceIniFile = Path(os.path.join(self.testFileFolder,vc.SliceIniFileName))
-        PrintheadIniFile= Path(os.path.join(self.testFileFolder,vc.PrintHeadIniFileName))
-        PrinterIniFile = Path(os.path.join(self.testFileFolder,vc.PrinterIniFileName))
-        #check if file created
-        self.assertEqual(True, Versa3dIniFile.is_file())
-        self.assertEqual(True,SliceIniFile.is_file())
-        self.assertEqual(True,PrintheadIniFile.is_file())
-        self.assertEqual(True,PrinterIniFile.is_file())
-    
     def test_ConfigGetValue(self):
         configObject = vc.config(self.testFileFolder)
 
         versa3dSetting = configObject.getVersa3dSettings()
         printerSetting = configObject.getPrinterSettings()
         printheadSetting = configObject.getPrinterHeadSettings()
-        SliceSetting = configObject.getSlicingSettings()
+        SliceSetting = configObject.getPrintSettings()
 
         UnitValue = versa3dSetting.getSettingValue('Versa3d','unit')
         self.assertEqual('mm',UnitValue)
@@ -59,15 +46,31 @@ class TestConfig(unittest.TestCase):
         value = versa3dSetting.getSettingValue('Versa3d','unit')
 
         self.assertEqual('inch', value)
+    
+    def test_ConfigCreation(self):
+        configObject = vc.config(self.testFileFolder)
+
+        configObject.saveVersa3dSettings()
+        configObject.savePrintSettings()
+        configObject.savePrinterSettings()
+        configObject.savePrinterHeadSettings()
+        
+        listOfFolder = ["Versa3dSettings", "PrintSettings", "PrinterSettings", "PrintHeadSettings"]
+        
+        for folder in listOfFolder:
+            SettingFolder = os.path.join(self.testFileFolder,folder)
+            SettingFile = Path(os.path.join(SettingFolder,"Default.ini"))
+            self.assertEqual(True,SettingFile.is_file())
 
     def test_SaveConfig(self):
         configObject = vc.config(self.testFileFolder)
         versa3dSetting = configObject.getVersa3dSettings()
         versa3dSetting.setSettingValue('Versa3d','unit','inch')
 
-        configObject.saveConfig()
+        configObject.saveVersa3dSettings("newSetting")
 
         configObject2 = vc.config(self.testFileFolder)
+        configObject2.readVersa3dSettings("newSetting")
         versa3dSetting2 = configObject2.getVersa3dSettings()
         value = versa3dSetting2.getSettingValue('Versa3d','unit')
         self.assertEqual('inch', value)
