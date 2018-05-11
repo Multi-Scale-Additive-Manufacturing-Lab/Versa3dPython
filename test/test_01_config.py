@@ -13,10 +13,10 @@ class TestConfig(unittest.TestCase):
     def test_ConfigGetValue(self):
         configObject = vc.config(self.testFileFolder)
 
-        versa3dSetting = configObject.getVersa3dSettings()
-        printerSetting = configObject.getPrinterSettings()
-        printheadSetting = configObject.getPrinterHeadSettings()
-        SliceSetting = configObject.getPrintSettings()
+        versa3dSetting = configObject.getSettings('Versa3dSettings')
+        printerSetting = configObject.getSettings('PrinterSettings')
+        printheadSetting = configObject.getSettings('PrintHeadSettings')
+        SliceSetting = configObject.getSettings('PrintSettings')
 
         UnitValue = versa3dSetting.getSettingValue('Versa3d','unit')
         self.assertEqual('mm',UnitValue)
@@ -39,7 +39,7 @@ class TestConfig(unittest.TestCase):
     def test_ModifyConfig(self):
         configObject = vc.config(self.testFileFolder)
 
-        versa3dSetting = configObject.getVersa3dSettings()
+        versa3dSetting = configObject.getSettings('Versa3dSettings')
 
         versa3dSetting.setSettingValue('Versa3d','unit','inch')
 
@@ -50,10 +50,7 @@ class TestConfig(unittest.TestCase):
     def test_ConfigCreation(self):
         configObject = vc.config(self.testFileFolder)
 
-        configObject.saveVersa3dSettings()
-        configObject.savePrintSettings()
-        configObject.savePrinterSettings()
-        configObject.savePrinterHeadSettings()
+        configObject.saveAll()
         
         listOfFolder = ["Versa3dSettings", "PrintSettings", "PrinterSettings", "PrintHeadSettings"]
         
@@ -64,14 +61,14 @@ class TestConfig(unittest.TestCase):
 
     def test_SaveConfig(self):
         configObject = vc.config(self.testFileFolder)
-        versa3dSetting = configObject.getVersa3dSettings()
+        versa3dSetting = configObject.getSettings('Versa3dSettings')
         versa3dSetting.setSettingValue('Versa3d','unit','inch')
 
-        configObject.saveVersa3dSettings("newSetting")
+        configObject.saveSettings('Versa3dSettings',"newSetting")
 
         configObject2 = vc.config(self.testFileFolder)
-        configObject2.readVersa3dSettings("newSetting")
-        versa3dSetting2 = configObject2.getVersa3dSettings()
+        configObject2.readSettings('Versa3dSettings',"newSetting")
+        versa3dSetting2 = configObject2.getSettings('Versa3dSettings')
         value = versa3dSetting2.getSettingValue('Versa3d','unit')
         self.assertEqual('inch', value)
         

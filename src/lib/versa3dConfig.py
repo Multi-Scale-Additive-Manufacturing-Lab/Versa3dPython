@@ -41,6 +41,7 @@ class Versa3dOption():
         self.category = ""
         self.subcategory = ""
         self.type = ""
+        self._QObject = None
 
         self.min = None
         self.max = None
@@ -52,6 +53,9 @@ class Versa3dOption():
     
     def setValue(self,val):
         self._value = val
+    
+    def updateValue(self):
+        pass
 
 class Versa3dEnumOption(Versa3dOption):
     def __init__(self,Enum,default_val):
@@ -180,7 +184,16 @@ class Print_Settings(setting):
 
         FillEnum = {'fblack':'full black', 'fcheckerBoard':'checker board'}
         self.BinderJet['fill'] = Versa3dEnumOption(FillEnum,'fblack')
+        self.BinderJet['fill'].label = 'Fill Pattern'
+        self.BinderJet['fill'].category = 'InFill'
+        self.BinderJet['fill'].subcategory = 'Fill'
+        self.BinderJet['fill'].type = 'StringEnum'
+
         self.BinderJet['layer_thickness'] = Versa3dOption(0.1)
+        self.BinderJet['layer_thickness'].label = 'layer thickness'
+        self.BinderJet['layer_thickness'].category = 'InFill'
+        self.BinderJet['layer_thickness'].type = 'float'
+        self.BinderJet['layer_thickness'].sidetext = 'mm'
 
     
     @saveWrapperConfig
@@ -242,7 +255,6 @@ class Printheads_Settings(setting):
         output = {'Syringe': self.Syringe,'Imtech':self.Imtech}
         return (output,name)
 
-
 class config():
     
     def __init__(self,ConfigFolderPath):
@@ -264,47 +276,22 @@ class config():
         else:
             return None
     
-    def getVersa3dSettings(self):
-        return self.Versa3dSettings
+    def getSettings(self,Name):
+        return getattr(self,Name)
     
-    def getPrintSettings(self):
-        return self.PrintSettings
-    
-    def getPrinterSettings(self):
-        return self.PrinterSettings
+    def saveSettings(self,SettingName,FileName = "Default"):
+        section = getattr(self,SettingName)
+        section.writeFile(FileName)
 
-    def getPrinterHeadSettings(self):
-        return self.PrintHeadSettings
-
-    def saveVersa3dSettings(self,name = "Default"):
+    def saveAll(self,name = "Default"):
         self.Versa3dSettings.writeFile(name)
-    
-    def savePrintSettings(self,name = "Default"):
         self.PrintSettings.writeFile(name)
-    
-    def savePrinterSettings(self,name = "Default"):
         self.PrinterSettings.writeFile(name)
-    
-    def savePrinterHeadSettings(self,name = "Default"):
         self.PrintHeadSettings.writeFile(name)
     
-    def readVersa3dSettings(self,name = "Default"):
-        self.Versa3dSettings.readConfigFile(name)
-    
-    def readPrintSettings(self,name = "Default"):
-        self.PrintSettings.readConfigFile(name)
-    
-    def readPrinterSettings(self,name = "Default"):
-        self.PrinterSettings.readConfigFile(name)
-    
-    def readPrinterHeadSettings(self,name = "Default"):
-        self.PrintHeadSettings.readConfigFile(name)
-
-    def saveConfig(self):
-        self.Versa3dSettings.writeFile()
-        self.PrintSettings.writeFile()
-        self.PrinterSettings.writeFile()
-        self.PrintHeadSettings.writeFile()
+    def readSettings(self,SettingName,name):
+        section = getattr(self,SettingName)
+        section.readConfigFile(name)
     
     def getVersa3dSetting(self,tag):
         return self.Versa3dSettings.getSettingValue('Versa3d',tag)
