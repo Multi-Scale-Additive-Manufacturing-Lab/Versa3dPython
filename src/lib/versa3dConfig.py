@@ -162,7 +162,7 @@ class Versa3d_Settings(setting):
         self.Versa3d['unit'] = Versa3dOption('mm')
         self.Versa3d['machine'] = Versa3dOption('BMVlasea')
         self.Versa3d['printhead'] = Versa3dOption('Imtech')
-        self.Versa3d['machineyype'] = Versa3dOption('BinderJet')
+        self.Versa3d['machinetype'] = Versa3dOption('BinderJet')
         self.Versa3d['gcodeflavor'] = Versa3dOption('BMVlasea')
         self.Versa3d['imgbmvlasealocalpath'] = Versa3dOption(True)
 

@@ -36,26 +36,26 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self._Folderpath = FolderPath
         self._Slicer = None
 
-        self.gantryXYVelocity = config.getMachineSetting('gantryXYVelocity')
-        self.H = config.getMachineSetting('Work_Distance_Roller_Substrate')
-        self.S = config.getMachineSetting('Powder_Loss')
-        self.W = config.getMachineSetting('Printing_Height_Offset')
-        self.feedBedVelocity = config.getMachineSetting('feedBedVelocity')
-        self.buildBedVelocity = config.getMachineSetting('buildBedVelocity')
-        self.DefaultPrintHead = config.getMachineSetting('DefaultPrinthead')
-        self.DefaultPrintVelocity = config.getPrintHeadSetting('PrintheadVelocity')
-        self.DefaultPrintHeadAddr = config.getMachineSetting('DefaultPrintHeadAddr')
+        self.gantryXYVelocity = config.getMachineSetting('gantryxyvelocity')
+        self.H = config.getMachineSetting('work_distance_roller_substrate')
+        self.S = config.getMachineSetting('powder_loss')
+        self.W = config.getMachineSetting('printing_height_offset')
+        self.feedBedVelocity = config.getMachineSetting('feedbedvelocity')
+        self.buildBedVelocity = config.getMachineSetting('buildbedvelocity')
+        self.DefaultPrintHead = config.getMachineSetting('defaultprinthead')
+        self.DefaultPrintVelocity = config.getPrintHeadSetting('printheadvelocity')
+        self.DefaultPrintHeadAddr = config.getMachineSetting('defaultprintheadaddr')
 
-        self.NumberOfBuffer = config.getPrintHeadSetting('BufferNumber')
-        self.XImageSizeLimit = config.getPrintHeadSetting('BufferSizeLimit')[0]
+        self.NumberOfBuffer = config.getPrintHeadSetting('buffernumber')
+        self.XImageSizeLimit = config.getPrintHeadSetting('buffersizelimit')[0]
 
-        self.FeedBedSel = config.getMachineSetting('FeedBedSel')
+        self.FeedBedSel = config.getMachineSetting('feedbedsel')
 
-        self.rollerLinVel = config.getMachineSetting('RollerLinVel')
-        self.rollerRotVel = config.getMachineSetting('RollerRotVel')
+        self.rollerLinVel = config.getMachineSetting('rollerlinvel')
+        self.rollerRotVel = config.getMachineSetting('rollerrotvel')
         
         self.Thickness = config.getPrintSetting('layer_thickness')
-        self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('ImgBMVLaseaLocalPath')
+        self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmvlasealocalpath')
 
     def SetInput(self,slicer):
         """Set Input slicer
