@@ -8,7 +8,7 @@ from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
 import src.GUI.res_rc
 
 from src.lib.command import stlImportCommand
-from src.lib.versa3dConfig import config , FillEnum
+from src.lib.versa3dConfig import config
 import src.lib.slicing as sl
 from collections import deque
 import numpy as np
