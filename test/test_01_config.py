@@ -24,13 +24,13 @@ class TestConfig(unittest.TestCase):
         printBedValue = printerSetting.getSettingValue('BMVlasea','printbedsize')
         self.assertEqual([30,30], printBedValue)
 
-        buffersizeLimit = printheadSetting.getSettingValue('Imtech','BufferSizeLimit')
+        buffersizeLimit = printheadSetting.getSettingValue('Imtech','buffersizelimit')
         self.assertEqual([150,-1], buffersizeLimit)
 
         FillValue = SliceSetting.getSettingValue('BinderJet','layer_thickness')
         self.assertEqual(0.1, FillValue)
 
-        gantryXYVelocity = printerSetting.getSettingValue('BMVlasea','gantryXYVelocity')
+        gantryXYVelocity = printerSetting.getSettingValue('BMVlasea','gantryxyvelocity')
         self.assertEqual([100,100],gantryXYVelocity)
 
         printBedValue = configObject.getMachineSetting('printbedsize')
