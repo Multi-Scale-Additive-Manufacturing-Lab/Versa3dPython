@@ -9,28 +9,6 @@ import fnmatch
 from vtk.util import keys
 
 
-def saveWrapperConfig(fun):
-        
-    def wrapped(self,name):
-        output,fileName = fun(self,name)
-
-        configFile = open(os.path.join(self._FolderPath,fileName+".ini"), 'w')
-        configParse = configparser.ConfigParser()
-        
-        for key, OptionDic in output.items():
-            configParse[key] = {}
-            section = configParse[key]
-            for optiontag,option in OptionDic.items():
-                section[optiontag] = str(option.getValue())
-
-        configParse.write(configFile)
-        configFile.close()
-
-        if(not fileName in self._FileDict):
-            self._FileDict[fileName] = os.path.realpath(configFile.name)
-
-    return wrapped
-
 class Versa3dOption():
     def __init__(self,def_value):
         self._value = def_value
@@ -53,6 +31,7 @@ class Versa3dOption():
     
     def setValue(self,val):
         self._value = val
+        return self._value
     
     def updateValue(self):
         pass
@@ -76,6 +55,7 @@ class setting():
         self._FolderPath = FolderPath
         self._FileDict = self.globFile()
         self._ConfigName = 'Default'
+        self._settingList = {}
     
     def globFile(self):
 
@@ -87,13 +67,17 @@ class setting():
         
         return fileDict
 
-    def getSettingValue(self,Section,tag):
-        dic = getattr(self,Section)
-        return dic[tag].getValue()
+    def getSettingValue(self,tag):
+        if tag in self._settingList:
+            return self._settingList[tag].getValue()
+        else:
+            return None
     
-    def setSettingValue(self,Section,tag,value):
-        dic = getattr(self,Section)
-        dic[tag].setValue(value)
+    def setSettingValue(self,tag,value):
+        if tag in self._settingList:
+            return self._settingList[tag].setValue(value)
+        else:
+            return None
 
     def readConfigFile(self,Name = None):
 
@@ -110,8 +94,9 @@ class setting():
 
             for section in configParse.sections():
                 for key in configParse[section]:
-                    configdic = getattr(self, section)
-                    configdic[key].setValue(self._unpackStr(configParse[section][key]))
+
+                    if key in self._settingList:
+                        self._settingList[key].setValue(self._unpackStr(configParse[section][key]))
 
             configFile.close()
     
@@ -153,107 +138,152 @@ class setting():
         
         return newArray
     
-    def writeFile(self,name):
-        pass
+    def writeFile(self,fileName):
+        configFile = open(os.path.join(self._FolderPath,fileName+".ini"), 'w')
+        configParse = configparser.ConfigParser()
+        
+        for key, item in self._settingList.items():
+            category = item.category
+            
+            if(not configParse.has_section(category)):
+                configParse.add_section(category)
+
+            configParse[category][key] = str(item.getValue())
+
+        configParse.write(configFile)
+        configFile.close()
+
+        if(not fileName in self._FileDict):
+            self._FileDict[fileName] = os.path.realpath(configFile.name)
     
 
 class Versa3d_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"Versa3dSettings"))
 
-        self.Versa3d = {}
+        self._settingList['unit'] = Versa3dOption('mm')
+        self._settingList['unit'].category = 'general'
 
-        self.Versa3d['unit'] = Versa3dOption('mm')
-        self.Versa3d['machine'] = Versa3dOption('BMVlasea')
-        self.Versa3d['printhead'] = Versa3dOption('Imtech')
-        self.Versa3d['machinetype'] = Versa3dOption('BinderJet')
-        self.Versa3d['gcodeflavor'] = Versa3dOption('BMVlasea')
-        self.Versa3d['imgbmvlasealocalpath'] = Versa3dOption(True)
+        self._settingList['machine'] = Versa3dOption('BMVlasea')
+        self._settingList['machine'].category = 'general'
 
+        self._settingList['printhead'] = Versa3dOption('Imtech')
+        self._settingList['printhead'].category = 'general'
 
-    @saveWrapperConfig
-    def writeFile(self, name):
-        output = {'Versa3d':self.Versa3d}
-        return (output,name)
+        self._settingList['machinetype'] = Versa3dOption('BinderJet')
+        self._settingList['machinetype'].category = 'general'
+
+        self._settingList['gcodeflavor'] = Versa3dOption('BMVlasea')
+        self._settingList['gcodeflavor'].category = 'general'
+
+        self._settingList['imgbmvlasealocalpath'] = Versa3dOption(True)
+        self._settingList['imgbmvlasealocalpath'].category = 'general'
+
 
 class Print_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"PrintSettings"))
-        #self.BinderJet = {'fill': FillEnum['full black'], 'layer_thickness': 0.1}
-        self.BinderJet = {}
 
         FillEnum = {'fblack':'full black', 'fcheckerBoard':'checker board'}
-        self.BinderJet['fill'] = Versa3dEnumOption(FillEnum,'fblack')
-        self.BinderJet['fill'].label = 'Fill Pattern'
-        self.BinderJet['fill'].category = 'InFill'
-        self.BinderJet['fill'].subcategory = 'Fill'
-        self.BinderJet['fill'].type = 'StringEnum'
+        self._settingList['fill'] = Versa3dEnumOption(FillEnum,'fblack')
+        self._settingList['fill'].label = 'Fill Pattern'
+        self._settingList['fill'].category = 'BinderJet'
+        self._settingList['fill'].subcategory = 'InFill'
+        self._settingList['fill'].type = 'StringEnum'
 
-        self.BinderJet['layer_thickness'] = Versa3dOption(0.1)
-        self.BinderJet['layer_thickness'].label = 'layer thickness'
-        self.BinderJet['layer_thickness'].category = 'InFill'
-        self.BinderJet['layer_thickness'].type = 'float'
-        self.BinderJet['layer_thickness'].sidetext = 'mm'
+        self._settingList['layer_thickness'] = Versa3dOption(0.1)
+        self._settingList['layer_thickness'].label = 'layer thickness'
+        self._settingList['layer_thickness'].category = 'BinderJet'
+        self._settingList['layer_thickness'].subcategory = 'InFill'
+        self._settingList['layer_thickness'].type = 'float'
+        self._settingList['layer_thickness'].sidetext = 'mm'
 
-    
-    @saveWrapperConfig
-    def writeFile(self, name):
-        output = {'BinderJet': self.BinderJet }
-        return (output, name)
 
 class Printers_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"PrinterSettings"))
 
-        self.BMVlasea = {}
-        self.BMVlasea['printbedsize'] = Versa3dOption([30.0,30.0])
-        self.BMVlasea['buildheight'] = Versa3dOption(50.0)
-        self.BMVlasea['gantryxyvelocity'] = Versa3dOption([100.0,100.0])
-        self.BMVlasea['work_distance_roller_substrate'] = Versa3dOption(1.1)
-        self.BMVlasea['printing_height_offset'] = Versa3dOption(0.05)
-        self.BMVlasea['powder_loss'] = Versa3dOption(0.1)
+        self._settingList['printbedsize'] = Versa3dOption([30.0,30.0])
+        self._settingList['printbedsize'].category = "BMVLasea"
 
-        self.BMVlasea['feedbedvelocity'] = Versa3dOption(1)
-        self.BMVlasea['feedbedvelocity'].setValue(10.0)
+        self._settingList['buildheight'] = Versa3dOption(50.0)
+        self._settingList['buildheight'].category = "BMVLasea"
 
-        self.BMVlasea['buildbedvelocity'] = Versa3dOption(10.0)
-        self.BMVlasea['defaultprinthead'] = Versa3dOption(1)
-        self.BMVlasea['defaultprintheadaddr'] = Versa3dOption(1)
-        self.BMVlasea['rollerlinvel'] = Versa3dOption(10.0)
-        self.BMVlasea['rollerrotvel'] = Versa3dOption(10.0)
-        self.BMVlasea['feedbedsel'] = Versa3dOption(0)
+        self._settingList['gantryxyvelocity'] = Versa3dOption([100.0,100.0])
+        self._settingList['gantryxyvelocity'].category = "BMVLasea"
 
+        self._settingList['work_distance_roller_substrate'] = Versa3dOption(1.1)
+        self._settingList['work_distance_roller_substrate'].category = "BMVLasea"
 
-    @saveWrapperConfig
-    def writeFile(self, name):
-        output = {'BMVlasea': self.BMVlasea}
-        return (output, name)
+        self._settingList['printing_height_offset'] = Versa3dOption(0.05)
+        self._settingList['printing_height_offset'].category = "BMVLasea"
+        
+        self._settingList['powder_loss'] = Versa3dOption(0.1)
+        self._settingList['powder_loss'].category = "BMVLasea"
+
+        self._settingList['feedbedvelocity'] = Versa3dOption(1)
+        self._settingList['feedbedvelocity'].setValue(10.0)
+        self._settingList['feedbedvelocity'].category = "BMVLasea"
+
+        self._settingList['buildbedvelocity'] = Versa3dOption(10.0)
+        self._settingList['buildbedvelocity'].category = "BMVLasea"
+
+        self._settingList['defaultprinthead'] = Versa3dOption(1)
+        self._settingList['defaultprinthead'].category = "BMVLasea"
+
+        self._settingList['defaultprintheadaddr'] = Versa3dOption(1)
+        self._settingList['defaultprintheadaddr'].category = "BMVLasea"
+
+        self._settingList['rollerlinvel'] = Versa3dOption(10.0)
+        self._settingList['rollerlinvel'].category = "BMVLasea"
+
+        self._settingList['rollerrotvel'] = Versa3dOption(10.0)
+        self._settingList['rollerrotvel'].category = "BMVLasea"
+
+        self._settingList['feedbedsel'] = Versa3dOption(0)
+        self._settingList['feedbedsel'].category = "BMVLasea"
+
 
 class Printheads_Settings(setting):
     def __init__(self,FilePath):
         super().__init__(os.path.join(FilePath,"PrintHeadSettings"))
+        
+        self._settingList['syringe_motor_velocity'] = Versa3dOption(5)
+        self._settingList['syringe_motor_velocity'].category = "Syringe"
 
-        self.Syringe = {}
+        self._settingList['syringepressure'] = Versa3dOption(20)
+        self._settingList['syringepressure'].category = "Syringe"
 
-        self.Syringe['syringe_motor_velocity'] = Versa3dOption(5)
-        self.Syringe['syringepressure'] = Versa3dOption(20)
-        self.Syringe['syringevacuum'] = Versa3dOption(3)
-        self.Syringe['syringelinearvelocity'] = Versa3dOption(1)
-        self.Syringe['syringeworkdistance'] = Versa3dOption(1)
+        self._settingList['syringevacuum'] = Versa3dOption(3)
+        self._settingList['syringevacuum'].category = "Syringe"
 
-        self.Imtech = {}
-        self.Imtech['prinheadvppvoltage'] = Versa3dOption(1)
-        self.Imtech['printheadpulsewidth'] = Versa3dOption(1)
-        self.Imtech['printheadvelocity'] = Versa3dOption(25.4)
-        self.Imtech['nprintswathe'] = Versa3dOption(1)
-        self.Imtech['buffernumber'] = Versa3dOption(16)
-        self.Imtech['buffersizelimit'] = Versa3dOption([150,-1])
-        self.Imtech['dpi'] = Versa3dOption([600,600])
+        self._settingList['syringelinearvelocity'] = Versa3dOption(1)
+        self._settingList['syringelinearvelocity'].category = "Syringe"
 
-    @saveWrapperConfig
-    def writeFile(self,name):
-        output = {'Syringe': self.Syringe,'Imtech':self.Imtech}
-        return (output,name)
+        self._settingList['syringeworkdistance'] = Versa3dOption(1)
+        self._settingList['syringeworkdistance'].category = "Syringe"
+
+        self._settingList['prinheadvppvoltage'] = Versa3dOption(1)
+        self._settingList['prinheadvppvoltage'].category = "Imtech"
+
+        self._settingList['printheadpulsewidth'] = Versa3dOption(1)
+        self._settingList['printheadpulsewidth'].category = "Imtech"
+
+        self._settingList['printheadvelocity'] = Versa3dOption(25.4)
+        self._settingList['printheadvelocity'].category = "Imtech"
+
+        self._settingList['nprintswathe'] = Versa3dOption(1)
+        self._settingList['nprintswathe'].category = "Imtech"
+
+        self._settingList['buffernumber'] = Versa3dOption(16)
+        self._settingList['buffernumber'].category = "Imtech"
+
+        self._settingList['buffersizelimit'] = Versa3dOption([150,-1])
+        self._settingList['buffersizelimit'].category = "Imtech"
+
+        self._settingList['dpi'] = Versa3dOption([600,600])
+        self._settingList['dpi'].category = "Imtech"
+
 
 class config():
     
@@ -294,19 +324,16 @@ class config():
         section.readConfigFile(name)
     
     def getVersa3dSetting(self,tag):
-        return self.Versa3dSettings.getSettingValue('Versa3d',tag)
+        return self.Versa3dSettings.getSettingValue(tag)
     
     def getMachineSetting(self,tag):
-        MachineName = self.Versa3dSettings.getSettingValue('Versa3d','machine')
-        return self.PrinterSettings.getSettingValue(MachineName,tag)
+        return self.PrinterSettings.getSettingValue(tag)
     
     def getPrintHeadSetting(self,tag):
-        Printhead = self.Versa3dSettings.getSettingValue('Versa3d','printhead')
-        return self.PrintHeadSettings.getSettingValue(Printhead,tag)
+        return self.PrintHeadSettings.getSettingValue(tag)
     
     def getPrintSetting(self,tag):
-        ProcessType = self.Versa3dSettings.getSettingValue('Versa3d','machinetype')
-        return self.PrintSettings.getSettingValue(ProcessType,tag)
+        return self.PrintSettings.getSettingValue(tag)
            
 
     

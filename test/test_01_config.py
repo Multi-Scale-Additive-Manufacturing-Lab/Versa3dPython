@@ -18,19 +18,19 @@ class TestConfig(unittest.TestCase):
         printheadSetting = configObject.getSettings('PrintHeadSettings')
         SliceSetting = configObject.getSettings('PrintSettings')
 
-        UnitValue = versa3dSetting.getSettingValue('Versa3d','unit')
+        UnitValue = versa3dSetting.getSettingValue('unit')
         self.assertEqual('mm',UnitValue)
 
-        printBedValue = printerSetting.getSettingValue('BMVlasea','printbedsize')
+        printBedValue = printerSetting.getSettingValue('printbedsize')
         self.assertEqual([30,30], printBedValue)
 
-        buffersizeLimit = printheadSetting.getSettingValue('Imtech','buffersizelimit')
+        buffersizeLimit = printheadSetting.getSettingValue('buffersizelimit')
         self.assertEqual([150,-1], buffersizeLimit)
 
-        FillValue = SliceSetting.getSettingValue('BinderJet','layer_thickness')
+        FillValue = SliceSetting.getSettingValue('layer_thickness')
         self.assertEqual(0.1, FillValue)
 
-        gantryXYVelocity = printerSetting.getSettingValue('BMVlasea','gantryxyvelocity')
+        gantryXYVelocity = printerSetting.getSettingValue('gantryxyvelocity')
         self.assertEqual([100,100],gantryXYVelocity)
 
         printBedValue = configObject.getMachineSetting('printbedsize')
@@ -41,9 +41,9 @@ class TestConfig(unittest.TestCase):
 
         versa3dSetting = configObject.getSettings('Versa3dSettings')
 
-        versa3dSetting.setSettingValue('Versa3d','unit','inch')
+        versa3dSetting.setSettingValue('unit','inch')
 
-        value = versa3dSetting.getSettingValue('Versa3d','unit')
+        value = versa3dSetting.getSettingValue('unit')
 
         self.assertEqual('inch', value)
     
@@ -62,14 +62,14 @@ class TestConfig(unittest.TestCase):
     def test_SaveConfig(self):
         configObject = vc.config(self.testFileFolder)
         versa3dSetting = configObject.getSettings('Versa3dSettings')
-        versa3dSetting.setSettingValue('Versa3d','unit','inch')
+        versa3dSetting.setSettingValue('unit','inch')
 
         configObject.saveSettings('Versa3dSettings',"newSetting")
 
         configObject2 = vc.config(self.testFileFolder)
         configObject2.readSettings('Versa3dSettings',"newSetting")
         versa3dSetting2 = configObject2.getSettings('Versa3dSettings')
-        value = versa3dSetting2.getSettingValue('Versa3d','unit')
+        value = versa3dSetting2.getSettingValue('unit')
         self.assertEqual('inch', value)
         
     def tearDown(self):
