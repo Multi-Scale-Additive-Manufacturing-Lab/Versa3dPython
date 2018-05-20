@@ -20,7 +20,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow,self).__init__()
         
         self._config = config('./config')
-        self.mapPage = None
+        self.mapPage = {}
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
@@ -123,11 +123,12 @@ class MainWindow(QtWidgets.QMainWindow):
             leftSide.addLayout(TopLeftSideLayout)
 
             CategoryList = QtWidgets.QListWidget()
+            CategoryList.itemClicked.connect(self.switchPage)
+
             leftSide.addWidget(CategoryList)
             
             setting = self._config.getSettings(settingName)
 
-            self.mapPage = {}
             pageIndex = 0
             for key, item in setting.getSettingList().items():
                 category = item.category
@@ -135,14 +136,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 if(len(CategoryList.findItems(category,QtCore.Qt.MatchFixedString)) == 0 and category != "" ):
                     CategoryList.addItem(category)
                     subPage = QtWidgets.QWidget()
-                    self.mapPage[category] = pageIndex
+                    self.mapPage[category] = (stackedWidget,pageIndex)
                     pageIndex = pageIndex + 1
 
                     stackedWidget.addWidget(subPage)
                     subPageLayout = QtWidgets.QVBoxLayout()
                     subPage.setLayout(subPageLayout)
                 
-                subPage = stackedWidget.widget(self.mapPage[category])
+                subPage = stackedWidget.widget(self.mapPage[category][1])
                 self.populatePage(item,subPage)
 
             page.setLayout(layout)
@@ -178,6 +179,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if(sidetext != ""):
             layout.addWidget(QtWidgets.QLabel(sidetext,page))
+    
+    @pyqtSlot(QtWidgets.QListWidgetItem)
+    def switchPage(self,item):
+        category = item.text()
+        stackedWidget, index = self.mapPage[category]
+        stackedWidget.setCurrentIndex(index)
 
 
     def setUpScene(self):

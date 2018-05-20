@@ -342,7 +342,6 @@ class Printheads_Settings(setting):
         self._settingList['dpi'].type = '2dPoint'
         self._settingList['dpi'].label = 'dpi'
 
-
 class config():
     
     def __init__(self,ConfigFolderPath):
