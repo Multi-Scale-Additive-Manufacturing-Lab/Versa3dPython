@@ -67,6 +67,9 @@ class setting():
         
         return fileDict
 
+    def getSettingList(self):
+        return self._settingList
+
     def getSettingValue(self,tag):
         if tag in self._settingList:
             return self._settingList[tag].getValue()
@@ -189,7 +192,7 @@ class Print_Settings(setting):
         self._settingList['fill'].label = 'Fill Pattern'
         self._settingList['fill'].category = 'BinderJet'
         self._settingList['fill'].subcategory = 'InFill'
-        self._settingList['fill'].type = 'StringEnum'
+        self._settingList['fill'].type = 'Enum'
 
         self._settingList['layer_thickness'] = Versa3dOption(0.1)
         self._settingList['layer_thickness'].label = 'layer thickness'
@@ -205,84 +208,139 @@ class Printers_Settings(setting):
 
         self._settingList['printbedsize'] = Versa3dOption([30.0,30.0])
         self._settingList['printbedsize'].category = "BMVLasea"
+        self._settingList['printbedsize'].type = "2dPoint"
+        self._settingList['printbedsize'].label = 'Print Bed Size'
+        self._settingList['printbedsize'].sidetext = 'mm'
 
         self._settingList['buildheight'] = Versa3dOption(50.0)
         self._settingList['buildheight'].category = "BMVLasea"
+        self._settingList['buildheight'].type = 'float'
+        self._settingList['buildheight'].label = 'Build Height'
+        self._settingList['buildheight'].sidetext = 'mm'
 
         self._settingList['gantryxyvelocity'] = Versa3dOption([100.0,100.0])
         self._settingList['gantryxyvelocity'].category = "BMVLasea"
+        self._settingList['gantryxyvelocity'].type = '2dPoint'
+        self._settingList['gantryxyvelocity'].label = 'gantry xy velocity'
+        self._settingList['gantryxyvelocity'].sidetext = 'mm'
 
         self._settingList['work_distance_roller_substrate'] = Versa3dOption(1.1)
         self._settingList['work_distance_roller_substrate'].category = "BMVLasea"
+        self._settingList['work_distance_roller_substrate'].label = 'work distance roller substrate'
+        self._settingList['work_distance_roller_substrate'].type = 'float'
 
         self._settingList['printing_height_offset'] = Versa3dOption(0.05)
         self._settingList['printing_height_offset'].category = "BMVLasea"
+        self._settingList['printing_height_offset'].type = 'float'
+        self._settingList['printing_height_offset'].label = 'print height offset'
+        self._settingList['printing_height_offset'].sidetext = 'mm'
         
         self._settingList['powder_loss'] = Versa3dOption(0.1)
         self._settingList['powder_loss'].category = "BMVLasea"
+        self._settingList['powder_loss'].type = 'float'
+        self._settingList['powder_loss'].label = 'powder loss offset'
+        self._settingList['powder_loss'].sidetext = 'mm'
 
-        self._settingList['feedbedvelocity'] = Versa3dOption(1)
+        self._settingList['feedbedvelocity'] = Versa3dOption(1.0)
         self._settingList['feedbedvelocity'].setValue(10.0)
         self._settingList['feedbedvelocity'].category = "BMVLasea"
+        self._settingList['feedbedvelocity'].type = 'float'
+        self._settingList['feedbedvelocity'].label = 'feed bed velocity'
 
         self._settingList['buildbedvelocity'] = Versa3dOption(10.0)
         self._settingList['buildbedvelocity'].category = "BMVLasea"
+        self._settingList['buildbedvelocity'].type = 'float'
+        self._settingList['buildbedvelocity'].label = 'build bed Velocity'
 
         self._settingList['defaultprinthead'] = Versa3dOption(1)
         self._settingList['defaultprinthead'].category = "BMVLasea"
+        self._settingList['defaultprinthead'].label = 'default print head'
+        self._settingList['defaultprinthead'].type = 'int'
 
         self._settingList['defaultprintheadaddr'] = Versa3dOption(1)
         self._settingList['defaultprintheadaddr'].category = "BMVLasea"
+        self._settingList['defaultprintheadaddr'].type = 'int'
+        self._settingList['defaultprintheadaddr'].label = 'default print head address'
 
         self._settingList['rollerlinvel'] = Versa3dOption(10.0)
         self._settingList['rollerlinvel'].category = "BMVLasea"
+        self._settingList['rollerlinvel'].type = 'float'
+        self._settingList['rollerlinvel'].label = 'linear roller velocity'
 
         self._settingList['rollerrotvel'] = Versa3dOption(10.0)
         self._settingList['rollerrotvel'].category = "BMVLasea"
+        self._settingList['rollerrotvel'].type = 'float'
+        self._settingList['rollerrotvel'].label = 'rotational roller velocity'
 
         self._settingList['feedbedsel'] = Versa3dOption(0)
         self._settingList['feedbedsel'].category = "BMVLasea"
+        self._settingList['feedbedsel'].type = 'int'
+        self._settingList['feedbedsel'].label = 'feed bed selection'
 
 
 class Printheads_Settings(setting):
     def __init__(self,FilePath):
         super().__init__(os.path.join(FilePath,"PrintHeadSettings"))
         
-        self._settingList['syringe_motor_velocity'] = Versa3dOption(5)
+        self._settingList['syringe_motor_velocity'] = Versa3dOption(5.0)
         self._settingList['syringe_motor_velocity'].category = "Syringe"
+        self._settingList['syringe_motor_velocity'].type = 'float'
+        self._settingList['syringe_motor_velocity'].label = 'syringe motor velocity'
 
-        self._settingList['syringepressure'] = Versa3dOption(20)
+        self._settingList['syringepressure'] = Versa3dOption(20.0)
         self._settingList['syringepressure'].category = "Syringe"
+        self._settingList['syringepressure'].type = 'float'
+        self._settingList['syringepressure'].label = 'syringe pressure'
 
-        self._settingList['syringevacuum'] = Versa3dOption(3)
+        self._settingList['syringevacuum'] = Versa3dOption(3.0)
         self._settingList['syringevacuum'].category = "Syringe"
+        self._settingList['syringevacuum'].type = 'float'
+        self._settingList['syringevacuum'].label = 'syringe vacuum'
 
-        self._settingList['syringelinearvelocity'] = Versa3dOption(1)
+        self._settingList['syringelinearvelocity'] = Versa3dOption(1.0)
         self._settingList['syringelinearvelocity'].category = "Syringe"
+        self._settingList['syringelinearvelocity'].type = 'float'
+        self._settingList['syringelinearvelocity'].label = 'syringe linear velocity'
 
-        self._settingList['syringeworkdistance'] = Versa3dOption(1)
+        self._settingList['syringeworkdistance'] = Versa3dOption(1.0)
         self._settingList['syringeworkdistance'].category = "Syringe"
+        self._settingList['syringeworkdistance'].type = 'float'
+        self._settingList['syringeworkdistance'].label = 'syringe work distance'
 
-        self._settingList['prinheadvppvoltage'] = Versa3dOption(1)
-        self._settingList['prinheadvppvoltage'].category = "Imtech"
+        self._settingList['printheadvppvoltage'] = Versa3dOption(1.0)
+        self._settingList['printheadvppvoltage'].category = "Imtech"
+        self._settingList['printheadvppvoltage'].type = 'float'
+        self._settingList['printheadvppvoltage'].label = 'print head vpp voltage'
 
         self._settingList['printheadpulsewidth'] = Versa3dOption(1)
         self._settingList['printheadpulsewidth'].category = "Imtech"
+        self._settingList['printheadpulsewidth'].type = 'float'
+        self._settingList['printheadpulsewidth'].label = 'print head pulse width'
 
         self._settingList['printheadvelocity'] = Versa3dOption(25.4)
         self._settingList['printheadvelocity'].category = "Imtech"
+        self._settingList['printheadvelocity'].type = 'float'
+        self._settingList['printheadvelocity'].label = 'print head velocity'
 
         self._settingList['nprintswathe'] = Versa3dOption(1)
         self._settingList['nprintswathe'].category = "Imtech"
+        self._settingList['nprintswathe'].type = 'int'
+        self._settingList['nprintswathe'].label = 'n print swathe'
 
         self._settingList['buffernumber'] = Versa3dOption(16)
         self._settingList['buffernumber'].category = "Imtech"
+        self._settingList['buffernumber'].type = 'int'
+        self._settingList['buffernumber'].label = 'buffer number'
 
         self._settingList['buffersizelimit'] = Versa3dOption([150,-1])
         self._settingList['buffersizelimit'].category = "Imtech"
+        self._settingList['buffersizelimit'].type = '2dPoint'
+        self._settingList['buffersizelimit'].label = 'buffer size limit'
 
         self._settingList['dpi'] = Versa3dOption([600,600])
         self._settingList['dpi'].category = "Imtech"
+        self._settingList['dpi'].type = '2dPoint'
+        self._settingList['dpi'].label = 'dpi'
 
 
 class config():
@@ -296,9 +354,6 @@ class config():
 
         self._listOfSetting = [self.Versa3dSettings,self.PrintSettings,self.PrinterSettings,self.PrintHeadSettings]
         self.ActorKey = keys.MakeKey(keys.StringKey,"Type","Actor")
-
-        for setting in self._listOfSetting:
-            setting.readConfigFile()
 
     def getKey(self,Name,Class):
         if(Name =="Type" and Class == "Actor"):

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QObject, pyqtSignal,pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+import PyQt5.QtCore as QtCore
 import vtk
 
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
@@ -18,6 +20,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow,self).__init__()
         
         self._config = config('./config')
+        self.mapPage = None
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
@@ -79,13 +82,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def InitSettingTab(self):
         
-        for tabName in ["Print Setting", "PrintHead","Printer"]:
+        mapSettingTabName = {'PrintSettings':"Print Setting",
+                               'PrintHeadSettings':"PrintHead",
+                               'PrinterSettings':"Printer"}
+
+        for settingName,tabName in mapSettingTabName.items():
             page = QtWidgets.QWidget()
             self.ui.MainViewTab.addTab(page,tabName)
 
             layout = QtWidgets.QHBoxLayout()
             leftSide = QtWidgets.QVBoxLayout()
             rightSide = QtWidgets.QHBoxLayout()
+
+            stackedWidget = QtWidgets.QStackedWidget()
+            rightSide.addWidget(stackedWidget)
 
             PageSize = page.size()
             RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32,5)
@@ -114,10 +124,62 @@ class MainWindow(QtWidgets.QMainWindow):
 
             CategoryList = QtWidgets.QListWidget()
             leftSide.addWidget(CategoryList)
+            
+            setting = self._config.getSettings(settingName)
+
+            self.mapPage = {}
+            pageIndex = 0
+            for key, item in setting.getSettingList().items():
+                category = item.category
+
+                if(len(CategoryList.findItems(category,QtCore.Qt.MatchFixedString)) == 0 and category != "" ):
+                    CategoryList.addItem(category)
+                    subPage = QtWidgets.QWidget()
+                    self.mapPage[category] = pageIndex
+                    pageIndex = pageIndex + 1
+
+                    stackedWidget.addWidget(subPage)
+                    subPageLayout = QtWidgets.QVBoxLayout()
+                    subPage.setLayout(subPageLayout)
+                
+                subPage = stackedWidget.widget(self.mapPage[category])
+                self.populatePage(item,subPage)
 
             page.setLayout(layout)
-
     
+    def populatePage(self,item,page):
+
+        label = item.label
+        ValType = item.type
+        sidetext = item.sidetext
+
+        layout = page.layout()
+
+        sublayout = QtWidgets.QHBoxLayout()
+
+        if(ValType == "Enum"):
+            ComboBox = QtWidgets.QComboBox(page)
+            enum = item.getEnum()
+            for key, val in enum.items():
+                ComboBox.addItem(val)
+            
+            self.addItem(label,sidetext,ComboBox,page,sublayout)
+        elif(ValType in ["float","double"]):
+            DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
+            self.addItem(label,sidetext,DoubleSpinBox,page,sublayout)            
+        
+        layout.addLayout(sublayout)
+    
+    def addItem(self,label,sidetext,QtWidget,page,layout):
+        if(label != ""):
+            layout.addWidget(QtWidgets.QLabel(label,page))
+        
+        layout.addWidget(QtWidget)
+
+        if(sidetext != ""):
+            layout.addWidget(QtWidgets.QLabel(sidetext,page))
+
+
     def setUpScene(self):
 
         #add coordinate axis
