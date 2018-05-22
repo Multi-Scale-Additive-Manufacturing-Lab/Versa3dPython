@@ -33,6 +33,9 @@ class Versa3dOption():
         self._value = val
         return self._value
     
+    def setQObject(self,obj):
+        self._QObject = obj
+    
     def updateValue(self):
         pass
 

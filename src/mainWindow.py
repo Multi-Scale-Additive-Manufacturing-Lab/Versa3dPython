@@ -163,11 +163,17 @@ class MainWindow(QtWidgets.QMainWindow):
             enum = item.getEnum()
             for key, val in enum.items():
                 ComboBox.addItem(val)
+                item.setQObject(ComboBox)
             
             self.addItem(label,sidetext,ComboBox,page,sublayout)
         elif(ValType in ["float","double"]):
             DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label,sidetext,DoubleSpinBox,page,sublayout)            
+            self.addItem(label,sidetext,DoubleSpinBox,page,sublayout)
+            item.setQObject(DoubleSpinBox)
+        elif(ValType == "int"):
+            IntSpinBox = QtWidgets.QSpinBox(page)
+            self.addItem(label, sidetext,IntSpinBox,page,sublayout)
+            item.setQObject(IntSpinBox)            
         
         layout.addLayout(sublayout)
     
@@ -185,7 +191,6 @@ class MainWindow(QtWidgets.QMainWindow):
         category = item.text()
         stackedWidget, index = self.mapPage[category]
         stackedWidget.setCurrentIndex(index)
-
 
     def setUpScene(self):
 
