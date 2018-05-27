@@ -3,14 +3,17 @@ import numpy as np
 from src.lib.versa3dConfig import config
 import math
 
-def slicerFactory(type, config):
-    
-    if('black' == type):
-        return FullBlackImageSlicer(config)
-    elif('checker_board'==type):
-        return CheckerBoardImageSlicer(config)
-    else:
-        return None
+def slicerFactory(config):
+
+    if(config != None):
+        type = config.getPrintSetting('fill')
+
+        if('fblack' == type):
+            return FullBlackImageSlicer(config)
+        elif('checker_board'==type):
+            return CheckerBoardImageSlicer(config)
+        else:
+            return None
  
 class VoxelSlicer():
     def __init__(self, config):

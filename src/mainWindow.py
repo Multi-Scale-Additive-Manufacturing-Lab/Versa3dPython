@@ -52,6 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionCamera_Mode.triggered.connect(self.SetCameraMode)
         self.ui.actionSelection_Mode.triggered.connect(self.SetSelectionMode)
         self.ui.NumLayerSlider.valueChanged.connect(self.ChangeSliceDisplayed)
+        self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
         
         self.setUpScene()
         self._ImageMapper = vtk.vtkImageSliceMapper()
@@ -153,6 +154,7 @@ class MainWindow(QtWidgets.QMainWindow):
         label = item.label
         ValType = item.type
         sidetext = item.sidetext
+        default_value = item.default_value
 
         layout = page.layout()
 
@@ -162,26 +164,37 @@ class MainWindow(QtWidgets.QMainWindow):
             ComboBox = QtWidgets.QComboBox(page)
             enum = item.getEnum()
             for key, val in enum.items():
-                ComboBox.addItem(val)
-                item.setQObject(ComboBox)
-            
-            self.addItem(label,sidetext,ComboBox,page,sublayout)
+                ComboBox.addItem(key)
+
+            item.setQObject(ComboBox)            
+            self.addItem(label,sidetext,default_value,[ComboBox],page,sublayout)
+
         elif(ValType in ["float","double"]):
             DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label,sidetext,DoubleSpinBox,page,sublayout)
+            self.addItem(label,sidetext,default_value,[DoubleSpinBox],page,sublayout)
             item.setQObject(DoubleSpinBox)
+
         elif(ValType == "int"):
             IntSpinBox = QtWidgets.QSpinBox(page)
-            self.addItem(label, sidetext,IntSpinBox,page,sublayout)
-            item.setQObject(IntSpinBox)            
+            self.addItem(label, sidetext,default_value,[IntSpinBox],page,sublayout)
+            item.setQObject(IntSpinBox)
+
+        elif(ValType == "2dPoint"):
+            listOfQtWidget = []
+            for i in range(0,2):
+                DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
+                listOfQtWidget.append(DoubleSpinBox)
+
+            self.addItem(label,sidetext,default_value,listOfQtWidget,page,sublayout)         
         
         layout.addLayout(sublayout)
     
-    def addItem(self,label,sidetext,QtWidget,page,layout):
+    def addItem(self,label,sidetext,default_value,ListQtWidget,page,layout):
         if(label != ""):
             layout.addWidget(QtWidgets.QLabel(label,page))
         
-        layout.addWidget(QtWidget)
+        for QtWidget in ListQtWidget:
+            layout.addWidget(QtWidget)
 
         if(sidetext != ""):
             layout.addWidget(QtWidgets.QLabel(sidetext,page))
@@ -260,8 +273,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.Image_SliceViewer.GetRenderWindow().Render()
             
     def slice_stl(self):
-        #fillSelection = self.ui.inFillComboBox.currentText()
-        slicer = sl.slicerFactory('black',self._config)
+        
+        self._config.updateAll()
+
+        slicer = sl.slicerFactory(self._config)
 
         actors = self.StlRenderer.GetActors()
         key = self._config.getKey("Type","Actor")
@@ -291,6 +306,3 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.NumLayerSlider.setValue(0)
         self.ui.ViewerTab.setCurrentIndex(1)
-
-
-

@@ -37,16 +37,20 @@ class Versa3dOption():
         self._QObject = obj
     
     def updateValue(self):
-        pass
+        print(self.label)
+        self._value = self._QObject.value()
 
 class Versa3dEnumOption(Versa3dOption):
     def __init__(self,Enum,default_val):
         super().__init__(default_val)
-
         self._list = Enum
     
     def getEnum(self):
         return self._list
+    
+    def updateValue(self):
+        val = self._QObject.currentText()
+        self._value = self._list[val]
 
 class setting():
 
@@ -162,7 +166,10 @@ class setting():
         if(not fileName in self._FileDict):
             self._FileDict[fileName] = os.path.realpath(configFile.name)
     
-
+    def updateSetting(self):
+        for key,item in self._settingList.items():
+            item.updateValue()
+    
 class Versa3d_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"Versa3dSettings"))
@@ -190,7 +197,7 @@ class Print_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"PrintSettings"))
 
-        FillEnum = {'fblack':'full black', 'fcheckerBoard':'checker board'}
+        FillEnum = {'full black': 'fblack', 'checker board': 'fcheckerBoard'}
         self._settingList['fill'] = Versa3dEnumOption(FillEnum,'fblack')
         self._settingList['fill'].label = 'Fill Pattern'
         self._settingList['fill'].category = 'BinderJet'
@@ -391,6 +398,11 @@ class config():
     
     def getPrintSetting(self,tag):
         return self.PrintSettings.getSettingValue(tag)
+    
+    def updateAll(self):
+        self.PrintSettings.updateSetting()
+        self.PrinterSettings.updateSetting()
+        self.PrintHeadSettings.updateSetting()      
            
 
     
