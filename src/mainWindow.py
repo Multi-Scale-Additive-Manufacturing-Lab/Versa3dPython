@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, pyqtSignal,pyqtSlot
+
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+import PyQt5.QtCore as QtCore
 import vtk
+
 from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
+import src.GUI.res_rc
 
 from src.lib.command import stlImportCommand
-from src.lib.versa3dConfig import config , FillEnum
+from src.lib.versa3dConfig import config
 import src.lib.slicing as sl
 from collections import deque
 import numpy as np
@@ -16,6 +20,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow,self).__init__()
         
         self._config = config('./config')
+        self.mapPage = {}
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
@@ -35,16 +40,19 @@ class MainWindow(QtWidgets.QMainWindow):
         ImageInteractorStyle = vtk.vtkInteractorStyleImage()
         self.ImageInteractor.SetInteractorStyle(ImageInteractorStyle)
 
+        #setting undo Stack size
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
-                
+
+        #connect slot        
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
-        self.ui.SliceButton.clicked.connect(self.slice_stl)
+        self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
         self.ui.actionUndo.triggered.connect(self.undo)
         self.ui.actionRedo.triggered.connect(self.redo)
         self.ui.actionCamera_Mode.triggered.connect(self.SetCameraMode)
         self.ui.actionSelection_Mode.triggered.connect(self.SetSelectionMode)
         self.ui.NumLayerSlider.valueChanged.connect(self.ChangeSliceDisplayed)
+        self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
         
         self.setUpScene()
         self._ImageMapper = vtk.vtkImageSliceMapper()
@@ -52,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.StlInteractor.Initialize()
         self.ImageInteractor.Initialize()
 
-        self.populateComboBox(FillEnum, self.ui.inFillComboBox)
+        self.InitSettingTab()
 
     
     def import_stl(self):
@@ -73,9 +81,134 @@ class MainWindow(QtWidgets.QMainWindow):
             command.redo()
             self.undoStack.append(command)
 
-    def populateComboBox(self,list,combobox):
-        combobox.addItems(list)
+    def InitSettingTab(self):
+        
+        mapSettingTabName = {'PrintSettings':"Print Setting",
+                               'PrintHeadSettings':"PrintHead",
+                               'PrinterSettings':"Printer"}
+
+        for settingName,tabName in mapSettingTabName.items():
+            page = QtWidgets.QWidget()
+            self.ui.MainViewTab.addTab(page,tabName)
+
+            layout = QtWidgets.QHBoxLayout()
+            leftSide = QtWidgets.QVBoxLayout()
+            rightSide = QtWidgets.QHBoxLayout()
+
+            stackedWidget = QtWidgets.QStackedWidget()
+            rightSide.addWidget(stackedWidget)
+
+            PageSize = page.size()
+            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32,5)
+            rightSide.addSpacerItem(RightSideSpacer)
+
+            layout.addLayout(leftSide)
+            layout.addLayout(rightSide)
+
+            TopLeftSideLayout = QtWidgets.QHBoxLayout()
+            
+            PresetSelector = QtWidgets.QComboBox()
+            SaveButton = QtWidgets.QToolButton()
+            DeleteButton = QtWidgets.QToolButton()
+
+            SaveIcon = QtGui.QIcon(":/Icon/save.svg")
+            SaveButton.setIcon(SaveIcon)
+
+            DeleteIcon = QtGui.QIcon(":/Icon/trash.svg")
+            DeleteButton.setIcon(DeleteIcon)
+
+            TopLeftSideLayout.addWidget(PresetSelector)
+            TopLeftSideLayout.addWidget(SaveButton)
+            TopLeftSideLayout.addWidget(DeleteButton)
+
+            leftSide.addLayout(TopLeftSideLayout)
+
+            CategoryList = QtWidgets.QListWidget()
+            CategoryList.itemClicked.connect(self.switchPage)
+
+            leftSide.addWidget(CategoryList)
+            
+            setting = self._config.getSettings(settingName)
+
+            pageIndex = 0
+            for key, item in setting.getSettingList().items():
+                category = item.category
+
+                if(len(CategoryList.findItems(category,QtCore.Qt.MatchFixedString)) == 0 and category != "" ):
+                    CategoryList.addItem(category)
+                    subPage = QtWidgets.QWidget()
+                    self.mapPage[category] = (stackedWidget,pageIndex)
+                    pageIndex = pageIndex + 1
+
+                    stackedWidget.addWidget(subPage)
+                    subPageLayout = QtWidgets.QVBoxLayout()
+                    subPage.setLayout(subPageLayout)
+                
+                subPage = stackedWidget.widget(self.mapPage[category][1])
+                self.populatePage(item,subPage)
+
+            page.setLayout(layout)
     
+    def populatePage(self,item,page):
+
+        label = item.label
+        ValType = item.type
+        sidetext = item.sidetext
+        default_value = item.default_value
+
+        layout = page.layout()
+
+        sublayout = QtWidgets.QHBoxLayout()
+
+        if(ValType == "Enum"):
+            ComboBox = QtWidgets.QComboBox(page)
+            enum = item.getEnum()
+            for key, val in enum.items():
+                ComboBox.addItem(key)
+
+            item.setQObject(ComboBox)            
+            self.addItem(label,sidetext,[ComboBox],page,sublayout)
+
+        elif(ValType in ["float","double"]):
+            DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
+            self.addItem(label,sidetext,[DoubleSpinBox],page,sublayout)
+            DoubleSpinBox.setValue(default_value)
+            item.setQObject(DoubleSpinBox)
+
+        elif(ValType == "int"):
+            IntSpinBox = QtWidgets.QSpinBox(page)
+            self.addItem(label, sidetext,[IntSpinBox],page,sublayout)
+            IntSpinBox.setValue(default_value)
+            item.setQObject(IntSpinBox)
+
+        elif(ValType == "2dPoint"):
+            listOfQtWidget = []
+            for i in range(0,2):
+                DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
+                listOfQtWidget.append(DoubleSpinBox)
+                DoubleSpinBox.setValue(default_value[i])
+                item.addQObject(DoubleSpinBox)
+                
+            self.addItem(label,sidetext,listOfQtWidget,page,sublayout)         
+        
+        layout.addLayout(sublayout)
+    
+    def addItem(self,label,sidetext,ListQtWidget,page,layout):
+        if(label != ""):
+            layout.addWidget(QtWidgets.QLabel(label,page))
+        
+        for QtWidget in ListQtWidget:
+            layout.addWidget(QtWidget)
+
+        if(sidetext != ""):
+            layout.addWidget(QtWidgets.QLabel(sidetext,page))
+    
+    @pyqtSlot(QtWidgets.QListWidgetItem)
+    def switchPage(self,item):
+        category = item.text()
+        stackedWidget, index = self.mapPage[category]
+        stackedWidget.setCurrentIndex(index)
+
     def setUpScene(self):
 
         #add coordinate axis
@@ -144,8 +277,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.Image_SliceViewer.GetRenderWindow().Render()
             
     def slice_stl(self):
-        fillSelection = self.ui.inFillComboBox.currentText()
-        slicer = sl.slicerFactory(fillSelection,self._config)
+        
+        self._config.updateAll()
+
+        slicer = sl.slicerFactory(self._config)
 
         actors = self.StlRenderer.GetActors()
         key = self._config.getKey("Type","Actor")
@@ -175,6 +310,3 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ui.NumLayerSlider.setValue(0)
         self.ui.ViewerTab.setCurrentIndex(1)
-
-
-

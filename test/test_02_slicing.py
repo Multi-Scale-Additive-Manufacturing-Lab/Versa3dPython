@@ -43,12 +43,11 @@ class TestSlicer(unittest.TestCase):
         
         self.stlActor.SetPosition(newPosition)
 
-    
     def test_slicerFactory(self):
-        AllBlackSlicer = slicerFactory('black',self.test_config)
+        AllBlackSlicer = slicerFactory(self.test_config)
         self.assertEqual(FullBlackImageSlicer, type(AllBlackSlicer))
 
-        NullCase = slicerFactory(None,None)
+        NullCase = slicerFactory(None)
         self.assertEqual(None,NullCase)
 
     def test_blackSlicing(self):
@@ -70,7 +69,7 @@ class TestSlicer(unittest.TestCase):
         
         BuildBedSize = self.test_config.getMachineSetting('printbedsize')
         dpi = self.test_config.getPrintHeadSetting('dpi')
-        thickness = self.test_config.getSlicingSetting('layer_thickness')
+        thickness = self.test_config.getPrintSetting('layer_thickness')
         BuildHeight = self.test_config.getMachineSetting('buildheight')
 
         BuildBedVoxSize = [0]*3

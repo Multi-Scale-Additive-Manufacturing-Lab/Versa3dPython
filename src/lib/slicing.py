@@ -3,14 +3,17 @@ import numpy as np
 from src.lib.versa3dConfig import config
 import math
 
-def slicerFactory(type, config):
-    
-    if('black' == type):
-        return FullBlackImageSlicer(config)
-    elif('checker_board'==type):
-        return CheckerBoardImageSlicer(config)
-    else:
-        return None
+def slicerFactory(config):
+
+    if(config != None):
+        type = config.getPrintSetting('fill')
+
+        if('fblack' == type):
+            return FullBlackImageSlicer(config)
+        elif('checker_board'==type):
+            return CheckerBoardImageSlicer(config)
+        else:
+            return None
  
 class VoxelSlicer():
     def __init__(self, config):
@@ -19,7 +22,7 @@ class VoxelSlicer():
         self._buildBedSizeXY = config.getMachineSetting('printbedsize')
 
         self._buildHeight = config.getMachineSetting('buildheight')
-        self._thickness = config.getSlicingSetting('layer_thickness')
+        self._thickness = config.getPrintSetting('layer_thickness')
         dpi = config.getPrintHeadSetting('dpi')
         self.listOfVoxShape = []
         self._buildBedVolPixel = [0]*3
