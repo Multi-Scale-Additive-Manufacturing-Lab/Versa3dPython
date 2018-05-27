@@ -37,7 +37,6 @@ class Versa3dOption():
         self._QObject = obj
     
     def updateValue(self):
-        print(self.label)
         self._value = self._QObject.value()
 
 class Versa3dEnumOption(Versa3dOption):
@@ -51,6 +50,18 @@ class Versa3dEnumOption(Versa3dOption):
     def updateValue(self):
         val = self._QObject.currentText()
         self._value = self._list[val]
+
+class Versa3d2dPointOption(Versa3dOption):
+    def __init__(self,default_val):
+        super().__init__(default_val)
+        self._QObject = []
+    
+    def addQObject(self,QObject):
+        self._QObject.append(QObject)
+    
+    def updateValue(self):
+        for i in range(0,2):
+           self._value[i] = self._QObject[i].value()
 
 class setting():
 
@@ -216,7 +227,7 @@ class Printers_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"PrinterSettings"))
 
-        self._settingList['printbedsize'] = Versa3dOption([30.0,30.0])
+        self._settingList['printbedsize'] = Versa3d2dPointOption([30.0,30.0])
         self._settingList['printbedsize'].category = "BMVLasea"
         self._settingList['printbedsize'].type = "2dPoint"
         self._settingList['printbedsize'].label = 'Print Bed Size'
@@ -228,7 +239,7 @@ class Printers_Settings(setting):
         self._settingList['buildheight'].label = 'Build Height'
         self._settingList['buildheight'].sidetext = 'mm'
 
-        self._settingList['gantryxyvelocity'] = Versa3dOption([100.0,100.0])
+        self._settingList['gantryxyvelocity'] = Versa3d2dPointOption([100.0,100.0])
         self._settingList['gantryxyvelocity'].category = "BMVLasea"
         self._settingList['gantryxyvelocity'].type = '2dPoint'
         self._settingList['gantryxyvelocity'].label = 'gantry xy velocity'
@@ -342,12 +353,12 @@ class Printheads_Settings(setting):
         self._settingList['buffernumber'].type = 'int'
         self._settingList['buffernumber'].label = 'buffer number'
 
-        self._settingList['buffersizelimit'] = Versa3dOption([150,-1])
+        self._settingList['buffersizelimit'] = Versa3d2dPointOption([150,-1])
         self._settingList['buffersizelimit'].category = "Imtech"
         self._settingList['buffersizelimit'].type = '2dPoint'
         self._settingList['buffersizelimit'].label = 'buffer size limit'
 
-        self._settingList['dpi'] = Versa3dOption([600,600])
+        self._settingList['dpi'] = Versa3d2dPointOption([600,600])
         self._settingList['dpi'].category = "Imtech"
         self._settingList['dpi'].type = '2dPoint'
         self._settingList['dpi'].label = 'dpi'

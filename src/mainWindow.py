@@ -167,16 +167,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 ComboBox.addItem(key)
 
             item.setQObject(ComboBox)            
-            self.addItem(label,sidetext,default_value,[ComboBox],page,sublayout)
+            self.addItem(label,sidetext,[ComboBox],page,sublayout)
 
         elif(ValType in ["float","double"]):
             DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label,sidetext,default_value,[DoubleSpinBox],page,sublayout)
+            self.addItem(label,sidetext,[DoubleSpinBox],page,sublayout)
+            DoubleSpinBox.setValue(default_value)
             item.setQObject(DoubleSpinBox)
 
         elif(ValType == "int"):
             IntSpinBox = QtWidgets.QSpinBox(page)
-            self.addItem(label, sidetext,default_value,[IntSpinBox],page,sublayout)
+            self.addItem(label, sidetext,[IntSpinBox],page,sublayout)
+            IntSpinBox.setValue(default_value)
             item.setQObject(IntSpinBox)
 
         elif(ValType == "2dPoint"):
@@ -184,12 +186,14 @@ class MainWindow(QtWidgets.QMainWindow):
             for i in range(0,2):
                 DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
                 listOfQtWidget.append(DoubleSpinBox)
-
-            self.addItem(label,sidetext,default_value,listOfQtWidget,page,sublayout)         
+                DoubleSpinBox.setValue(default_value[i])
+                item.addQObject(DoubleSpinBox)
+                
+            self.addItem(label,sidetext,listOfQtWidget,page,sublayout)         
         
         layout.addLayout(sublayout)
     
-    def addItem(self,label,sidetext,default_value,ListQtWidget,page,layout):
+    def addItem(self,label,sidetext,ListQtWidget,page,layout):
         if(label != ""):
             layout.addWidget(QtWidgets.QLabel(label,page))
         
