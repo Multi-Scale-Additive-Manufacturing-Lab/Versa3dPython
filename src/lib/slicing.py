@@ -3,6 +3,8 @@ import numpy as np
 from src.lib.versa3dConfig import config
 import math
 
+from test.debugHelper import visualizer
+
 def slicerFactory(config):
 
     if(config != None):
@@ -16,15 +18,11 @@ def slicerFactory(config):
             return None
 
 class slice():
-    def __init__(self, height,spacing, Dimensions):
+    def __init__(self, height,thickess):
         self._height = height
-        self._thickness = spacing[2]
+        self._thickness = thickess
 
-        self._image = vtk.vtkImageData()
-        self._image.SetSpacing(spacing)
-        self._image.SetDimensions(Dimensions)
-        self._image.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
-        self._image.GetPointData().GetScalars().Fill(255)
+        self._image = None
 
     def getThickness(self):
         return self._thickness
@@ -67,16 +65,36 @@ class FullBlackImageSlicer(VoxelSlicer):
 
     def __init__(self, config):
         super().__init__(config)
+        self._spacing = self._XYVoxelSize+[self._thickness]
+        self._Dim = self._buildBedVolPixel[0:2]+[1]
 
         self._cutter = vtk.vtkCutter()
-        self._cutPlane = vtk.vtkPlane()
-        self._cutPlane.SetOrigin(0,0,0)
-        self._cutPlane.SetNormal(0,0,1)
-
-        self._cutter.SetCutFunction(self._cutPlane)
 
         self._stripper = vtk.vtkStripper()
         self._stripper.SetInputConnection(self._cutter.GetOutputPort())
+
+        whiteImage = vtk.vtkImageData()
+        whiteImage.SetSpacing(self._spacing)
+        whiteImage.SetDimensions(self._Dim)
+        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
+        whiteImage.GetPointData().GetScalars().Fill(255)
+
+        self._extruder = vtk.vtkLinearExtrusionFilter()
+        self._extruder.SetScaleFactor(1.)
+        self._extruder.SetExtrusionTypeToNormalExtrusion()
+        self._extruder.SetVector(0, 0, 1)
+
+        self._poly2Sten = vtk.vtkPolyDataToImageStencil()
+        self._poly2Sten.SetTolerance(0) #important for when SetVector is 0,0,1
+        self._poly2Sten.SetOutputSpacing(self._spacing)
+        self._poly2Sten.SetOutputWholeExtent(0,self._Dim[0]-1,0,self._Dim[1]-1,0,self._Dim[2]-1)
+        self._poly2Sten.SetInputConnection(self._extruder.GetOutputPort())
+        
+        self._imgstenc = vtk.vtkImageStencil()
+        self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
+        self._imgstenc.SetInputData(whiteImage)
+        self._imgstenc.ReverseStencilOn()
+        self._imgstenc.SetBackgroundValue(0)
         
     def slice(self):
         listOfTargetExtent = []
@@ -96,16 +114,21 @@ class FullBlackImageSlicer(VoxelSlicer):
                 if(maxZ<= Extent[5]): 
                     maxZ = Extent[5]
 
-        for height in np.arange(minZ-self._thickness,maxZ+self._thickness,self._thickness):
-            spacing = self._XYVoxelSize+[self._thickness]
-            Dim = self._buildBedVolPixel[0:2]+[1]
+        for height in np.arange(minZ,maxZ+self._thickness,self._thickness):
+            
+            IndividualSlice = slice(height,self._thickness)
 
-            IndividualSlice = slice(height,spacing,Dim)
+            cutPlane = vtk.vtkPlane()
+            cutPlane.SetOrigin(0,0,0)
+            cutPlane.SetNormal(0,0,1)
+            cutPlane.SetOrigin(0,0,height)
 
-            self._cutPlane.SetOrigin(0,0,height)
+            self._cutter.SetCutFunction(cutPlane)
+
             self._stripper.Update()
-
             contour = self._stripper.GetOutput()
+
+            #visualizer(contour)
 
             ContourBounds = contour.GetBounds()
             origin = [0]*3
@@ -114,30 +137,18 @@ class FullBlackImageSlicer(VoxelSlicer):
             origin[1] = ContourBounds[2]
             origin[2] = ContourBounds[4]
 
-            extruder = vtk.vtkLinearExtrusionFilter()
-            extruder.SetInputData(contour)
-            extruder.SetScaleFactor(1.)
-            extruder.SetExtrusionTypeToNormalExtrusion()
-            extruder.SetVector(0, 0, 1)
-            extruder.Update()
+            if(contour.GetNumberOfLines() > 0):
+                self._extruder.SetInputData(contour)
+                self._extruder.Update()
+                
+                self._poly2Sten.SetOutputOrigin(origin)
+                self._poly2Sten.Update()
 
-            poly2Sten = vtk.vtkPolyDataToImageStencil()
-            poly2Sten.SetTolerance(0) #important for when SetVector is 0,0,1
-            poly2Sten.SetInputConnection(extruder.GetOutputPort())
-            poly2Sten.SetOutputOrigin(origin)
-            poly2Sten.SetOutputSpacing(spacing)
-            poly2Sten.SetOutputWholeExtent(0,Dim[0]-1,0,Dim[1]-1,0,Dim[2]-1)
-            poly2Sten.Update()
-
-            imgstenc = vtk.vtkImageStencil()
-            imgstenc.SetInputData(IndividualSlice.getImage())
-            imgstenc.SetStencilConnection(poly2Sten.GetOutputPort())
-            imgstenc.ReverseStencilOff()
-            imgstenc.SetBackgroundValue(255)
-            imgstenc.Update()
-
-            IndividualSlice.setImage(imgstenc.GetOutput())
-            self._sliceStack.append(IndividualSlice)
+                self._imgstenc.Update()
+                image = vtk.vtkImageData()
+                image.ShallowCopy(self._imgstenc.GetOutput())
+                IndividualSlice.setImage(image)
+                self._sliceStack.append(IndividualSlice)
 
         return self._sliceStack
 
