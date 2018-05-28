@@ -19,13 +19,19 @@ class TestSlicer(unittest.TestCase):
         os.mkdir(self.testFileFolder)
         self.test_config = config(self.testFileFolder)
 
-        self.stlPolyData = reader.GetOutput()
-
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(reader.GetOutputPort())
 
+        mapper2 = vtk.vtkPolyDataMapper()
+        polydata = vtk.vtkPolyData()
+        polydata.DeepCopy(reader.GetOutput())
+        mapper2.SetInputData(polydata)
+
         self.stlActor = vtk.vtkActor()
         self.stlActor.SetMapper(mapper)
+
+        self.stlActor2 = vtk.vtkActor()
+        self.stlActor2.SetMapper(mapper2)
 
         printBedSize = self.test_config.getMachineSetting("printbedsize")
         zRange = self.stlActor.GetZRange()
@@ -33,7 +39,7 @@ class TestSlicer(unittest.TestCase):
         newPosition = [0]*3
 
         oldPosition = self.stlActor.GetPosition()
-        newPosition[0] = printBedSize[0]/2
+        newPosition[0] = printBedSize[0]/4
         newPosition[1] = printBedSize[1]/2
 
         if(zRange[0]<0):
@@ -42,6 +48,7 @@ class TestSlicer(unittest.TestCase):
             newPosition[2] = oldPosition[2]
         
         self.stlActor.SetPosition(newPosition)
+        self.stlActor2.SetPosition(newPosition[1],newPosition[0],newPosition[2]+10)
 
     def test_slicerFactory(self):
         AllBlackSlicer = slicerFactory(self.test_config)
@@ -53,7 +60,10 @@ class TestSlicer(unittest.TestCase):
     def test_blackSlicing(self):
         
         blackSlicer = FullBlackImageSlicer(self.test_config)
+
         blackSlicer.addActor(self.stlActor)
+        blackSlicer.addActor(self.stlActor2)
+
         BuildVtkImage = blackSlicer.slice()
 
         #vtkImageStat  = vtk.vtkImageHistogram()
