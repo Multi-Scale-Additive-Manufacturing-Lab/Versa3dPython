@@ -98,9 +98,9 @@ class FullBlackImageSlicer(VoxelSlicer):
         
     def slice(self):
         listOfTargetExtent = []
-        minZ = self._buildHeight
-        maxZ = 0
-        listOfZInterval = []
+
+        min = self._buildBedSizeXY[0:2]+[self._buildHeight]
+        max = [0]*3
 
         for actor in self._listOfActors:
 
@@ -108,13 +108,16 @@ class FullBlackImageSlicer(VoxelSlicer):
                 Extent = actor.GetBounds()
 
                 self._cutter.AddInputDataObject(PolyData)
-                if(minZ >= Extent[4]):
-                    minZ = Extent[4]
 
-                if(maxZ<= Extent[5]): 
-                    maxZ = Extent[5]
+                for i in range(0,3):
+                    if(min[i] >= Extent[2*i] ):
+                        min[i] = Extent[2*i]
+                    
+                    if(max[i]<= Extent[2*i+1]):
+                        max[i] = Extent[2*i+1]
+                
 
-        for height in np.arange(minZ,maxZ+self._thickness,self._thickness):
+        for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
             
             IndividualSlice = slice(height,self._thickness)
 
