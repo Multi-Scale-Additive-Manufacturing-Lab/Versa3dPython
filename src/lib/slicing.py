@@ -87,7 +87,6 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._poly2Sten = vtk.vtkPolyDataToImageStencil()
         self._poly2Sten.SetTolerance(0) #important for when SetVector is 0,0,1
         self._poly2Sten.SetOutputSpacing(self._spacing)
-        self._poly2Sten.SetOutputWholeExtent(0,self._Dim[0]-1,0,self._Dim[1]-1,0,self._Dim[2]-1)
         self._poly2Sten.SetInputConnection(self._extruder.GetOutputPort())
         
         self._imgstenc = vtk.vtkImageStencil()
@@ -139,7 +138,7 @@ class FullBlackImageSlicer(VoxelSlicer):
             origin[0] = ContourBounds[0]
             origin[1] = ContourBounds[2]
             origin[2] = ContourBounds[4]
-
+            
             if(contour.GetNumberOfLines() > 0):
                 self._extruder.SetInputData(contour)
                 self._extruder.Update()
