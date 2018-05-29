@@ -68,11 +68,6 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._spacing = self._XYVoxelSize+[self._thickness]
         self._Dim = self._buildBedVolPixel[0:2]+[1]
 
-        self._cutter = vtk.vtkCutter()
-
-        self._stripper = vtk.vtkStripper()
-        self._stripper.SetInputConnection(self._cutter.GetOutputPort())
-
         whiteImage = vtk.vtkImageData()
         whiteImage.SetSpacing(self._spacing)
         whiteImage.SetDimensions(self._Dim)
@@ -96,24 +91,37 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._imgstenc.SetBackgroundValue(0)
         
     def slice(self):
-        listOfTargetExtent = []
+        listOfPolydata = []
 
         min = self._buildBedSizeXY[0:2]+[self._buildHeight]
         max = [0]*3
 
         for actor in self._listOfActors:
 
-                PolyData = actor.GetMapper().GetInput()
-                Extent = actor.GetBounds()
+            PolyData = actor.GetMapper().GetInput()
+            Extent = actor.GetBounds()
+            
+            PolyDataCenter = PolyData.GetCenter()
+            ActorCenter = actor.GetCenter()
 
-                self._cutter.AddInputDataObject(PolyData)
+            offset = [ActorCenter[i] - PolyDataCenter[i] for i in range(0,3)]
 
-                for i in range(0,3):
-                    if(min[i] >= Extent[2*i] ):
-                        min[i] = Extent[2*i]
-                    
-                    if(max[i]<= Extent[2*i+1]):
-                        max[i] = Extent[2*i+1]
+            TranslateTransform = vtk.vtkTransform()
+            TranslateTransform.Translate(offset)
+
+            polydataFilter = vtk.vtkTransformPolyDataFilter()
+            polydataFilter.SetTransform(TranslateTransform)
+            polydataFilter.SetInputData(PolyData)
+            polydataFilter.Update()
+
+            for i in range(0,3):
+                if(min[i] >= Extent[2*i] ):
+                    min[i] = Extent[2*i]
+                
+                if(max[i]<= Extent[2*i+1]):
+                    max[i] = Extent[2*i+1]
+            
+            listOfPolydata.append(polydataFilter.GetOutput())
                 
 
         for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
@@ -125,14 +133,29 @@ class FullBlackImageSlicer(VoxelSlicer):
             cutPlane.SetNormal(0,0,1)
             cutPlane.SetOrigin(0,0,height)
 
-            self._cutter.SetCutFunction(cutPlane)
+            merge = vtk.vtkAppendPolyData()
+            clean = vtk.vtkCleanPolyData()
+            for polydata in listOfPolydata:
+                cutter = vtk.vtkCutter()
+                cutter.SetCutFunction(cutPlane)
+                cutter.SetInputData(polydata)
 
-            self._stripper.Update()
-            contour = self._stripper.GetOutput()
+                stripper = vtk.vtkStripper()
+                stripper.SetInputConnection(cutter.GetOutputPort())
+                
+                stripper.Update()
+                contour = stripper.GetOutput()
+                merge.AddInputData(contour)
+            
+            merge.Update()
+            clean.SetInputConnection(merge.GetOutputPort())
+            clean.Update()
+
+            mergedContour = clean.GetOutput() 
 
             #visualizer(contour)
 
-            ContourBounds = contour.GetBounds()
+            ContourBounds = mergedContour.GetBounds()
             origin = [0]*3
 
             origin[0] = ContourBounds[0]
@@ -140,7 +163,7 @@ class FullBlackImageSlicer(VoxelSlicer):
             origin[2] = ContourBounds[4]
             
             if(contour.GetNumberOfLines() > 0):
-                self._extruder.SetInputData(contour)
+                self._extruder.SetInputData(mergedContour)
                 self._extruder.Update()
                 
                 self._poly2Sten.SetOutputOrigin(origin)
