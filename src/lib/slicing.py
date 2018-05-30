@@ -132,8 +132,6 @@ class FullBlackImageSlicer(VoxelSlicer):
 
         mergedPoly = clean.GetOutput() 
 
-        visualizer(mergedPoly)
-
         for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
             
             IndividualSlice = slice(height,self._thickness)
