@@ -273,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @pyqtSlot(int)
     def ChangeSliceDisplayed(self,value):
         self.ui.NumLayerSpinBox.setValue(value)
-        self._ImageMapper.SetSliceNumber(value)
+        self._ImageMapper.SetInputData(self._sliceStack[value].getImage())
         self.ui.Image_SliceViewer.GetRenderWindow().Render()
             
     def slice_stl(self):
@@ -291,13 +291,15 @@ class MainWindow(QtWidgets.QMainWindow):
             if(actorInfo.Has(key)):
                 slicer.addActor(actor)
         
-        buildVox = slicer.slice()
-        (xDim,yDim,zDim) = buildVox.GetDimensions()
+        self._sliceStack = slicer.slice()
+        (xDim,yDim) = slicer.getXYDim()
+
+        zDim = len(self._sliceStack)
 
         self.ui.NumLayerSlider.setMinimum(0)
         self.ui.NumLayerSlider.setMaximum(zDim-1)
         
-        self._ImageMapper.SetInputData(buildVox)
+        self._ImageMapper.SetInputData(self._sliceStack[0].getImage())
         self._ImageMapper.BackgroundOn()
         self._ImageMapper.SetOrientationToZ()
         self._ImageMapper.SetSliceNumber(0)

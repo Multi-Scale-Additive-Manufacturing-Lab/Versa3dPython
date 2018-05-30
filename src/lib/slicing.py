@@ -63,6 +63,8 @@ class VoxelSlicer():
         return self._sliceStack
     def getXYDim(self):
         return self._buildBedVolPixel
+    def getSlice(self,index):
+        return self._sliceStack[i]
 
 class FullBlackImageSlicer(VoxelSlicer):
 
