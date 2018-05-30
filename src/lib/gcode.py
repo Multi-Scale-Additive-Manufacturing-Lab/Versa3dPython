@@ -18,9 +18,6 @@ def gcodeFactory(type, config):
 class gcodeWriter():
     def __init__(self,config):
         self._config =config
-    
-    def generateGCode(self,BuildBedVTKImage):
-        pass
 
 class gcodeWriterVlaseaBM(gcodeWriter):
 
@@ -67,43 +64,44 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
     def generateGCode(self):
 
-        BuildVtkImage = self._Slicer.getBuildVolume()
-        (xDim,yDim,zDim) = BuildVtkImage.GetDimensions()
+        SliceStack = self._Slicer.getBuildVolume()
+        (xDim, yDim) = self._Slicer.getXYDim()
+
+        zDim = len(SliceStack)
         
         imageFolder = os.path.join(self._Folderpath,"Image")
         os.mkdir(imageFolder)
 
-        for z in range(0,zDim):
+        for IndividualSlice in SliceStack:
             #yDim is actually x axis in printer
             NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-            
-            if (z <= self._Slicer.getCeiling()):
-                
-                yStart = 0
-                listOfImg = []
-                for i in range(0, NumSubImage):
-                    yEnd = yStart+self.XImageSizeLimit
 
-                    if (yDim-1) < yEnd:
-                        yEnd = yDim-1
+            yStart = 0
+            listOfImg = []
+            for i in range(0, NumSubImage):
+                yEnd = yStart+self.XImageSizeLimit
 
-                    slicer = vtk.vtkExtractVOI()
-                    slicer.SetVOI(0,xDim-1,yStart,yEnd,z,z)
-                    slicer.SetSampleRate(1,1,1)
-                    slicer.SetInputData(BuildVtkImage)
-                    slicer.Update()
+                if (yDim-1) < yEnd:
+                    yEnd = yDim-1
 
-                    listOfImg.append(slicer.GetOutput())
-                    yStart = yEnd+1
+                slicer = vtk.vtkExtractVOI()
+                slicer.SetVOI(0,xDim-1,yStart,yEnd,0,0)
+                slicer.SetSampleRate(1,1,1)
+                slicer.SetInputData(IndividualSlice.getImage())
+                slicer.Update()
 
-                self.XMLRoot = self.BuildSequenceCluster(0)
-                self.generateGCodeLayer(z,listOfImg,imageFolder)
+                listOfImg.append(slicer.GetOutput())
+                yStart = yEnd+1
 
-                xmlFileName = "layer_"+str(z)+".xml"
-                xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
+            self.XMLRoot = self.BuildSequenceCluster(0)
+            z = IndividualSlice.getHeight()
+            self.generateGCodeLayer(z,listOfImg,imageFolder)
 
-                tree = etree.ElementTree(self.XMLRoot)
-                tree.write(xmlFullPath, pretty_print=True)
+            xmlFileName = "layer_"+str(z)+".xml"
+            xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
+
+            tree = etree.ElementTree(self.XMLRoot)
+            tree.write(xmlFullPath, pretty_print=True)
 
 
     

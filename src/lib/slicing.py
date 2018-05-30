@@ -48,18 +48,21 @@ class VoxelSlicer():
         self.listOfVoxShape = []
         self._sliceStack = []
 
-        self._buildBedVolPixel = [0]*3
+        self._buildBedVolPixel = [0]*2
         self._XYVoxelSize = [0]*2
 
         for i in range(0,2):
             self._buildBedVolPixel[i] = int(math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
             self._XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
         
-        self._buildBedVolPixel[2] = math.ceil(self._buildHeight/self._thickness)
 
     def addActor(self, actor):
         self._listOfActors.append(actor)
-              
+    
+    def getBuildVolume(self):
+        return self._sliceStack
+    def getXYDim(self):
+        return self._buildBedVolPixel
 
 class FullBlackImageSlicer(VoxelSlicer):
 
