@@ -156,8 +156,8 @@ class FullBlackImageSlicer(VoxelSlicer):
             ContourBounds = contour.GetBounds()
             origin = [0]*3
 
-            origin[0] = ContourBounds[0]
-            origin[1] = ContourBounds[2]
+            origin[0] = min[0]
+            origin[1] = min[1]
             origin[2] = ContourBounds[4]
             
             if(contour.GetNumberOfLines() > 0):
