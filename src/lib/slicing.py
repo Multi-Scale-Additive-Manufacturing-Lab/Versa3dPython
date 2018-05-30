@@ -96,6 +96,9 @@ class FullBlackImageSlicer(VoxelSlicer):
         min = self._buildBedSizeXY[0:2]+[self._buildHeight]
         max = [0]*3
 
+        merge = vtk.vtkAppendPolyData()
+        clean = vtk.vtkCleanPolyData()
+
         for actor in self._listOfActors:
 
             PolyData = actor.GetMapper().GetInput()
@@ -121,8 +124,15 @@ class FullBlackImageSlicer(VoxelSlicer):
                 if(max[i]<= Extent[2*i+1]):
                     max[i] = Extent[2*i+1]
             
-            listOfPolydata.append(polydataFilter.GetOutput())
-                
+            merge.AddInputData(polydataFilter.GetOutput())
+
+        merge.Update()
+        clean.SetInputConnection(merge.GetOutputPort())
+        clean.Update()
+
+        mergedPoly = clean.GetOutput() 
+
+        visualizer(mergedPoly)
 
         for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
             
@@ -133,29 +143,19 @@ class FullBlackImageSlicer(VoxelSlicer):
             cutPlane.SetNormal(0,0,1)
             cutPlane.SetOrigin(0,0,height)
 
-            merge = vtk.vtkAppendPolyData()
-            clean = vtk.vtkCleanPolyData()
-            for polydata in listOfPolydata:
-                cutter = vtk.vtkCutter()
-                cutter.SetCutFunction(cutPlane)
-                cutter.SetInputData(polydata)
+            cutter = vtk.vtkCutter()
+            cutter.SetCutFunction(cutPlane)
+            cutter.SetInputData(mergedPoly)
 
-                stripper = vtk.vtkStripper()
-                stripper.SetInputConnection(cutter.GetOutputPort())
-                
-                stripper.Update()
-                contour = stripper.GetOutput()
-                merge.AddInputData(contour)
+            stripper = vtk.vtkStripper()
+            stripper.SetInputConnection(cutter.GetOutputPort())
             
-            merge.Update()
-            clean.SetInputConnection(merge.GetOutputPort())
-            clean.Update()
-
-            mergedContour = clean.GetOutput() 
+            stripper.Update()
+            contour = stripper.GetOutput()
 
             #visualizer(contour)
 
-            ContourBounds = mergedContour.GetBounds()
+            ContourBounds = contour.GetBounds()
             origin = [0]*3
 
             origin[0] = ContourBounds[0]
@@ -163,7 +163,7 @@ class FullBlackImageSlicer(VoxelSlicer):
             origin[2] = ContourBounds[4]
             
             if(contour.GetNumberOfLines() > 0):
-                self._extruder.SetInputData(mergedContour)
+                self._extruder.SetInputData(contour)
                 self._extruder.Update()
                 
                 self._poly2Sten.SetOutputOrigin(origin)

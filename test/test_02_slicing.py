@@ -40,7 +40,7 @@ class TestSlicer(unittest.TestCase):
 
         oldPosition = self.stlActor.GetPosition()
         newPosition[0] = printBedSize[0]/4
-        newPosition[1] = printBedSize[1]/2
+        newPosition[1] = printBedSize[1]/4
 
         if(zRange[0]<0):
             newPosition[2] = oldPosition[2]-zRange[0]
@@ -48,7 +48,7 @@ class TestSlicer(unittest.TestCase):
             newPosition[2] = oldPosition[2]
         
         self.stlActor.SetPosition(newPosition)
-        self.stlActor2.SetPosition(newPosition[1],newPosition[0],newPosition[2]+10)
+        self.stlActor2.SetPosition(newPosition[0]*2,newPosition[1]*3,newPosition[2])
 
     def test_slicerFactory(self):
         AllBlackSlicer = slicerFactory(self.test_config)
