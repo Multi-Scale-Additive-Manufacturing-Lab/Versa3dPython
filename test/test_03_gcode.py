@@ -23,39 +23,38 @@ class gcodeTest(unittest.TestCase):
 
         os.mkdir(self.testConfigFolder)
         self.test_config = config(self.testConfigFolder)
+        self.ListActor = []
+        #generate cylinder aligned z axis
+        for i in range(0,2):
+            for j in range(0,2):
+                axis = vtk.vtkLineSource()
+                axis.SetPoint1(10.0*i+10.0,10.0*j+10.0,0.0)
+                axis.SetPoint2(10.0*i+10.0,10.0*j+10.0,10.0)
 
-        reader = vtk.vtkSTLReader()
-        reader.SetFileName('./test/testFile/3DBenchySmall.stl')
-        reader.Update()
+                tube = vtk.vtkTubeFilter()
+                tube.SetInputConnection(axis.GetOutputPort())
+                tube.SetRadius(5.0)
+                tube.SetNumberOfSides(100)
+                tube.CappingOn()
+                tube.Update()
 
-        self.stlPolyData = reader.GetOutput()
+                mapper = vtk.vtkPolyDataMapper()
+                mapper.SetInputConnection(tube.GetOutputPort())
 
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(reader.GetOutputPort())
-
-        self.stlActor = vtk.vtkActor()
-        self.stlActor.SetMapper(mapper)
+                tubeActor = vtk.vtkActor()
+                tubeActor.SetMapper(mapper)
+                self.ListActor.append(tubeActor)
+                
 
         printBedSize = self.test_config.getMachineSetting("printbedsize")
-        zRange = self.stlActor.GetZRange()
-
-        newPosition = [0]*3
-
-        oldPosition = self.stlActor.GetPosition()
-        newPosition[0] = printBedSize[0]/2
-        newPosition[1] = printBedSize[1]/2
-
-        if(zRange[0]<0):
-            newPosition[2] = oldPosition[2]-zRange[0]
-        else:
-            newPosition[2] = oldPosition[2]
-        
-        self.stlActor.SetPosition(newPosition)
     
     def test_generategcode(self):
         
         blackSlicer = FullBlackImageSlicer(self.test_config)
-        blackSlicer.addActor(self.stlActor)
+
+        for actor in self.ListActor:
+            blackSlicer.addActor(actor)
+
         BuildVtkImage = blackSlicer.slice()
 
         gcodewriter = gcodeWriterVlaseaBM(self.test_config,self.OutputFolder)

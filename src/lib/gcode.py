@@ -67,18 +67,20 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def generateGCode(self):
 
         SliceStack = self._Slicer.getBuildVolume()
-        (xDim, yDim) = self._Slicer.getXYDim()
-
-        zDim = len(SliceStack)
         
         imageFolder = os.path.join(self._Folderpath,"Image")
         os.mkdir(imageFolder)
 
         for IndividualSlice in SliceStack:
+            
+            
+            OriginalImg = IndividualSlice.getImage()
+            origin = list(OriginalImg.GetOrigin())
+
+            (xDim,yDim,zDim) = OriginalImg.GetDimensions()
+
             #yDim is actually x axis in printer
             NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-            OriginalImg = IndividualSlice.getImage()
-            origin = OriginalImg.GetOrigin()
 
             OffsetRealCoord = (150.0/self.dpi[0])*25.4
 
@@ -97,8 +99,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 slicer.Update()
 
                 slicedImg = slicer.GetOutput()
-                origin[2] = origin[2]+OffsetRealCoord
-                slicedImg.SetOrigin(origin)
+                #origin[2] = origin[2]+OffsetRealCoord
+                #slicedImg.SetOrigin(origin)
 
                 listOfImg.append(slicedImg)
                 yStart = yEnd+1
@@ -141,7 +143,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             imageStat.SetInputData(individualSlice)
             imageStat.Update()
 
-            origin = individualSlice.GetOrigin()
+            #origin = individualSlice.GetOrigin()
 
             totalpixel = imageStat.GetTotal()
             results = imageStat.GetHistogram()
