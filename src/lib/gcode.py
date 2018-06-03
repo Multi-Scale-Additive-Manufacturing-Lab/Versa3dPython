@@ -53,6 +53,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         self.Thickness = config.getPrintSetting('layer_thickness')
         self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmvlasealocalpath')
+        
+        self.dpi = config.getPrintHeadSetting('dpi')
 
     def SetInput(self,slicer):
         """Set Input slicer
@@ -75,6 +77,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         for IndividualSlice in SliceStack:
             #yDim is actually x axis in printer
             NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
+            OriginalImg = IndividualSlice.getImage()
+            origin = OriginalImg.GetOrigin()
+
+            OffsetRealCoord = (150.0/self.dpi[0])*25.4
 
             yStart = 0
             listOfImg = []
@@ -87,10 +93,14 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 slicer = vtk.vtkExtractVOI()
                 slicer.SetVOI(0,xDim-1,yStart,yEnd,0,0)
                 slicer.SetSampleRate(1,1,1)
-                slicer.SetInputData(IndividualSlice.getImage())
+                slicer.SetInputData(OriginalImg)
                 slicer.Update()
 
-                listOfImg.append(slicer.GetOutput())
+                slicedImg = slicer.GetOutput()
+                origin[2] = origin[2]+OffsetRealCoord
+                slicedImg.SetOrigin(origin)
+
+                listOfImg.append(slicedImg)
                 yStart = yEnd+1
 
             self.XMLRoot = self.BuildSequenceCluster(0)
@@ -130,6 +140,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             imageStat.AutomaticBinningOn()
             imageStat.SetInputData(individualSlice)
             imageStat.Update()
+
+            origin = individualSlice.GetOrigin()
 
             totalpixel = imageStat.GetTotal()
             results = imageStat.GetHistogram()

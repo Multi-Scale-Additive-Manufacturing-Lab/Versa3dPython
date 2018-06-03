@@ -73,12 +73,6 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._spacing = self._XYVoxelSize+[self._thickness]
         self._Dim = self._buildBedVolPixel[0:2]+[1]
 
-        whiteImage = vtk.vtkImageData()
-        whiteImage.SetSpacing(self._spacing)
-        whiteImage.SetDimensions(self._Dim)
-        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
-        whiteImage.GetPointData().GetScalars().Fill(255)
-
         self._extruder = vtk.vtkLinearExtrusionFilter()
         self._extruder.SetScaleFactor(1.)
         self._extruder.SetExtrusionTypeToNormalExtrusion()
@@ -91,7 +85,6 @@ class FullBlackImageSlicer(VoxelSlicer):
         
         self._imgstenc = vtk.vtkImageStencil()
         self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
-        self._imgstenc.SetInputData(whiteImage)
         self._imgstenc.ReverseStencilOn()
         self._imgstenc.SetBackgroundValue(0)
         
@@ -135,7 +128,18 @@ class FullBlackImageSlicer(VoxelSlicer):
         clean.SetInputConnection(merge.GetOutputPort())
         clean.Update()
 
-        mergedPoly = clean.GetOutput() 
+        mergedPoly = clean.GetOutput()
+
+        imgDim = [1]*3
+        for i in range(0,2):
+            imgDim[i] = int(math.ceil((max[i]-min[i])/self._XYVoxelSize[i]))+1
+
+        whiteImage = vtk.vtkImageData()
+        whiteImage.SetSpacing(self._spacing)
+        whiteImage.SetDimensions(imgDim)
+        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
+        whiteImage.GetPointData().GetScalars().Fill(255) 
+        self._imgstenc.SetInputData(whiteImage)
 
         for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
             
@@ -158,13 +162,14 @@ class FullBlackImageSlicer(VoxelSlicer):
 
             #visualizer(contour)
 
-            ContourBounds = contour.GetBounds()
             origin = [0]*3
-
+            ContourBounds = contour.GetBounds()
             origin[0] = min[0]
             origin[1] = min[1]
             origin[2] = ContourBounds[4]
             
+            whiteImage.SetOrigin(origin)
+
             if(contour.GetNumberOfLines() > 0):
                 self._extruder.SetInputData(contour)
                 self._extruder.Update()
