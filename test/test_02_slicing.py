@@ -33,14 +33,14 @@ class TestSlicer(unittest.TestCase):
         self.stlActor2 = vtk.vtkActor()
         self.stlActor2.SetMapper(mapper2)
 
-        printBedSize = self.test_config.getMachineSetting("printbedsize")
+        self.printBedSize = self.test_config.getMachineSetting("printbedsize")
         zRange = self.stlActor.GetZRange()
 
         newPosition = [0]*3
 
         oldPosition = self.stlActor.GetPosition()
-        newPosition[0] = printBedSize[0]/4
-        newPosition[1] = printBedSize[1]/4
+        newPosition[0] = self.printBedSize[0]/4
+        newPosition[1] = self.printBedSize[1]/4
 
         if(zRange[0]<0):
             newPosition[2] = oldPosition[2]-zRange[0]
@@ -49,6 +49,14 @@ class TestSlicer(unittest.TestCase):
         
         self.stlActor.SetPosition(newPosition)
         self.stlActor2.SetPosition(newPosition[0]*2,newPosition[1]*3,newPosition[2])
+
+        self.PositionOfActor1 = newPosition
+        self.PositionOfActor2 = [newPosition[0]*2,newPosition[1]*3,newPosition[2]]
+        
+        XRange = self.stlActor.GetXRange()
+        YRange = self.stlActor.GetYRange()
+
+        self.XYLength = [XRange[1]-XRange[0], YRange[1]-YRange[0]]
 
     def test_slicerFactory(self):
         AllBlackSlicer = slicerFactory(self.test_config)
@@ -99,10 +107,11 @@ class TestSlicer(unittest.TestCase):
 
         count = 0
         for image in BuildVtkImage:
-
+            vtkimg = image.getImage()
             imgFullPath = os.path.join(folderPath,'img_%d.bmp'%(count))
             bmpWriter.SetFileName(imgFullPath)
-            bmpWriter.SetInputData(image.getImage())
+            bmpWriter.SetInputData(vtkimg)
+            vtkimg.ComputeBounds()
             count = count +1
             bmpWriter.Write()
 
