@@ -42,6 +42,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.DefaultPrintHead = config.getMachineSetting('defaultprinthead')
         self.DefaultPrintVelocity = config.getPrintHeadSetting('printheadvelocity')
         self.DefaultPrintHeadAddr = config.getMachineSetting('defaultprintheadaddr')
+        self.BuildBedSize = config.getMachineSetting('printbedsize')
 
         self.NumberOfBuffer = config.getPrintHeadSetting('buffernumber')
         self.XImageSizeLimit = config.getPrintHeadSetting('buffersizelimit')[0]
@@ -140,6 +141,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             imageStat.Update()
 
             origin = individualSlice.GetOrigin()
+            dimension = individualSlice.GetDimensions()
+            spacing = individualSlice.GetSpacing()
 
             totalpixel = imageStat.GetTotal()
             results = imageStat.GetHistogram()
@@ -208,13 +211,15 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step8)
 
         for i in range(0,BNumber):
-
+            offset = [37,10]
+            upperCorner = [offset[i]-(self.BuildBedSize[i]-(origin[i]+spacing[i]*(dimension[i]-1))) for i in range(0,2) ]
+            print(upperCorner)
             #step 9 allign printhead with the printing area - move to Y=37
-            step9 = self.Gantry(1,0,3,[0,origin[0]+37],2,self.gantryXYVelocity[1],"")
+            step9 = self.Gantry(1,0,3,[0,upperCorner[0]],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step9)
 
             #step 10 allign printhead with the printing area - move to X=10
-            step10 = self.Gantry(1,0,3,[10+origin[1],0],0,self.gantryXYVelocity[0],"")
+            step10 = self.Gantry(1,0,3,[upperCorner[1],0],0,self.gantryXYVelocity[0],"")
             self.makeStep(defaultStep,step10)
 
             #step 11 turn ON printhead and get ready to print buffer 0
