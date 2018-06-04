@@ -20,3 +20,19 @@ def visualizer(polydata):
     Interactor.Initialize()
     RendererWindow.Render()
     Interactor.Start()
+
+def visualizerActor(listactor):
+    Renderer = vtk.vtkRenderer()
+    RendererWindow = vtk.vtkRenderWindow()
+    RendererWindow.AddRenderer(Renderer)
+
+    for actor in listactor:
+        Renderer.AddActor(actor)
+        
+    Renderer.ResetCamera()
+
+    Interactor = vtk.vtkRenderWindowInteractor()
+    Interactor.SetRenderWindow(RendererWindow)
+    Interactor.Initialize()
+    RendererWindow.Render()
+    Interactor.Start()
