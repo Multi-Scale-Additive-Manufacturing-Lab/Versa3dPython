@@ -227,7 +227,7 @@ class Printers_Settings(setting):
     def __init__(self,FolderPath):
         super().__init__(os.path.join(FolderPath,"PrinterSettings"))
 
-        self._settingList['printbedsize'] = Versa3d2dPointOption([31.59,31.85])
+        self._settingList['printbedsize'] = Versa3d2dPointOption([30.0,30.0])
         self._settingList['printbedsize'].category = "BMVLasea"
         self._settingList['printbedsize'].type = "2dPoint"
         self._settingList['printbedsize'].label = 'Print Bed Size'
