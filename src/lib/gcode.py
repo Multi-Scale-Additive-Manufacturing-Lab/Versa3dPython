@@ -105,7 +105,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             z = IndividualSlice.getHeight()
             self.generateGCodeLayer(z,listOfImg,imageFolder)
 
-            xmlFileName = "layer_"+str(z)+".xml"
+            xmlFileName = "layer_{0:.2f}.xml".format(z)
             xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
 
             tree = etree.ElementTree(self.XMLRoot)
