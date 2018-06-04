@@ -67,18 +67,16 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def generateGCode(self):
 
         SliceStack = self._Slicer.getBuildVolume()
-        (xDim, yDim) = self._Slicer.getXYDim()
-
-        zDim = len(SliceStack)
         
         imageFolder = os.path.join(self._Folderpath,"Image")
         os.mkdir(imageFolder)
 
         for IndividualSlice in SliceStack:
-            #yDim is actually x axis in printer
-            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
             OriginalImg = IndividualSlice.getImage()
-            origin = OriginalImg.GetOrigin()
+            (xDim, yDim,zDim) = OriginalImg.GetDimensions()
+
+            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
+            origin = list(OriginalImg.GetOrigin())
 
             OffsetRealCoord = (150.0/self.dpi[0])*25.4
 
