@@ -208,12 +208,13 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step8)
 
         for i in range(0,BNumber):
+
             #step 9 allign printhead with the printing area - move to Y=37
-            step9 = self.Gantry(1,0,3,[0,37],2,self.gantryXYVelocity[1],"")
+            step9 = self.Gantry(1,0,3,[0,origin[0]+37],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step9)
 
             #step 10 allign printhead with the printing area - move to X=10
-            step10 = self.Gantry(1,0,3,[10+i*10,0],0,self.gantryXYVelocity[0],"")
+            step10 = self.Gantry(1,0,3,[10+origin[1],0],0,self.gantryXYVelocity[0],"")
             self.makeStep(defaultStep,step10)
 
             #step 11 turn ON printhead and get ready to print buffer 0
