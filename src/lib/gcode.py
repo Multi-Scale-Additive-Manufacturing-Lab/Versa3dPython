@@ -72,6 +72,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         imageFolder = os.path.join(self._Folderpath,"Image")
         os.mkdir(imageFolder)
 
+        count = 1
         for IndividualSlice in SliceStack:
             OriginalImg = IndividualSlice.getImage()
             (xDim, yDim,zDim) = OriginalImg.GetDimensions()
@@ -106,7 +107,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             z = IndividualSlice.getHeight()
             self.generateGCodeLayer(z,listOfImg,imageFolder)
 
-            xmlFileName = "layer_{0:.2f}.xml".format(z)
+            xmlFileName = "layer_%d.xml"%(count)
+            count = count + 1
             xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
 
             tree = etree.ElementTree(self.XMLRoot)
@@ -211,23 +213,21 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step8)
 
         for i in range(0,BNumber):
-            offset = [37,10]
-            upperCorner = [offset[i]-(self.BuildBedSize[i]-(origin[i]+spacing[i]*(dimension[i]-1))) for i in range(0,2) ]
-            print(upperCorner)
-            #step 9 allign printhead with the printing area - move to Y=37
-            step9 = self.Gantry(1,0,3,[0,upperCorner[0]],2,self.gantryXYVelocity[1],"")
+
+            #step 9 allign printhead with the printing area - move to lower left corner of image
+            step9 = self.Gantry(1,0,3,[0,58-origin[0]],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step9)
 
             #step 10 allign printhead with the printing area - move to X=10
-            step10 = self.Gantry(1,0,3,[upperCorner[1],0],0,self.gantryXYVelocity[0],"")
+            step10 = self.Gantry(1,0,3,[20-origin[1],0],0,self.gantryXYVelocity[0],"")
             self.makeStep(defaultStep,step10)
 
             #step 11 turn ON printhead and get ready to print buffer 0
             step11 = self.ImtechPrintHead(1,8,5,0,0,i,0,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step11)
-
-            #step 12 execute printing motion in Y direction - move to Y=67
-            step12 = self.Gantry(1,0,3,[0,67],2,self.DefaultPrintVelocity,"")
+            
+            #step 12 execute printing motion in Y direction - move to right
+            step12 = self.Gantry(1,0,3,[0,38],2,self.DefaultPrintVelocity,"")
             self.makeStep(defaultStep,step12)
         
         #step 13 move back to origin in Y -direction Y=0(former step 16)
