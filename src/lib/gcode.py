@@ -104,8 +104,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 yStart = yEnd+1
 
             self.XMLRoot = self.BuildSequenceCluster(0)
-            z = IndividualSlice.getHeight()
-            self.generateGCodeLayer(z,listOfImg,imageFolder)
+
+            self.generateGCodeLayer(count,listOfImg,imageFolder)
 
             xmlFileName = "layer_%d.xml"%(count)
             count = count + 1
@@ -154,10 +154,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             if(numberOfBlackPixel != 0):
                 bmpWriter = vtk.vtkBMPWriter()
 
-                imgfileName = "slice_"+str(layerNum)+"_"+str(count)+".bmp"
+                imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
 
                 if(self.AbsPathBMVlaseaComputer):
-                    baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\\"+os.path.basename(self._Folderpath)+"\image\\"
+                    baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\{}\image\\".format(os.path.basename(self._Folderpath))
                     imgPath = baseFolder+imgfileName
                 else:
                     baseFolder = os.path.join("./","image")
@@ -225,7 +225,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             #step 11 turn ON printhead and get ready to print buffer 0
             step11 = self.ImtechPrintHead(1,8,5,0,0,i,0,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step11)
-            
+
             #step 12 execute printing motion in Y direction - move to right
             step12 = self.Gantry(1,0,3,[0,38],2,self.DefaultPrintVelocity,"")
             self.makeStep(defaultStep,step12)
