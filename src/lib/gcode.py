@@ -6,6 +6,7 @@ from copy import deepcopy
 import math
 import os
 import string
+from PIL import Image
 
 def gcodeFactory(type, config):
     
@@ -14,6 +15,26 @@ def gcodeFactory(type, config):
     else:
         return None
 
+class imageWriter():
+    """bmp writer
+    
+    output 1 bit bmp
+    
+    """
+    def __init__(self,Slice):
+        size = Slice.GetDimensions()
+        extent = Slice.GetExtent()
+
+        self.image = Image.new('1',size[0:2])
+
+        for i in range(extent[0],extent[1]+1):
+            for j in range(extent[2],extent[3]+1):
+                val = Slice.GetScalarComponentAsFloat(i,j,0,0)
+                if(val == 255):
+                    self.image.putpixel([i-extent[0],j-extent[2]],1)
+
+    def write(self,path):
+        self.image.save(path)
 
 class gcodeWriter():
     def __init__(self,config):
@@ -152,7 +173,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             numberOfBlackPixel = results.GetValue(0)
 
             if(numberOfBlackPixel != 0):
-                bmpWriter = vtk.vtkBMPWriter()
 
                 imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
 
@@ -164,9 +184,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                     imgPath = os.path.join(baseFolder,imgfileName)
 
                 imgFullPath = os.path.join(imageFolder,imgfileName)
-                bmpWriter.SetFileName(imgFullPath)
-                bmpWriter.SetInputData(individualSlice)
-                bmpWriter.Write()
+                
+                imgwriter = imageWriter(individualSlice)
+                imgwriter.write(imgFullPath)
 
                 #step 0 - turn ON printhead and get ready to print buffer 0
                 textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
