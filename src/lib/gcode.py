@@ -132,11 +132,11 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
-        listOfXCoord = []
 
-        count = 0
-        for individualSlice in imgSliceList:
-
+        count = len(imgSliceList)
+        for i in range(0,count):
+            
+            individualSlice = imgSliceList[i]
             imageStat = vtk.vtkImageHistogram()
             imageStat.AutomaticBinningOn()
             imageStat.SetInputData(individualSlice)
@@ -154,7 +154,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             if(numberOfBlackPixel != 0):
                 bmpWriter = vtk.vtkBMPWriter()
 
-                imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
+                imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
 
                 if(self.AbsPathBMVlaseaComputer):
                     baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\{}\image\\".format(os.path.basename(self._Folderpath))
@@ -169,16 +169,12 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 bmpWriter.Write()
 
                 #step 0 - turn ON printhead and get ready to print buffer 0
-                textStr = "%T"+str(fontNumber).zfill(2)+listOfAlphabet[fontNumber-1]
+                textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
                 step0 = self.ImtechPrintHead(1,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
                 self.makeStep(defaultStep,step0)
                 BNumber = BNumber + 1
                 fontNumber = fontNumber + 1
                 listTxtToPrint.append(textStr)
-
-            count = count + 1
-
-            listOfXCoord.append(10*count+10)
 
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(1,0,3,[0,0],0,self.gantryXYVelocity[0],"")
@@ -369,7 +365,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         return self.ew("Function",listOfChoice,Val)
     
     def ewEquation(self,Val):
-        listOfChoice = ["Use Height","H + T + S","H - T","-(H + W)","+W"]
+        listOfChoice = ["Use Height","H + T + S","H - T","-(H  + W)","+W"]
         return self.ew("Equation",listOfChoice,Val)
     
     def ewMotionControl(self,Val):
@@ -413,14 +409,14 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def String(self,Name,Val):
         return self._TypeNameVal("String", Name,Val)
 
-    def XaarPrinthead(self,Bool_Xaar=0,Module=0,Function=0,Img_Path="",Start_Stop_Print=0):
+    def XaarPrinthead(self,Bool_Xaar=0,Module=0,Function=0,Img_Path=0,Start_Stop_Print=0):
         root = self.Cluster("Printhead",4)
         root.append(self.Boolean("Printhead",Bool_Xaar))
 
         root.append(self.ewModule(Module))
         root.append(self.ewXaarFunction(Function))
 
-        xaarConfig = self.Cluster("Print head Config",2)
+        xaarConfig = self.Cluster("Print Head Config",2)
         root.append(xaarConfig)
 
         xaarConfig.append(self.Path("Image File",Img_Path))
@@ -457,25 +453,25 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         syringeConfig = self.Cluster("Syringe Config",2)
         syringeConfig.append(self.Boolean("Extrusion ON/OFF",Bool_Extrusion))
-        syringeConfig.append(self.DBL("Syringe",Syringe_Velocity))
+        syringeConfig.append(self.DBL("Syringe Velocity",Syringe_Velocity))
 
         root.append(syringeConfig)
 
         return root
     
     def Syringe2(self,Bool_Syringe=0, Module=0,Function=0,Pressure_Units=0,Pressure=0,Vacuum_Units=0,Vacuum=0,Start_Stop=0):
-        root = self.Cluster("Syringe 2",2)
+        root = self.Cluster("Syringe 2",4)
         root.append(self.Boolean("Syringe 2",Bool_Syringe))
 
         root.append(self.ewModule(Module))
         root.append(self.ewSyringe2Function(Function))
 
-        syringe2Config = self.Cluster("Syringe 2",5)
+        syringe2Config = self.Cluster("Syringe Config",5)
         root.append(syringe2Config)
 
         syringe2Config.append(self.I16("Pressure Units",Pressure_Units))
         syringe2Config.append(self.DBL("Pressure",Pressure))
-        syringe2Config.append(self.I16("Vacuum_Units",Vacuum_Units))
+        syringe2Config.append(self.I16("Vacuum Units",Vacuum_Units))
         syringe2Config.append(self.DBL("Vacuum",Vacuum))
         syringe2Config.append(self.Boolean("Start/Stop",Start_Stop))
         
