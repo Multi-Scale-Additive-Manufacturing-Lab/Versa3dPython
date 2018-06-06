@@ -223,7 +223,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             self.makeStep(defaultStep,step10)
 
             #step 11 turn ON printhead and get ready to print buffer 0
-            step11 = self.ImtechPrintHead(1,8,5,0,0,i,0,listTxtToPrint[i],self.DefaultPrintHeadAddr,imgPath)
+            step11 = self.ImtechPrintHead(1,8,5,0,0,i,0,listTxtToPrint[i],self.DefaultPrintHeadAddr)
             self.makeStep(defaultStep,step11)
 
             #step 12 execute printing motion in Y direction - move to right
@@ -276,8 +276,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.XMLRoot.find("Dimsize").text = str(count)
 
         return count
-
-
 
     def create_default_Step(self):
         default_gantry_cluster = self.Gantry()
