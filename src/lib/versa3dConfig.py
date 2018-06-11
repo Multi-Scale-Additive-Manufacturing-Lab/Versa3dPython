@@ -239,7 +239,7 @@ class Printers_Settings(setting):
         self._settingList['buildheight'].label = 'Build Height'
         self._settingList['buildheight'].sidetext = 'mm'
 
-        self._settingList['gantryxyvelocity'] = Versa3d2dPointOption([100.0,100.0])
+        self._settingList['gantryxyvelocity'] = Versa3d2dPointOption([20.0,100.0])
         self._settingList['gantryxyvelocity'].category = "BMVLasea"
         self._settingList['gantryxyvelocity'].type = '2dPoint'
         self._settingList['gantryxyvelocity'].label = 'gantry xy velocity'
@@ -256,14 +256,13 @@ class Printers_Settings(setting):
         self._settingList['printing_height_offset'].label = 'print height offset'
         self._settingList['printing_height_offset'].sidetext = 'mm'
         
-        self._settingList['powder_loss'] = Versa3dOption(0.1)
+        self._settingList['powder_loss'] = Versa3dOption(0.075)
         self._settingList['powder_loss'].category = "BMVLasea"
         self._settingList['powder_loss'].type = 'float'
         self._settingList['powder_loss'].label = 'powder loss offset'
         self._settingList['powder_loss'].sidetext = 'mm'
 
-        self._settingList['feedbedvelocity'] = Versa3dOption(1.0)
-        self._settingList['feedbedvelocity'].setValue(10.0)
+        self._settingList['feedbedvelocity'] = Versa3dOption(10.0)
         self._settingList['feedbedvelocity'].category = "BMVLasea"
         self._settingList['feedbedvelocity'].type = 'float'
         self._settingList['feedbedvelocity'].label = 'feed bed velocity'
@@ -283,12 +282,12 @@ class Printers_Settings(setting):
         self._settingList['defaultprintheadaddr'].type = 'int'
         self._settingList['defaultprintheadaddr'].label = 'default print head address'
 
-        self._settingList['rollerlinvel'] = Versa3dOption(10.0)
+        self._settingList['rollerlinvel'] = Versa3dOption(20.0)
         self._settingList['rollerlinvel'].category = "BMVLasea"
         self._settingList['rollerlinvel'].type = 'float'
         self._settingList['rollerlinvel'].label = 'linear roller velocity'
 
-        self._settingList['rollerrotvel'] = Versa3dOption(10.0)
+        self._settingList['rollerrotvel'] = Versa3dOption(20.0)
         self._settingList['rollerrotvel'].category = "BMVLasea"
         self._settingList['rollerrotvel'].type = 'float'
         self._settingList['rollerrotvel'].label = 'rotational roller velocity'
