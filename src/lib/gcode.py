@@ -106,9 +106,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             yStart = 0
             listOfImg = []
             for i in range(0, NumSubImage):
-                yEnd = yStart+self.XImageSizeLimit
+                yEnd = yStart+self.XImageSizeLimit-1
 
-                if (yDim-1) < yEnd:
+                if (yDim-1) <= yEnd:
                     yEnd = yDim-1
 
                 slicer = vtk.vtkExtractVOI()
