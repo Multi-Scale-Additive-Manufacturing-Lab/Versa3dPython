@@ -89,7 +89,6 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._imgstenc.SetBackgroundValue(0)
         
     def slice(self):
-        listOfPolydata = []
 
         min = self._buildBedSizeXY[0:2]+[self._buildHeight]
         max = [0]*3
@@ -99,21 +98,18 @@ class FullBlackImageSlicer(VoxelSlicer):
 
         for actor in self._listOfActors:
 
-            PolyData = actor.GetMapper().GetInput()
+            transform = vtk.vtkTransform()
+            transform.SetMatrix(actor.GetMatrix())
+
+            PolyData = vtk.vtkPolyData()
+            PolyData.DeepCopy(actor.GetMapper().GetInput())
+
+            LocalToWorldCoordConverter = vtk.vtkTransformPolyDataFilter()
+            LocalToWorldCoordConverter.SetTransform(transform)
+            LocalToWorldCoordConverter.SetInputData(PolyData)
+            LocalToWorldCoordConverter.Update()
+
             Extent = actor.GetBounds()
-            
-            PolyDataCenter = PolyData.GetCenter()
-            ActorCenter = actor.GetCenter()
-
-            offset = [ActorCenter[i] - PolyDataCenter[i] for i in range(0,3)]
-
-            TranslateTransform = vtk.vtkTransform()
-            TranslateTransform.Translate(offset)
-
-            polydataFilter = vtk.vtkTransformPolyDataFilter()
-            polydataFilter.SetTransform(TranslateTransform)
-            polydataFilter.SetInputData(PolyData)
-            polydataFilter.Update()
 
             for i in range(0,3):
                 if(min[i] >= Extent[2*i] ):
@@ -122,7 +118,7 @@ class FullBlackImageSlicer(VoxelSlicer):
                 if(max[i]<= Extent[2*i+1]):
                     max[i] = Extent[2*i+1]
             
-            merge.AddInputData(polydataFilter.GetOutput())
+            merge.AddInputData(LocalToWorldCoordConverter.GetOutput())
 
         merge.Update()
         clean.SetInputConnection(merge.GetOutputPort())
