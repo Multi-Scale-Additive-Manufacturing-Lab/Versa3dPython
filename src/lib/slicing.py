@@ -156,14 +156,13 @@ class FullBlackImageSlicer(VoxelSlicer):
             stripper.Update()
             contour = stripper.GetOutput()
 
-            #visualizer(contour)
-
             origin = [0]*3
             ContourBounds = contour.GetBounds()
             origin[0] = min[0]
             origin[1] = min[1]
             origin[2] = ContourBounds[4]
             
+            #white image origin and stencil origin must line up
             whiteImage.SetOrigin(origin)
 
             if(contour.GetNumberOfLines() > 0):
