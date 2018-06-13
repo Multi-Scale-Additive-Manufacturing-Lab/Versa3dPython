@@ -89,21 +89,31 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._imgstenc.SetBackgroundValue(0)
         
     def slice(self):
-        listOfTransformationMatrix = []
+        listOfPolydata = []
 
         min = self._buildBedSizeXY[0:2]+[self._buildHeight]
         max = [0]*3
 
-        for actor in self._listOfActors:               
-            forward = actor.GetMatrix()
-            backward = vtk.vtkMatrix4x4()
-            backward.DeepCopy(forward)
-            backward.Invert()
+        merge = vtk.vtkAppendPolyData()
+        clean = vtk.vtkCleanPolyData()
 
-            listOfTransformationMatrix.append((forward,backward))
+        for actor in self._listOfActors:
 
             PolyData = actor.GetMapper().GetInput()
             Extent = actor.GetBounds()
+            
+            PolyDataCenter = PolyData.GetCenter()
+            ActorCenter = actor.GetCenter()
+
+            offset = [ActorCenter[i] - PolyDataCenter[i] for i in range(0,3)]
+
+            TranslateTransform = vtk.vtkTransform()
+            TranslateTransform.Translate(offset)
+
+            polydataFilter = vtk.vtkTransformPolyDataFilter()
+            polydataFilter.SetTransform(TranslateTransform)
+            polydataFilter.SetInputData(PolyData)
+            polydataFilter.Update()
 
             for i in range(0,3):
                 if(min[i] >= Extent[2*i] ):
@@ -111,85 +121,65 @@ class FullBlackImageSlicer(VoxelSlicer):
                 
                 if(max[i]<= Extent[2*i+1]):
                     max[i] = Extent[2*i+1]
+            
+            merge.AddInputData(polydataFilter.GetOutput())
+
+        merge.Update()
+        clean.SetInputConnection(merge.GetOutputPort())
+        clean.Update()
+
+        mergedPoly = clean.GetOutput()
+
+        imgDim = [1]*3
+        for i in range(0,2):
+            imgDim[i] = int(math.ceil((max[i]-min[i])/self._XYVoxelSize[i]))+1
+
+        whiteImage = vtk.vtkImageData()
+        whiteImage.SetSpacing(self._spacing)
+        whiteImage.SetDimensions(imgDim)
+        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
+        whiteImage.GetPointData().GetScalars().Fill(255) 
+        self._imgstenc.SetInputData(whiteImage)
 
         for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
-
+            
             IndividualSlice = slice(height,self._thickness)
 
-            merge = vtk.vtkAppendPolyData()
-            clean = vtk.vtkCleanPolyData()
+            cutPlane = vtk.vtkPlane()
+            cutPlane.SetOrigin(0,0,0)
+            cutPlane.SetNormal(0,0,1)
+            cutPlane.SetOrigin(0,0,height)
+
+            cutter = vtk.vtkCutter()
+            cutter.SetCutFunction(cutPlane)
+            cutter.SetInputData(mergedPoly)
+
+            stripper = vtk.vtkStripper()
+            stripper.SetInputConnection(cutter.GetOutputPort())
             
-            #homogeneous world Coord
-            CutPlaneOriginWorldCoord = [0,0,height,1]
-            CutPlaneNormalWorldCoord = [0,0,1,1]
+            stripper.Update()
+            contour = stripper.GetOutput()
+
+            #visualizer(contour)
+
+            origin = [0]*3
+            ContourBounds = contour.GetBounds()
+            origin[0] = min[0]
+            origin[1] = min[1]
+            origin[2] = ContourBounds[4]
             
-            listOfContour = []
+            whiteImage.SetOrigin(origin)
 
-            for i in range(0,len(self._listOfActors)):
-                actor = self._listOfActors[i]
-
-                backward = listOfTransformationMatrix[i][1]
-
-                originLocalCoord = backward.MultiplyPoint(CutPlaneOriginWorldCoord)
-                normalLocalCoord = backward.MultiplyPoint(CutPlaneNormalWorldCoord)
-                
-                cutPlane = vtk.vtkPlane()
-                cutPlane.SetNormal(originLocalCoord[0:3])
-                cutPlane.SetOrigin(normalLocalCoord[0:3])
-
-                PolyData = actor.GetMapper().GetInput()
-                
-                cutter = vtk.vtkCutter()
-                cutter.SetCutFunction(cutPlane)
-                cutter.SetInputData(PolyData)
-
-                stripper = vtk.vtkStripper()
-                stripper.SetInputConnection(cutter.GetOutputPort())
-            
-                stripper.Update()
-
-                transform = vtk.vtkTransform()
-                transform.SetMatrix(listOfTransformationMatrix[i][0])
-
-                Filter = vtk.vtkTransformPolyDataFilter()
-                Filter.SetTransform(transform)
-                Filter.SetInputData(stripper.GetOutput())
-                Filter.Update()
-
-                listOfContour.append(Filter.GetOutput())
-            
-            merge = vtk.vtkAppendPolyData()
-            clean = vtk.vtkCleanPolyData()
-
-            for contour in listOfContour:
-                merge.AddInputData(contour)
-            
-            merge.Update()
-            clean.SetInputConnection(merge.GetOutputPort())
-            clean.Update()
-
-            mergedPoly = clean.GetOutput()
-            
-            imgDim = [1]*3
-            for j in range(0,2):
-                imgDim[j] = math.ceil((max[j]-min[j])/self._spacing[j])
-
-            whiteImage = vtk.vtkImageData()
-            whiteImage.SetSpacing(self._spacing)
-            whiteImage.SetDimensions(imgDim)
-            whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
-            whiteImage.GetPointData().GetScalars().Fill(255) 
-            self._imgstenc.SetInputData(whiteImage)
-
-            if(mergedPoly.GetNumberOfLines() > 0):
-                self._extruder.SetInputData(mergedPoly)
+            if(contour.GetNumberOfLines() > 0):
+                self._extruder.SetInputData(contour)
                 self._extruder.Update()
+                
+                self._poly2Sten.SetOutputOrigin(origin)
                 self._poly2Sten.Update()
 
                 self._imgstenc.Update()
                 image = vtk.vtkImageData()
                 image.ShallowCopy(self._imgstenc.GetOutput())
-                image.SetOrigin(min)
                 IndividualSlice.setImage(image)
                 self._sliceStack.append(IndividualSlice)
 
