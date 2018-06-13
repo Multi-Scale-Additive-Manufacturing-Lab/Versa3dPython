@@ -99,13 +99,14 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             (xDim, yDim,zDim) = OriginalImg.GetDimensions()
 
             NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-            origin = list(OriginalImg.GetOrigin())
+            origin = OriginalImg.GetOrigin()
 
             OffsetRealCoord = (150.0/self.dpi[0])*25.4
 
             yStart = 0
             listOfImg = []
             for i in range(0, NumSubImage):
+                newOrigin = list(origin)
                 yEnd = yStart+self.XImageSizeLimit-1
 
                 if (yDim-1) <= yEnd:
@@ -118,8 +119,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 slicer.Update()
 
                 slicedImg = slicer.GetOutput()
-                origin[2] = origin[2]+OffsetRealCoord
-                slicedImg.SetOrigin(origin)
+                newOrigin[1] = origin[1]+OffsetRealCoord*i
+                slicedImg.SetOrigin(newOrigin)
 
                 listOfImg.append(slicedImg)
                 yStart = yEnd+1
@@ -155,6 +156,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listTxtToPrint = []
 
         count = len(imgSliceList)
+        listOfOrigin = []
         for i in range(0,count):
             
             individualSlice = imgSliceList[i]
@@ -164,6 +166,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             imageStat.Update()
 
             origin = individualSlice.GetOrigin()
+
+            listOfOrigin.append(origin)
             dimension = individualSlice.GetDimensions()
             spacing = individualSlice.GetSpacing()
 
@@ -233,23 +237,24 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step9)
         
         for i in range(0,BNumber):
-
+            origin = listOfOrigin[i]
+            pos = [20-origin[1],58-origin[0]]
             #step 10 allign printhead with the printing area - move to lower left corner of image
-            step10 = self.Gantry(True,0,3,[0,58-origin[0]],2,self.gantryXYVelocity[1],"")
+            step10 = self.Gantry(True,0,3,[0,pos[1]],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step10)
 
-            #step 11 allign printhead with the printing area - move to X=10
-            step11 = self.Gantry(True,0,3,[20-origin[1],0],0,self.gantryXYVelocity[0],"")
+            #step 11 allign printhead with the printing area 
+            step11 = self.Gantry(True,0,3,[pos[0],0],0,self.gantryXYVelocity[0],"")
             self.makeStep(defaultStep,step11)
 
-            #step 12 turn ON printhead and get ready to print buffer 0
+            #step 12 turn ON printhead and get ready to print buffer i
             step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,0,1)
             self.makeStep(defaultStep,step12)
 
             #step 13 execute printing motion in Y direction - move to right
             step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
             self.makeStep(defaultStep,step13)
-        
+            
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
         self.makeStep(defaultStep,step14)
