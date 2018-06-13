@@ -46,12 +46,13 @@ class TestSlicer(unittest.TestCase):
             newPosition[2] = oldPosition[2]-zRange[0]
         else:
             newPosition[2] = oldPosition[2]
-        
-        self.stlActor.SetPosition(newPosition)
-        self.stlActor2.SetPosition(newPosition[0]*2,newPosition[1]*3,newPosition[2])
 
         self.PositionOfActor1 = newPosition
         self.PositionOfActor2 = [newPosition[0]*2,newPosition[1]*3,newPosition[2]]
+        
+        self.stlActor.SetPosition(self.PositionOfActor1)
+        self.stlActor2.SetPosition(self.PositionOfActor2)
+        self.stlActor2.RotateZ(90)        
         
         XRange = self.stlActor.GetXRange()
         YRange = self.stlActor.GetYRange()
