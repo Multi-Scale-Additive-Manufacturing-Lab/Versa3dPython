@@ -11,8 +11,14 @@ def visualizer(polydata):
 
     actor = vtk.vtkActor()
     actor.SetMapper(polymapper)
-    
+
+    Bound = actor.GetBounds()
+
+    axes = vtk.vtkAxesActor()
+    axes.SetTotalLength(Bound[1],Bound[3],Bound[5])
+
     Renderer.AddActor(actor)
+    Renderer.AddActor(axes)
     Renderer.ResetCamera()
 
     Interactor = vtk.vtkRenderWindowInteractor()
