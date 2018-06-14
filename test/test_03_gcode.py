@@ -51,6 +51,7 @@ class gcodeTest(unittest.TestCase):
             newPosition[2] = oldPosition[2]
         
         self.stlActor.SetPosition(newPosition)
+        self.stlActor.RotateZ(45) 
     
     def test_generategcode(self):
         
