@@ -96,12 +96,25 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         count = 1
         for IndividualSlice in SliceStack:
             OriginalImg = IndividualSlice.getImage()
-            (xDim, yDim,zDim) = OriginalImg.GetDimensions()
-
-            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-            origin = OriginalImg.GetOrigin()
 
             OffsetRealCoord = (150.0/self.dpi[0])*25.4
+            #flip img to match printer xy axis
+            flipImgFilter = vtk.vtkImageReslice()
+            flipImgFilter.SetResliceAxesDirectionCosines(-1,0,0,0,1,0,0,0,1)
+            flipImgFilter.SetOutputExtentToDefault()
+            flipImgFilter.SetOutputOriginToDefault()
+            flipImgFilter.SetOutputSpacingToDefault()
+            flipImgFilter.SetInterpolationModeToLinear()
+
+            flipImgFilter.SetInputData(OriginalImg)
+            flipImgFilter.Update()
+
+            flippedImg = flipImgFilter.GetOutput()
+
+            (xDim, yDim,zDim) = flippedImg.GetDimensions()
+
+            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
+            origin = flippedImg.GetOrigin()
 
             yStart = 0
             listOfImg = []
@@ -115,7 +128,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 slicer = vtk.vtkExtractVOI()
                 slicer.SetVOI(0,xDim-1,yStart,yEnd,0,0)
                 slicer.SetSampleRate(1,1,1)
-                slicer.SetInputData(OriginalImg)
+                slicer.SetInputData(flippedImg)
                 slicer.Update()
 
                 slicedImg = slicer.GetOutput()
