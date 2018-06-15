@@ -51,6 +51,7 @@ class TestSlicer(unittest.TestCase):
         self.PositionOfActor2 = [newPosition[0]*2,newPosition[1]*3,newPosition[2]]
         
         self.stlActor.SetPosition(self.PositionOfActor1)
+        self.stlActor.RotateZ(45)   
         self.stlActor2.SetPosition(self.PositionOfActor2)
         self.stlActor2.RotateZ(90)        
         
