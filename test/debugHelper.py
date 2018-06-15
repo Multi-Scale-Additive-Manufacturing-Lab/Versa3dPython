@@ -34,7 +34,10 @@ def visualizerActor(listactor):
 
     for actor in listactor:
         Renderer.AddActor(actor)
-        
+
+    axes = vtk.vtkAxesActor()
+    axes.SetTotalLength(30,30,30)
+    Renderer.AddActor(axes)    
     Renderer.ResetCamera()
 
     Interactor = vtk.vtkRenderWindowInteractor()
