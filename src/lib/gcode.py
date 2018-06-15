@@ -163,7 +163,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def generateGCodeLayer(self,layerNum,imgSliceList,imageFolder):
 
         defaultStep = self.create_default_Step()
-        BNumber = 0
         listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
@@ -207,9 +206,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                 #step 0 - turn ON printhead and get ready to print buffer 0
                 textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
-                step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+                step0 = self.ImtechPrintHead(True,8,1,0,0,i,0,textStr,self.DefaultPrintHeadAddr,imgPath)
                 self.makeStep(defaultStep,step0)
-                BNumber = BNumber + 1
                 fontNumber = fontNumber + 1
                 listTxtToPrint.append(textStr)
 
@@ -251,7 +249,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         for i in range(0,BNumber):
             origin = listOfOrigin[i]
-            pos = [20-origin[1],58-origin[0]]
+            pos = [20+origin[0],58+origin[1]]
             #step 10 allign printhead with the printing area - move to lower left corner of image
             step10 = self.Gantry(True,0,3,[0,pos[1]],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step10)
