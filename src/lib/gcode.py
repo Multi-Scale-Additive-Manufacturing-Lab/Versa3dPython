@@ -169,6 +169,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         count = len(imgSliceList)
         listOfOrigin = []
+        BNumber = 0
         for i in range(0,count):
             
             individualSlice = imgSliceList[i]
@@ -206,9 +207,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                 #step 0 - turn ON printhead and get ready to print buffer 0
                 textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
-                step0 = self.ImtechPrintHead(True,8,1,0,0,i,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+                step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
                 self.makeStep(defaultStep,step0)
                 fontNumber = fontNumber + 1
+                BNumber = BNumber + 1
                 listTxtToPrint.append(textStr)
 
         #step 1 - move gantry to X1 = 0 
