@@ -205,86 +205,86 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 imgwriter = imageWriter(individualSlice)
                 imgwriter.write(imgFullPath)
 
-                #step 0 - turn ON printhead and get ready to print buffer 0
+                #step 0 - turn ON printhead and get ready to print buffer BNumber
                 textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
                 step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-                self.makeStep(defaultStep,step0)
+                self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and load img to buffer {}".format(BNumber))
                 fontNumber = fontNumber + 1
                 BNumber = BNumber + 1
                 listTxtToPrint.append(textStr)
 
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
-        self.makeStep(defaultStep,step1)
+        self.makeStep(defaultStep,step1,"step 1 - move gantry to X1 = 0")
 
         #step 2 - move to Y = 0
         step2 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
-        self.makeStep(defaultStep,step2)
+        self.makeStep(defaultStep,step2,"step 2 - move to Y = 0")
 
         #step 3 - turn on roller
         step3 = self.Roller(True,6,1,self.rollerRotVel)
-        self.makeStep(defaultStep,step3)
+        self.makeStep(defaultStep,step3,"step 3 - turn on roller")
         
         #step 4 - material handling raise feed bed by = H+T+S
         step4 = self.MaterialHandling(True,2,2,self.H+self.Thickness+self.S,self.FeedBedSel,self.feedBedVelocity,0,0)
-        self.makeStep(defaultStep,step4)
+        self.makeStep(defaultStep,step4,"step 4 - material handling raise feed bed by = H+T+S")
         
         #step 5 - material handling raise build bed by = H-T
         step5 = self.MaterialHandling(True,2,2,self.H-self.Thickness,3,self.buildBedVelocity,0,0)
-        self.makeStep(defaultStep,step5)
+        self.makeStep(defaultStep,step5,"step 5 - material handling raise build bed by = H-T")
         
         #step 6 - spread the powder by moving in X-coordinate 300
         step6 = self.Gantry(True,0,3,[300,0],0,self.rollerLinVel,"")
-        self.makeStep(defaultStep,step6)
+        self.makeStep(defaultStep,step6,"step 6 - spread the powder by moving in X-coordinate 300")
         
         #step 7 - turn off roller
         step7 = self.Roller(True,6,1,0)
-        self.makeStep(defaultStep,step7)
+        self.makeStep(defaultStep,step7,"step 7 - turn off roller")
         
         #step 8 - lower build bed by -(H+W)
         step8 = self.MaterialHandling(True,2,2,(-1)*(self.H+self.W),3, self.buildBedVelocity,0,0)
-        self.makeStep(defaultStep,step8)
+        self.makeStep(defaultStep,step8,"step 8 - lower build bed by -(H+W)")
         
         #step 9 - lower feed bed by -(H+W)
         step9 = self.MaterialHandling(True,2,2,(-1)*(self.H+self.W),self.FeedBedSel,self.feedBedVelocity,0,0)
-        self.makeStep(defaultStep,step9)
+        self.makeStep(defaultStep,step9,"step 9 - lower feed bed by -(H+W)")
         
         for i in range(0,BNumber):
             origin = listOfOrigin[i]
             pos = [20+origin[0],58+origin[1]]
             #step 10 allign printhead with the printing area - move to lower left corner of image
             step10 = self.Gantry(True,0,3,[0,pos[1]],2,self.gantryXYVelocity[1],"")
-            self.makeStep(defaultStep,step10)
+            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(pos[1]))
 
             #step 11 allign printhead with the printing area 
             step11 = self.Gantry(True,0,3,[pos[0],0],0,self.gantryXYVelocity[0],"")
-            self.makeStep(defaultStep,step11)
+            self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(pos[0]))
 
             #step 12 turn ON printhead and get ready to print buffer i
             step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,0,1)
-            self.makeStep(defaultStep,step12)
+            self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
             #step 13 execute printing motion in Y direction - move to right
             step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
-            self.makeStep(defaultStep,step13)
+            self.makeStep(defaultStep,step13,"step 13 move to y: 38")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
-        self.makeStep(defaultStep,step14)
+        self.makeStep(defaultStep,step14,"step 14 move back to origin y")
 
         #step 15 move back to origin in X-direction X=0 
         step15 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
-        self.makeStep(defaultStep,step15)
+        self.makeStep(defaultStep,step15,"step 15 move back to origin x")
         
         #step 16 raise build bed
         step16 = self.MaterialHandling(True,2,2,self.W, 3,self.buildBedVelocity, 0,0)
-        self.makeStep(defaultStep,step16)
+        self.makeStep(defaultStep,step16,"step 16 raise build bed")
 
         #step 17 raise feed bed
         step17 = self.MaterialHandling(True,2,2,self.W, self.FeedBedSel,self.feedBedVelocity, 0,0)
-        self.makeStep(defaultStep,step17)
+        self.makeStep(defaultStep,step17,"step 17 raise feed bed")
 
-    def makeStep(self, default_step, Command):
+    def makeStep(self, default_step, Command,Comment = ""):
         NameNode = Command.find("Name")
         Name = NameNode.text
 
@@ -310,6 +310,12 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         else:
             return None
 
+        if(Comment):
+            tagComment = etree.Comment(Comment)
+        else:
+            tagComment = etree.Comment("activate : {}".format(Name))
+        #add comment
+        self.XMLRoot.append(tagComment)
         self.XMLRoot.append(newStep)
         count = int(self.XMLRoot.find("Dimsize").text)
         count = count + 1
