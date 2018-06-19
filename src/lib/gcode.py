@@ -96,6 +96,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         count = 1
         for IndividualSlice in SliceStack:
             OriginalImg = IndividualSlice.getImage()
+            origin = OriginalImg.GetOrigin()
 
             OffsetRealCoord = (150.0/self.dpi[0])*25.4
             #flip img to match printer xy axis
@@ -114,7 +115,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             (xDim, yDim,zDim) = flippedImg.GetDimensions()
 
             NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-            origin = flippedImg.GetOrigin()
 
             yStart = 0
             listOfImg = []
@@ -132,7 +132,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 slicer.Update()
 
                 slicedImg = slicer.GetOutput()
-                newOrigin[1] = origin[1]+OffsetRealCoord*i
+                newOrigin[0] = origin[0]+OffsetRealCoord*i
                 slicedImg.SetOrigin(newOrigin)
 
                 listOfImg.append(slicedImg)
