@@ -31,7 +31,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0.1, FillValue)
 
         gantryXYVelocity = printerSetting.getSettingValue('gantryxyvelocity')
-        self.assertEqual([100,100],gantryXYVelocity)
+        self.assertEqual([20,100],gantryXYVelocity)
 
         printBedValue = configObject.getMachineSetting('printbedsize')
         self.assertEqual([30,30], printBedValue)
