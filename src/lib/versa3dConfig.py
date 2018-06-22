@@ -203,6 +203,9 @@ class Versa3d_Settings(setting):
         self._settingList['imgbmvlasealocalpath'] = Versa3dOption(True)
         self._settingList['imgbmvlasealocalpath'].category = 'general'
 
+        self._settingList['imgbmlasealocalpathstr'] = Versa3dOption("C:\Documents and Settings\Administrator\Desktop\InputVersa3d")
+        self._settingList['imgbmlasealocalpathstr'].category = 'general'
+
 
 class Print_Settings(setting):
     def __init__(self,FolderPath):

@@ -74,7 +74,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.rollerRotVel = config.getMachineSetting('rollerrotvel')
         
         self.Thickness = config.getPrintSetting('layer_thickness')
-        self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmvlasealocalpath')
+        self.AbsPathBMVlaseaComputerBool = config.getVersa3dSetting('imgbmvlasealocalpath')
+        self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmlasealocalpathstr')
         
         self.dpi = config.getPrintHeadSetting('dpi')
 
@@ -193,8 +194,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
                 imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
 
-                if(self.AbsPathBMVlaseaComputer):
-                    baseFolder = "C:\Documents and Settings\Administrator\Desktop\InputVersa3d\{}\image\\".format(os.path.basename(self._Folderpath))
+                if(self.AbsPathBMVlaseaComputerBool):
+                    baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
                     imgPath = baseFolder+imgfileName
                 else:
                     baseFolder = os.path.join("./","image")
