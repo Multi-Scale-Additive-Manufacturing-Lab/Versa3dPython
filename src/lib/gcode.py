@@ -20,7 +20,7 @@ class imageWriter():
     
     output 1 bit bmp
     
-    """
+    """ 
     def __init__(self,Slice):
         size = Slice.GetDimensions()
         extent = Slice.GetExtent()
@@ -33,8 +33,13 @@ class imageWriter():
                 if(val == 255):
                     self.image.putpixel([i-extent[0],j-extent[2]],1)
 
-    def write(self,path):
-        self.image.save(path)
+    def write(self,path,box):
+        croppedImg = self.image.crop(box)
+        if(croppedImg.histogram()[0] != 0):
+            croppedImg.save(path)
+            return True
+        else:
+            return False
 
 class gcodeWriter():
     def __init__(self,config):
@@ -97,51 +102,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         count = 1
         for IndividualSlice in SliceStack:
             OriginalImg = IndividualSlice.getImage()
-            origin = OriginalImg.GetOrigin()
-
-            OffsetRealCoord = (150.0/self.dpi[0])*25.4
-            #flip img to match printer xy axis
-            flipImgFilter = vtk.vtkImageReslice()
-            flipImgFilter.SetResliceAxesDirectionCosines(-1,0,0,0,1,0,0,0,1)
-            flipImgFilter.SetOutputExtentToDefault()
-            flipImgFilter.SetOutputOriginToDefault()
-            flipImgFilter.SetOutputSpacingToDefault()
-            flipImgFilter.SetInterpolationModeToLinear()
-
-            flipImgFilter.SetInputData(OriginalImg)
-            flipImgFilter.Update()
-
-            flippedImg = flipImgFilter.GetOutput()
-
-            (xDim, yDim,zDim) = flippedImg.GetDimensions()
-
-            NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
-
-            yStart = 0
-            listOfImg = []
-            for i in range(0, NumSubImage):
-                newOrigin = list(origin)
-                yEnd = yStart+self.XImageSizeLimit-1
-
-                if (yDim-1) <= yEnd:
-                    yEnd = yDim-1
-
-                slicer = vtk.vtkExtractVOI()
-                slicer.SetVOI(0,xDim-1,yStart,yEnd,0,0)
-                slicer.SetSampleRate(1,1,1)
-                slicer.SetInputData(flippedImg)
-                slicer.Update()
-
-                slicedImg = slicer.GetOutput()
-                newOrigin[0] = origin[0]+OffsetRealCoord*i
-                slicedImg.SetOrigin(newOrigin)
-
-                listOfImg.append(slicedImg)
-                yStart = yEnd+1
 
             self.XMLRoot = self.BuildSequenceCluster(0)
 
-            self.generateGCodeLayer(count,listOfImg,imageFolder)
+            self.generateGCodeLayer(count,OriginalImg,imageFolder)
 
             xmlFileName = "layer.%d.xml"%(count)
             count = count + 1
@@ -161,51 +125,49 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
     
-    def generateGCodeLayer(self,layerNum,imgSliceList,imageFolder):
+    def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
 
         defaultStep = self.create_default_Step()
         listOfAlphabet = list(string.ascii_uppercase)
         fontNumber = 1
         listTxtToPrint = []
 
-        count = len(imgSliceList)
+        origin = imgSlice.GetOrigin()
+        (xDim, yDim,zDim) = imgSlice.GetDimensions()
+        NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
+
         listOfOrigin = []
         BNumber = 0
-        for i in range(0,count):
-            
-            individualSlice = imgSliceList[i]
-            imageStat = vtk.vtkImageHistogram()
-            imageStat.AutomaticBinningOn()
-            imageStat.SetInputData(individualSlice)
-            imageStat.Update()
 
-            origin = individualSlice.GetOrigin()
+        OffsetRealCoord = (150.0/self.dpi[0])*25.4
 
-            listOfOrigin.append(origin)
-            dimension = individualSlice.GetDimensions()
-            spacing = individualSlice.GetSpacing()
+        imgwriter = imageWriter(imgSlice)
 
-            totalpixel = imageStat.GetTotal()
-            results = imageStat.GetHistogram()
-            
-            numberOfBlackPixel = results.GetValue(0)
+        yStart = 0
 
-            if(numberOfBlackPixel != 0):
+        for i in range(0,NumSubImage):
+            newOrigin = list(origin)
+            newOrigin[0] = origin[0]+OffsetRealCoord*i
 
-                imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
+            yEnd = yStart+self.XImageSizeLimit-1
 
-                if(self.AbsPathBMVlaseaComputerBool):
-                    baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
-                    imgPath = baseFolder+imgfileName
-                else:
-                    baseFolder = os.path.join("./","image")
-                    imgPath = os.path.join(baseFolder,imgfileName)
+            if (yDim-1) <= yEnd:
+                yEnd = yDim-1
 
-                imgFullPath = os.path.join(imageFolder,imgfileName)
-                
-                imgwriter = imageWriter(individualSlice)
-                imgwriter.write(imgFullPath)
+            imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
 
+            if(self.AbsPathBMVlaseaComputerBool):
+                baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
+                imgPath = baseFolder+imgfileName
+            else:
+                baseFolder = os.path.join("./","image")
+                imgPath = os.path.join(baseFolder,imgfileName)
+
+            imgFullPath = os.path.join(imageFolder,imgfileName)
+            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd))
+
+            yStart = yEnd+1
+            if(ImgNotEmpty):
                 #step 0 - turn ON printhead and get ready to print buffer BNumber
                 textStr = "\"%T{}{}\"".format(str(fontNumber).zfill(2),listOfAlphabet[fontNumber-1])
                 step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
@@ -213,6 +175,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 fontNumber = fontNumber + 1
                 BNumber = BNumber + 1
                 listTxtToPrint.append(textStr)
+                listOfOrigin.append(newOrigin)
 
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
