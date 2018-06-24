@@ -149,7 +149,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             newOrigin = list(origin)
             newOrigin[0] = origin[0]+OffsetRealCoord*i
 
-            yEnd = yStart+self.XImageSizeLimit-1
+            yEnd = yStart+self.XImageSizeLimit
 
             if (yDim-1) <= yEnd:
                 yEnd = yDim-1
