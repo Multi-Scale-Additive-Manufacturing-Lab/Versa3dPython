@@ -32,11 +32,13 @@ class imageWriter():
                 val = Slice.GetScalarComponentAsFloat(i,j,0,0)
                 if(val == 255):
                     self.image.putpixel([i-extent[0],j-extent[2]],1)
+        
+        self.image= self.image.rotate(-90)
 
     def write(self,path,box):
         croppedImg = self.image.crop(box)
         if(croppedImg.histogram()[0] != 0):
-            croppedImg.save(path)
+            croppedImg.save(path,dpi=(2.54,2.54))
             return True
         else:
             return False
@@ -217,7 +219,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             origin = listOfOrigin[i]
             pos = [5+origin[0],38+origin[1]]
             #step 10 allign printhead with the printing area - move to lower left corner of image
-            step10 = self.Gantry(True,0,3,[0,pos[1]],2,self.gantryXYVelocity[1],"")
+            step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
             self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(pos[1]))
 
             #step 11 allign printhead with the printing area 
@@ -229,7 +231,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
             #step 13 execute printing motion in Y direction - move to right
-            step13 = self.Gantry(True,0,3,[0,67],2,self.DefaultPrintVelocity,"")
+            step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
             self.makeStep(defaultStep,step13,"step 13 move to y: 38")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
