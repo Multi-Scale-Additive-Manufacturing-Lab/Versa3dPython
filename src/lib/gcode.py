@@ -227,7 +227,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(pos[0]))
 
             #step 12 turn ON printhead and get ready to print buffer i
-            step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,0,1)
+            step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
             self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
             #step 13 execute printing motion in Y direction - move to right
