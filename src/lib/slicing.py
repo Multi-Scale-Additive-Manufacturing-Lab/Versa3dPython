@@ -45,33 +45,16 @@ class VoxelSlicer():
         self._buildHeight = config.getMachineSetting('buildheight')
         self._thickness = config.getPrintSetting('layer_thickness')
         dpi = config.getPrintHeadSetting('dpi')
-        self.listOfVoxShape = []
         self._sliceStack = []
 
         self._buildBedVolPixel = [0]*2
-        self._XYVoxelSize = [0]*2
+        XYVoxelSize = [0]*2
 
         for i in range(0,2):
             self._buildBedVolPixel[i] = int(math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
-            self._XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
-        
+            XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
 
-    def addActor(self, actor):
-        self._listOfActors.append(actor)
-    
-    def getBuildVolume(self):
-        return self._sliceStack
-    def getXYDim(self):
-        return self._buildBedVolPixel
-    def getSlice(self,index):
-        return self._sliceStack[i]
-
-class FullBlackImageSlicer(VoxelSlicer):
-
-    def __init__(self, config):
-        super().__init__(config)
-        self._spacing = self._XYVoxelSize+[self._thickness]
-        self._Dim = self._buildBedVolPixel[0:2]+[1]
+        self._spacing = XYVoxelSize+[self._thickness]
 
         self._extruder = vtk.vtkLinearExtrusionFilter()
         self._extruder.SetScaleFactor(1.)
@@ -87,6 +70,22 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
         self._imgstenc.ReverseStencilOn()
         self._imgstenc.SetBackgroundValue(0)
+
+        
+    def addActor(self, actor):
+        self._listOfActors.append(actor)
+    
+    def getBuildVolume(self):
+        return self._sliceStack
+    def getXYDim(self):
+        return self._buildBedVolPixel
+    def getSlice(self,index):
+        return self._sliceStack[i]
+
+class FullBlackImageSlicer(VoxelSlicer):
+
+    def __init__(self, config):
+        super().__init__(config)
         
     def slice(self):
 
@@ -128,7 +127,7 @@ class FullBlackImageSlicer(VoxelSlicer):
 
         imgDim = [1]*3
         for i in range(0,2):
-            imgDim[i] = int(math.ceil((max[i]-min[i])/self._XYVoxelSize[i]))+1
+            imgDim[i] = int(math.ceil((max[i]-min[i])/self._spacing[i]))+1
 
         whiteImage = vtk.vtkImageData()
         whiteImage.SetSpacing(self._spacing)
