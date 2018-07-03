@@ -8,6 +8,25 @@ import math
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer,CheckerBoardImageSlicer , VoxelSlicer
 from src.lib.versa3dConfig import config
 
+def writer(folderPath,BuildVtkImage):
+    bmpWriter = vtk.vtkBMPWriter()
+
+    if(not os.path.isdir(folderPath)):
+        os.mkdir(folderPath)
+    else:
+        shutil.rmtree(folderPath)
+        os.mkdir(folderPath)
+
+    count = 0
+    for image in BuildVtkImage:
+        vtkimg = image.getImage()
+        imgFullPath = os.path.join(folderPath,'img_%d.bmp'%(count))
+        bmpWriter.SetFileName(imgFullPath)
+        bmpWriter.SetInputData(vtkimg)
+        vtkimg.ComputeBounds()
+        count += 1
+        bmpWriter.Write()  
+
 class TestSlicer(unittest.TestCase):
 
     def setUp(self):
@@ -76,16 +95,7 @@ class TestSlicer(unittest.TestCase):
 
         BuildVtkImage = blackSlicer.slice()
 
-        #vtkImageStat  = vtk.vtkImageHistogram()
-        #vtkImageStat.AutomaticBinningOn()
-        #vtkImageStat.SetInputData(BuildVtkImage)
-        #vtkImageStat.Update()
-
-        #stats = vtkImageStat.GetHistogram()
-        #BlackNum = stats.GetValue(0)
-        #WhiteNum = stats.GetValue(255)
-        
-        #totalVoxel = vtkImageStat.GetTotal()
+        self.assertNotEqual(len(BuildVtkImage),0)
         
         BuildBedSize = self.test_config.getMachineSetting('printbedsize')
         dpi = self.test_config.getPrintHeadSetting('dpi')
@@ -98,33 +108,24 @@ class TestSlicer(unittest.TestCase):
 
         BuildBedVoxSize[2] = math.ceil(BuildHeight/thickness)
 
-        bmpWriter = vtk.vtkBMPWriter()
         folderPath = './test/testOutput/FullBlack'
 
-        if(not os.path.isdir(folderPath)):
-            os.mkdir(folderPath)
-        else:
-            shutil.rmtree(folderPath)
-            os.mkdir(folderPath)
-
-        count = 0
-        for image in BuildVtkImage:
-            vtkimg = image.getImage()
-            imgFullPath = os.path.join(folderPath,'img_%d.bmp'%(count))
-            bmpWriter.SetFileName(imgFullPath)
-            bmpWriter.SetInputData(vtkimg)
-            vtkimg.ComputeBounds()
-            count = count +1
-            bmpWriter.Write()
-
-        #theoreticalNumberOfVoxel = BuildBedVoxSize[0]*BuildBedVoxSize[1]*BuildBedVoxSize[2]
-        #check number of voxel
-        #self.assertEqual(theoreticalNumberOfVoxel,totalVoxel)
-        #check blackness
-        #self.assertLessEqual(0.02,BlackNum/totalVoxel)
-
-        #uncomment if you want to visual check
+        writer(folderPath,BuildVtkImage)
+    
+    def test_checkerBoard(self):
+        checkerBoardSlicer = CheckerBoardImageSlicer(self.test_config)
         
+        checkerBoardSlicer.addActor(self.stlActor)
+
+        BuildVtkImage = checkerBoardSlicer.slice()
+
+        self.assertNotEqual(len(BuildVtkImage),0)
+
+        folderPath = './test/testOutput/CheckerBoard'
+
+        writer(folderPath,BuildVtkImage)
+
+
 
     def tearDown(self):
         shutil.rmtree(self.testFileFolder)
