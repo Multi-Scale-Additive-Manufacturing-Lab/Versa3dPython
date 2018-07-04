@@ -204,11 +204,28 @@ class FullBlackImageSlicer(VoxelSlicer):
 class CheckerBoardImageSlicer(VoxelSlicer):
 
     def __init__(self, config):
-        super(VoxelSlicer,self).__init__(config)
+        super().__init__(config)
     
     def slice(self):
 
-        for actor in self._listOfActors:
-            PolyData = vtk.vtkPolyData()
-            PolyData.DeepCopy(actor.GetMapper().GetInput())
+        mergedPoly = self._mergePoly()
+        mergedPoly.ComputeBounds()
+        bound = mergedPoly.GetBounds()
 
+        listOfContour = self._slicePoly(bound[4:6],self._thickness,mergedPoly)
+
+        for contour in listOfContour:
+            self.offsetContour(contour,0.1)
+    
+    def offsetContour(self,contour,thickness):
+        
+        if(contour.GetNumberOfLines() != 0):
+            LineIterator = contour.GetLines()
+            LineIterator.InitTraversal()
+
+            idList = vtk.vtkIdList()
+            while(LineIterator.GetNextCell(idList)):
+                for i in range(idList.GetNumberOfIds()):
+                    id = idList.GetId(i)
+
+                    vertex = contour.GetPoint(id)
