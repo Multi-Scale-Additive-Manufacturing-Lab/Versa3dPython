@@ -6,6 +6,7 @@ from copy import deepcopy
 import math
 import os
 from PIL import Image
+import string
 
 def gcodeFactory(type, config):
     
@@ -161,7 +162,41 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
 
         imgwriter = imageWriter(imgSlice)
+        listOfLetter = string.ascii_uppercase
+        listofPosition = []
 
+        yStart = 0
+        for i in range(0,NumSubImage):
+
+            newOrigin = list(origin)
+            newOrigin[0] = origin[0]+OffsetRealCoord*i
+            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
+            pos = [5+newOrigin[0],38+newOrigin[1]]
+
+            if (yDim-1) <= yEnd:
+                yEnd = yDim-1
+
+            imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
+
+            if(self.AbsPathBMVlaseaComputerBool):
+                baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
+                imgPath = baseFolder+imgfileName
+            else:
+                baseFolder = os.path.join("./","image")
+                imgPath = os.path.join(baseFolder,imgfileName)
+
+            imgFullPath = os.path.join(imageFolder,imgfileName)
+            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd),self.XImageSizeLimit,self.imgMarginSize)
+            
+            yStart = yEnd+1
+            if(ImgNotEmpty):
+                #step 0 - turn ON printhead and get ready to print buffer BNumber
+                textStr = "\"%T{}{}\"".format(str(1).zfill(2),listOfLetter[BNumber])
+                step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+                self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and load img to buffer {}".format(BNumber))
+                BNumber += 1
+                listofPosition.append(pos)
+        
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
         self.makeStep(defaultStep,step1,"step 1 - move gantry to X1 = 0")
@@ -198,51 +233,23 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         step9 = self.MaterialHandling(True,2,2,(-1)*(self.H+self.W),self.FeedBedSel,self.feedBedVelocity,0,0)
         self.makeStep(defaultStep,step9,"step 9 - lower feed bed by -(H+W)")
 
-        yStart = 0
-        for i in range(0,NumSubImage):
-            newOrigin = list(origin)
-            newOrigin[0] = origin[0]+OffsetRealCoord*i
+        for i in range(0,BNumber):
+            position = listofPosition[i]
+            #step 10 allign printhead with the printing area - move to lower left corner of image
+            step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
+            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(58))
 
-            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
+            #step 11 allign printhead with the printing area 
+            step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
+            self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position[0]))
 
-            if (yDim-1) <= yEnd:
-                yEnd = yDim-1
+            #step 12 turn ON printhead and get ready to print buffer i
+            step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
+            self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
-            imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
-
-            if(self.AbsPathBMVlaseaComputerBool):
-                baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
-                imgPath = baseFolder+imgfileName
-            else:
-                baseFolder = os.path.join("./","image")
-                imgPath = os.path.join(baseFolder,imgfileName)
-
-            imgFullPath = os.path.join(imageFolder,imgfileName)
-            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd),self.XImageSizeLimit,self.imgMarginSize)
-
-            yStart = yEnd+1
-            if(ImgNotEmpty):
-                #step 0 - turn ON printhead and get ready to print buffer BNumber
-                textStr = "\"%T{}{}\"".format(str(1).zfill(2),"A")
-                step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-                self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and load img to buffer {}".format(BNumber))
-
-                pos = [5+newOrigin[0],38+newOrigin[1]]
-                #step 10 allign printhead with the printing area - move to lower left corner of image
-                step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
-                self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(58))
-
-                #step 11 allign printhead with the printing area 
-                step11 = self.Gantry(True,0,3,[pos[0],0],0,self.gantryXYVelocity[0],"")
-                self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(pos[0]))
-
-                #step 12 turn ON printhead and get ready to print buffer i
-                step12 = self.ImtechPrintHead(True,8,5,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-                self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
-
-                #step 13 execute printing motion in Y direction - move to right
-                step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
-                self.makeStep(defaultStep,step13,"step 13 move to y: 38")
+            #step 13 execute printing motion in Y direction - move to right
+            step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
+            self.makeStep(defaultStep,step13,"step 13 move to y: 38")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
