@@ -45,33 +45,16 @@ class VoxelSlicer():
         self._buildHeight = config.getMachineSetting('buildheight')
         self._thickness = config.getPrintSetting('layer_thickness')
         dpi = config.getPrintHeadSetting('dpi')
-        self.listOfVoxShape = []
         self._sliceStack = []
 
         self._buildBedVolPixel = [0]*2
-        self._XYVoxelSize = [0]*2
+        XYVoxelSize = [0]*2
 
         for i in range(0,2):
             self._buildBedVolPixel[i] = int(math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
-            self._XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
-        
+            XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
 
-    def addActor(self, actor):
-        self._listOfActors.append(actor)
-    
-    def getBuildVolume(self):
-        return self._sliceStack
-    def getXYDim(self):
-        return self._buildBedVolPixel
-    def getSlice(self,index):
-        return self._sliceStack[i]
-
-class FullBlackImageSlicer(VoxelSlicer):
-
-    def __init__(self, config):
-        super().__init__(config)
-        self._spacing = self._XYVoxelSize+[self._thickness]
-        self._Dim = self._buildBedVolPixel[0:2]+[1]
+        self._spacing = XYVoxelSize+[self._thickness]
 
         self._extruder = vtk.vtkLinearExtrusionFilter()
         self._extruder.SetScaleFactor(1.)
@@ -87,11 +70,14 @@ class FullBlackImageSlicer(VoxelSlicer):
         self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
         self._imgstenc.ReverseStencilOn()
         self._imgstenc.SetBackgroundValue(0)
-        
-    def slice(self):
 
-        min = self._buildBedSizeXY[0:2]+[self._buildHeight]
-        max = [0]*3
+    def _mergePoly(self):
+        """internal function that merge all the actors into a single polydata. 
+        polydata is in world coord
+        
+        Returns:
+            vtkPolydata -- surface
+        """
 
         merge = vtk.vtkAppendPolyData()
         clean = vtk.vtkCleanPolyData()
@@ -111,24 +97,39 @@ class FullBlackImageSlicer(VoxelSlicer):
 
             Extent = actor.GetBounds()
 
-            for i in range(0,3):
-                if(min[i] >= Extent[2*i] ):
-                    min[i] = Extent[2*i]
-                
-                if(max[i]<= Extent[2*i+1]):
-                    max[i] = Extent[2*i+1]
-            
             merge.AddInputData(LocalToWorldCoordConverter.GetOutput())
 
         merge.Update()
         clean.SetInputConnection(merge.GetOutputPort())
         clean.Update()
 
-        mergedPoly = clean.GetOutput()
+        return clean.GetOutput()
 
+    def addActor(self, actor):
+        self._listOfActors.append(actor)
+    
+    def getBuildVolume(self):
+        return self._sliceStack
+    def getXYDim(self):
+        return self._buildBedVolPixel
+    def getSlice(self,index):
+        return self._sliceStack[i]
+
+class FullBlackImageSlicer(VoxelSlicer):
+
+    def __init__(self, config):
+        super().__init__(config)
+        
+    def slice(self):
+        
+        mergedPoly = self._mergePoly()
+
+        mergedPoly.ComputeBounds()
+        bound = mergedPoly.GetBounds()
+        
         imgDim = [1]*3
         for i in range(0,2):
-            imgDim[i] = int(math.ceil((max[i]-min[i])/self._XYVoxelSize[i]))+1
+            imgDim[i] = int(math.ceil((bound[2*i+1]-bound[2*i])/self._spacing[i]))+1
 
         whiteImage = vtk.vtkImageData()
         whiteImage.SetSpacing(self._spacing)
@@ -137,7 +138,7 @@ class FullBlackImageSlicer(VoxelSlicer):
         whiteImage.GetPointData().GetScalars().Fill(255) 
         self._imgstenc.SetInputData(whiteImage)
 
-        for height in np.arange(min[2],max[2]+self._thickness,self._thickness):
+        for height in np.arange(bound[4],bound[5]+self._thickness,self._thickness):
             
             IndividualSlice = slice(height,self._thickness)
 
@@ -158,8 +159,8 @@ class FullBlackImageSlicer(VoxelSlicer):
 
             origin = [0]*3
             ContourBounds = contour.GetBounds()
-            origin[0] = min[0]
-            origin[1] = min[1]
+            origin[0] = bound[0]
+            origin[1] = bound[2]
             origin[2] = ContourBounds[4]
             
             #white image origin and stencil origin must line up
@@ -184,3 +185,10 @@ class CheckerBoardImageSlicer(VoxelSlicer):
 
     def __init__(self, config):
         super(VoxelSlicer,self).__init__(config)
+    
+    def slice(self):
+
+        for actor in self._listOfActors:
+            PolyData = vtk.vtkPolyData()
+            PolyData.DeepCopy(actor.GetMapper().GetInput())
+
