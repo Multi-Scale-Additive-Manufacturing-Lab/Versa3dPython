@@ -34,10 +34,16 @@ class imageWriter():
         
         self.image= self.image.rotate(-90)
 
-    def write(self,path,box):
+    def write(self,path,box,imgSize, borderOffset = 0):
         croppedImg = self.image.crop(box)
         if(croppedImg.histogram()[0] != 0):
-            croppedImg.save(path,dpi=(2.54,2.54))
+            if((box[3]-box[1]) < imgSize):
+                expandedImg = Image.new('1',(box[2]-box[0],imgSize),color=1)
+
+                expandedImg.paste(croppedImg,(box[0],borderOffset))
+                expandedImg.save(path,dpi=(2.54,2.54))
+            else:    
+                croppedImg.save(path,dpi=(2.54,2.54))
             return True
         else:
             return False
@@ -84,6 +90,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmlasealocalpathstr')
         
         self.dpi = config.getPrintHeadSetting('dpi')
+
+        self.imgMarginSize = 15
 
     def SetInput(self,slicer):
         """Set Input slicer
@@ -136,7 +144,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         BNumber = 0
         #150 pixel offset - nozzle offset
-        OffsetRealCoord = (150.0/self.dpi[0])*25.4-1.11
+        OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
 
         imgwriter = imageWriter(imgSlice)
 
@@ -181,7 +189,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             newOrigin = list(origin)
             newOrigin[0] = origin[0]+OffsetRealCoord*i
 
-            yEnd = yStart+self.XImageSizeLimit
+            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
 
             if (yDim-1) <= yEnd:
                 yEnd = yDim-1
@@ -196,7 +204,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 imgPath = os.path.join(baseFolder,imgfileName)
 
             imgFullPath = os.path.join(imageFolder,imgfileName)
-            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd))
+            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd),self.XImageSizeLimit,self.imgMarginSize)
 
             yStart = yEnd+1
             if(ImgNotEmpty):
