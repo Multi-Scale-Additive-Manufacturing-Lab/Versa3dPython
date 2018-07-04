@@ -35,6 +35,20 @@ class imageWriter():
         self.image= self.image.rotate(-90)
 
     def write(self,path,box,imgSize, borderOffset = 0):
+        """write and crop image
+        
+        Arguments:
+            path {string} -- output folder
+            box {list} -- [xstart,ystart,xend,yend]
+            imgSize {int} -- max y size of image
+        
+        Keyword Arguments:
+            borderOffset {int} -- white border around image (default: {0})
+        
+        Returns:
+            bool -- if true if image is written
+        """
+
         croppedImg = self.image.crop(box)
         if(croppedImg.histogram()[0] != 0):
             if((box[3]-box[1]) < imgSize):
