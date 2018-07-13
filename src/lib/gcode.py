@@ -1,4 +1,5 @@
 import vtk
+from vtk.util.numpy_support import vtk_to_numpy
 from src.lib.versa3dConfig import config
 from lxml import etree
 from lxml.builder import E
@@ -7,6 +8,7 @@ import math
 import os
 from PIL import Image
 import string
+import numpy
 
 def gcodeFactory(type, config):
     
@@ -25,14 +27,11 @@ class imageWriter():
         size = Slice.GetDimensions()
         extent = Slice.GetExtent()
 
-        self.image = Image.new('1',size[0:2])
+        vtk_array = Slice.GetPointData().GetScalars()
+        np_array = vtk_to_numpy(vtk_array).reshape(size[0],-1)
 
-        for i in range(extent[0],extent[1]+1):
-            for j in range(extent[2],extent[3]+1):
-                val = Slice.GetScalarComponentAsFloat(i,j,0,0)
-                if(val == 255):
-                    self.image.putpixel([i-extent[0],j-extent[2]],1)
-        
+        self.image = Image.fromarray(np_array, mode = "L")
+        self.image = self.image.convert(mode = "1", matrix = None, dither = None)
         self.image= self.image.rotate(-90)
 
     def write(self,path,box,imgSize, borderOffset = 0):
