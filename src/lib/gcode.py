@@ -178,7 +178,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         if(NumberOfImage):
             #step 0 - turn ON printhead and get ready to print buffer BNumber
-            textStr = "%T{}{},{}".format(str(1).zfill(2),"A",NumberOfImage)
+            textStr = "%T{},{},{}".format(str(1).zfill(2),65,NumberOfImage)
             step0 = self.ImtechPrintHead(True,8,1,0,0,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and save font")
         
