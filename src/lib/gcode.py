@@ -1,4 +1,5 @@
 import vtk
+from vtk.util.numpy_support import vtk_to_numpy
 from src.lib.versa3dConfig import config
 from lxml import etree
 from lxml.builder import E
@@ -6,6 +7,8 @@ from copy import deepcopy
 import math
 import os
 from PIL import Image
+import string
+import numpy
 
 def gcodeFactory(type, config):
     
@@ -13,54 +16,6 @@ def gcodeFactory(type, config):
         return gcodeWriterVlaseaBM(config)
     else:
         return None
-
-class imageWriter():
-    """bmp writer
-    
-    output 1 bit bmp
-    
-    """ 
-    def __init__(self,Slice):
-        size = Slice.GetDimensions()
-        extent = Slice.GetExtent()
-
-        self.image = Image.new('1',size[0:2])
-
-        for i in range(extent[0],extent[1]+1):
-            for j in range(extent[2],extent[3]+1):
-                val = Slice.GetScalarComponentAsFloat(i,j,0,0)
-                if(val == 255):
-                    self.image.putpixel([i-extent[0],j-extent[2]],1)
-        
-        self.image= self.image.rotate(-90)
-
-    def write(self,path,box,imgSize, borderOffset = 0):
-        """write and crop image
-        
-        Arguments:
-            path {string} -- output folder
-            box {list} -- [xstart,ystart,xend,yend]
-            imgSize {int} -- max y size of image
-        
-        Keyword Arguments:
-            borderOffset {int} -- white border around image (default: {0})
-        
-        Returns:
-            bool -- if true if image is written
-        """
-
-        croppedImg = self.image.crop(box)
-        if(croppedImg.histogram()[0] != 0):
-            if((box[3]-box[1]) < imgSize):
-                expandedImg = Image.new('1',(box[2]-box[0],imgSize),color=1)
-
-                expandedImg.paste(croppedImg,(box[0],borderOffset))
-                expandedImg.save(path,dpi=(2.54,2.54))
-            else:    
-                croppedImg.save(path,dpi=(2.54,2.54))
-            return True
-        else:
-            return False
 
 class gcodeWriter():
     def __init__(self,config):
@@ -138,7 +93,6 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             tree.write(xmlFullPath, pretty_print=True)
 
 
-    
     def BuildSequenceCluster(self,Dimsize):
         root = (E.Array(
                     E.Name("Build Sequence"),
@@ -148,20 +102,86 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
     
+    def imageWriter(self,Slice, imgFullPath):
+        size = Slice.GetDimensions()
+        origin = list(Slice.GetOrigin())
+
+        vtk_array = Slice.GetPointData().GetScalars()
+        np_array = vtk_to_numpy(vtk_array).reshape(size[0],-1)
+
+        OriImage = Image.fromarray(np_array, mode = "L")
+        OriImage = OriImage.convert(mode = "1", matrix = None, dither = None)
+        OriImage = OriImage.rotate(-90)
+
+        OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
+
+        NumSubImage = math.ceil(size[1]/self.XImageSizeLimit)
+        listofPosition = []
+        listofSubImg = []
+
+        yStart = 0
+        pos = [5+origin[0],38+origin[1]]
+
+        for i in range(0,NumSubImage):
+            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
+
+            if (size[1]-1) <= yEnd:
+                yEnd = size[1]-1
+
+            box = (0,yStart,size[0],yEnd)
+
+            croppedImg = OriImage.crop(box)
+            
+            if(croppedImg.histogram()[0] != 0):
+                if((box[3]-box[1]) < self.XImageSizeLimit):
+                    expandedImg = Image.new('1',(box[2]-box[0],self.XImageSizeLimit),color=1)
+                    expandedImg.paste(croppedImg,(box[0],self.imgMarginSize))
+                    listofSubImg.append(expandedImg)
+                else:
+                    listofSubImg.append(croppedImg)
+                listofPosition.append(pos.copy())
+            yStart = yEnd+1
+            pos[0] += OffsetRealCoord
+        
+        finalImgWidth = len(listofSubImg)*size[1]
+        finalImg = Image.new('1',(finalImgWidth,self.XImageSizeLimit),color = 1)
+
+        for i in range(0,len(listofSubImg)):
+            finalImg.paste(listofSubImg[i],(i*size[1],0))
+        
+        finalImg.save(imgFullPath,dpi=(2.54,2.54))
+
+        return listofPosition
+
     def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
 
         defaultStep = self.create_default_Step()
 
         origin = imgSlice.GetOrigin()
         (xDim, yDim,zDim) = imgSlice.GetDimensions()
-        NumSubImage = math.ceil(yDim/self.XImageSizeLimit)
 
-        BNumber = 0
-        #150 pixel offset - nozzle offset
-        OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
+        listOfLetter = string.ascii_uppercase
 
-        imgwriter = imageWriter(imgSlice)
+        imgfileName = "slice_{0:d}.bmp".format(layerNum)
+        imgFullPath = os.path.join(imageFolder,imgfileName)
 
+        listofPosition = self.imageWriter(imgSlice,imgFullPath)
+
+        if(self.AbsPathBMVlaseaComputerBool):
+            baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
+            imgPath = baseFolder+imgfileName
+        else:
+            baseFolder = os.path.join("./","image")
+            imgPath = os.path.join(baseFolder,imgfileName)
+
+        NumberOfImage = len(listofPosition)
+
+        if(NumberOfImage):
+            #step 0 - turn ON printhead and get ready to print buffer BNumber
+            textStr = "%T{},{},{}".format(str(1).zfill(2),65,NumberOfImage)
+            step0 = self.ImtechPrintHead(True,8,1,0,0,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+            self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and save font")
+        
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
         self.makeStep(defaultStep,step1,"step 1 - move gantry to X1 = 0")
@@ -198,51 +218,23 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         step9 = self.MaterialHandling(True,2,2,(-1)*(self.H+self.W),self.FeedBedSel,self.feedBedVelocity,0,0)
         self.makeStep(defaultStep,step9,"step 9 - lower feed bed by -(H+W)")
 
-        yStart = 0
-        for i in range(0,NumSubImage):
-            newOrigin = list(origin)
-            newOrigin[0] = origin[0]+OffsetRealCoord*i
+        for i in range(0,NumberOfImage):
+            position = listofPosition[i]
+            #step 10 allign printhead with the printing area - move to lower left corner of image
+            step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
+            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(58))
 
-            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
+            #step 11 allign printhead with the printing area 
+            step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
+            self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position[0]))
 
-            if (yDim-1) <= yEnd:
-                yEnd = yDim-1
+            #step 12 turn ON printhead and get ready to print buffer i
+            step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
+            self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
-            imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,i)
-
-            if(self.AbsPathBMVlaseaComputerBool):
-                baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
-                imgPath = baseFolder+imgfileName
-            else:
-                baseFolder = os.path.join("./","image")
-                imgPath = os.path.join(baseFolder,imgfileName)
-
-            imgFullPath = os.path.join(imageFolder,imgfileName)
-            ImgNotEmpty = imgwriter.write(imgFullPath, (0,yStart,xDim,yEnd),self.XImageSizeLimit,self.imgMarginSize)
-
-            yStart = yEnd+1
-            if(ImgNotEmpty):
-                #step 0 - turn ON printhead and get ready to print buffer BNumber
-                textStr = "\"%T{}{}\"".format(str(1).zfill(2),"A")
-                step0 = self.ImtechPrintHead(True,8,1,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-                self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and load img to buffer {}".format(BNumber))
-
-                pos = [5+newOrigin[0],38+newOrigin[1]]
-                #step 10 allign printhead with the printing area - move to lower left corner of image
-                step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
-                self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(58))
-
-                #step 11 allign printhead with the printing area 
-                step11 = self.Gantry(True,0,3,[pos[0],0],0,self.gantryXYVelocity[0],"")
-                self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(pos[0]))
-
-                #step 12 turn ON printhead and get ready to print buffer i
-                step12 = self.ImtechPrintHead(True,8,5,0,0,BNumber,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-                self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
-
-                #step 13 execute printing motion in Y direction - move to right
-                step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
-                self.makeStep(defaultStep,step13,"step 13 move to y: 38")
+            #step 13 execute printing motion in Y direction - move to right
+            step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
+            self.makeStep(defaultStep,step13,"step 13 move to y: 38")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
