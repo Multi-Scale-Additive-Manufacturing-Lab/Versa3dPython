@@ -120,11 +120,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         listofSubImg = []
 
         yStart = 0
+        pos = [5+origin[0],38+origin[1]]
+
         for i in range(0,NumSubImage):
-            newOrigin = origin
-            newOrigin[0] = origin[0]+OffsetRealCoord*i
             yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
-            pos = [5+newOrigin[0],38+newOrigin[1]]
 
             if (size[1]-1) <= yEnd:
                 yEnd = size[1]-1
@@ -140,8 +139,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                     listofSubImg.append(expandedImg)
                 else:
                     listofSubImg.append(croppedImg)
-                listofPosition.append(pos)
+                listofPosition.append(pos.copy())
             yStart = yEnd+1
+            pos[0] += OffsetRealCoord
         
         finalImgWidth = len(listofSubImg)*size[1]
         finalImg = Image.new('1',(finalImgWidth,self.XImageSizeLimit),color = 1)
