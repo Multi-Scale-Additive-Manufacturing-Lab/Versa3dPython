@@ -119,6 +119,38 @@ def offsetContour(contour,thickness):
                     pass
                 PrevVertex = np.array(contour.GetPoint(VaId))
 
+def slicePoly(limit,increment,polydata):
+    """slice polydata in z direction into contour
+    
+    Arguments:
+        limit {list} -- min and max
+        increment {float} -- thickness
+        polydata {vtkpolydata} -- surface to slice
+    
+    Returns:
+        list -- list of vtkpolydata contour
+    """
+
+    listOfContour = []
+
+    for height in np.arange(limit[0],limit[1]+increment,increment):
+        cutPlane = vtk.vtkPlane()
+        cutPlane.SetOrigin(0,0,0)
+        cutPlane.SetNormal(0,0,1)
+        cutPlane.SetOrigin(0,0,height)
+
+        cutter = vtk.vtkCutter()
+        cutter.SetCutFunction(cutPlane)
+        cutter.SetInputData(polydata)
+
+        stripper = vtk.vtkStripper()
+        stripper.SetInputConnection(cutter.GetOutputPort())
+        
+        stripper.Update()
+        contour = stripper.GetOutput()
+        listOfContour.append(contour)
+    
+    return listOfContour
 
 class slice():
     def __init__(self, height,thickess):
@@ -207,39 +239,6 @@ class VoxelSlicer():
         clean.Update()
 
         return clean.GetOutput()
-    
-    def _slicePoly(self,limit,increment,polydata):
-        """slice polydata in z direction into contour
-        
-        Arguments:
-            limit {list} -- min and max
-            increment {float} -- thickness
-            polydata {vtkpolydata} -- surface to slice
-        
-        Returns:
-            list -- list of vtkpolydata contour
-        """
-
-        listOfContour = []
-
-        for height in np.arange(limit[0],limit[1]+increment,increment):
-            cutPlane = vtk.vtkPlane()
-            cutPlane.SetOrigin(0,0,0)
-            cutPlane.SetNormal(0,0,1)
-            cutPlane.SetOrigin(0,0,height)
-
-            cutter = vtk.vtkCutter()
-            cutter.SetCutFunction(cutPlane)
-            cutter.SetInputData(polydata)
-
-            stripper = vtk.vtkStripper()
-            stripper.SetInputConnection(cutter.GetOutputPort())
-            
-            stripper.Update()
-            contour = stripper.GetOutput()
-            listOfContour.append(contour)
-        
-        return listOfContour
         
     def addActor(self, actor):
         self._listOfActors.append(actor)
@@ -274,7 +273,7 @@ class FullBlackImageSlicer(VoxelSlicer):
         whiteImage.GetPointData().GetScalars().Fill(255) 
         self._imgstenc.SetInputData(whiteImage)
 
-        listOfContour = self._slicePoly(bound[4:6],self._thickness,mergedPoly)
+        listOfContour = slicePoly(bound[4:6],self._thickness,mergedPoly)
 
         for contour in listOfContour:
 
@@ -315,4 +314,4 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         mergedPoly.ComputeBounds()
         bound = mergedPoly.GetBounds()
 
-        listOfContour = self._slicePoly(bound[4:6],self._thickness,mergedPoly)
+        listOfContour = slicePoly(bound[4:6],self._thickness,mergedPoly)
