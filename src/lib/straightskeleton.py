@@ -12,36 +12,6 @@ import vtk
 log = logging.getLogger("__name__")
 
 
-class Debug:
-    def __init__(self, image):
-        if image is not None:
-            self.im = image[0]
-            self.draw = image[1]
-            self.do = True
-        else:
-            self.do = False
-
-    def line(self, *args, **kwargs):
-        if self.do:
-            self.draw.line(*args, **kwargs)
-
-    def rectangle(self, *args, **kwargs):
-        if self.do:
-            self.draw.rectangle(*args, **kwargs)
-
-    def show(self):
-        if self.do:
-            self.im.show()
-
-
-_debug = Debug(None)
-
-
-def set_debug(image):
-    global _debug
-    _debug = Debug(image)
-
-
 def _window(lst):
     prevs, items, nexts = tee(lst, 3)
     prevs = islice(cycle(prevs), len(lst)-1, None)
@@ -112,8 +82,6 @@ class _LAVertex:
         self._bisector = Ray2(self.point, operator.add(
             *creator_vectors) * (-1 if self.is_reflex else 1))
         log.info("Created vertex %s", self.__repr__())
-        _debug.line((self.bisector.p.x, self.bisector.p.y, self.bisector.p.x +
-                     self.bisector.v.x*100, self.bisector.p.y+self.bisector.v.y*100), fill="blue")
 
     @property
     def bisector(self):
@@ -505,11 +473,6 @@ def skeletonize(polygon, holes=None):
 
         if arc is not None:
             output.append(arc)
-            for sink in arc.sinks:
-                _debug.line((arc.source.x, arc.source.y,
-                             sink.x, sink.y), fill="red")
-
-            _debug.show()
 
 
     return output
