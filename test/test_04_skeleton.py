@@ -1,6 +1,7 @@
 import unittest
-import vtk
 import test.debugHelper as db
+import vtk
+import src.lib.skeleton as sk
 
 class skeletonizeTest(unittest.TestCase):
 
@@ -20,17 +21,21 @@ class skeletonizeTest(unittest.TestCase):
 
         cutter = vtk.vtkCutter()
         cutter.SetCutFunction(cut_plane)
-        cutter.SetInputData(stl_poly_data)
+        cutter.SetInputConnection(reader.GetOutputPort())
 
-        stripper = vtk.vtkStripper()
-        stripper.SetInputConnection(cutter.GetOutputPort())
+        self.stripper = vtk.vtkStripper()
+        self.stripper.SetInputConnection(cutter.GetOutputPort())
+        self.stripper.Update()
 
-        stripper.Update()
-        self.contour = stripper.GetOutput()
-    
-    def test_generateSkeleton(self):
-        #db.visualizer(self.contour)
-        pass
+    def test_generate_skeleton(self):
+        skeleton = sk.Skeletonize()
+
+        skeleton.SetInputConnection(self.stripper.GetOutputPort())
+        skeleton.set_shell_thickness(0.2)
+        skeleton.Update()
+
+        db.visualizer(skeleton.GetOutputDataObject(0))
+
     
     def tearDown(self):
         pass

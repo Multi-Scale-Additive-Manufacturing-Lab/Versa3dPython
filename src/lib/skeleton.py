@@ -1,6 +1,74 @@
 import vtk
+from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import numpy as np
 import queue as q
+
+class Skeletonize(VTKPythonAlgorithmBase):
+    def __init__(self):
+        VTKPythonAlgorithmBase.__init__(self, nInputPorts=1, inputType='vtkPolyData',
+                                        nOutputPorts=1, outputType='vtkPolyData')
+        
+        self._thickness = 0.1
+    
+    def set_shell_thickness(self, thickness):
+        self._thickness = thickness
+        self.Modified()
+
+    def RequestData(self, request, inInfo, outInfo):
+        inp = vtk.vtkPolyData.GetData(inInfo[0])
+        opt = vtk.vtkPolyData.GetData(outInfo)
+        opt.DeepCopy(inp)
+        
+        line_iterator = opt.GetLines()
+        line_iterator.InitTraversal()
+
+        id_list = vtk.vtkIdList()
+        listOfBisector = []
+        while(line_iterator.GetNextCell(id_list)):
+            length = id_list.GetNumberOfIds()
+
+            for i in range(3):
+                prev_vertex_id = id_list.GetId((i-1)%length)
+                vertex_id = id_list.GetId(i)
+                next_vertex_id =  id_list.GetId((i+1)%length)
+
+                if(prev_vertex_id == vertex_id):
+                    prev_vertex_id = id_list.GetId((i-2)%length)
+
+                prev_vertex = inp.GetPoint(prev_vertex_id)
+                vertex = inp.GetPoint(vertex_id)
+                next_vertex = inp.GetPoint(next_vertex_id)
+
+                bisector_point = find_bisector(np.array(vertex),np.array(prev_vertex),np.array(next_vertex))
+
+                points = vtk.vtkPoints()
+                bisector_point_id = points.InsertNextPoint(bisector_point)
+
+                line = vtk.vtkLine()
+                line.GetPointIds().InsertNextId(vertex_id)
+                line.GetPointIds().InsertNextId(bisector_point_id)
+                
+                listOfBisector.append(line)
+
+        for line in listOfBisector:
+            line_iterator.InsertNextCell(line)
+
+        return 1
+
+def find_bisector(vertex,prev_vertex,next_vertex):
+
+    edge1 = prev_vertex - vertex
+    edge2 = next_vertex - vertex
+    
+    ratio = np.linalg.norm(edge1)/np.linalg.norm(edge2)
+
+    edge3 = (prev_vertex - next_vertex)
+
+    bisector_point = np.linalg.norm(edge3)/(ratio+1)*edge3+next_vertex
+    vector = (bisector_point-vertex)
+    normalized_vector = vector/np.linalg.norm(vector)
+    
+    return normalized_vector+vertex
 
 def findInterceptPoint(line1, line2):
     origin1 = line1[0]
