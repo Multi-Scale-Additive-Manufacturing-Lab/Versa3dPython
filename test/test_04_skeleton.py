@@ -13,13 +13,13 @@ class skeletonizeTest(unittest.TestCase):
 
         bounds = stl_poly_data.GetBounds()
 
-        cutPlane = vtk.vtkPlane()
-        cutPlane.SetOrigin(0,0,0)
-        cutPlane.SetNormal(0,0,1)
-        cutPlane.SetOrigin(0,0,(bounds[5]-bounds[4])/2)
+        cut_plane = vtk.vtkPlane()
+        cut_plane.SetOrigin(0,0,0)
+        cut_plane.SetNormal(0,0,1)
+        cut_plane.SetOrigin(0,0,(bounds[5]-bounds[4])/2)
 
         cutter = vtk.vtkCutter()
-        cutter.SetCutFunction(cutPlane)
+        cutter.SetCutFunction(cut_plane)
         cutter.SetInputData(stl_poly_data)
 
         stripper = vtk.vtkStripper()
