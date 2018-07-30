@@ -13,6 +13,22 @@ class Skeletonize(VTKPythonAlgorithmBase):
     def set_shell_thickness(self, thickness):
         self._thickness = thickness
         self.Modified()
+    
+    def is_clock_wise(self,polydata,id_list):
+        length = id_list.GetNumberOfIds()
+        sum = 0
+        for i in range(length-1):
+            vertex_id = id_list.GetId(i)
+            next_vertex_id = id_list.GetId(i+1)
+
+            vertex = polydata.GetPoint(vertex_id)
+            next_vertex = polydata.GetPoint(next_vertex_id)
+            sum += (next_vertex[0]-vertex[0])*(next_vertex[1]-vertex[1])
+
+        if(sum >= 0):
+            return True
+        
+        return False
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
@@ -27,7 +43,14 @@ class Skeletonize(VTKPythonAlgorithmBase):
         while(line_iterator.GetNextCell(id_list)):
             length = id_list.GetNumberOfIds()
 
-            for i in range(3):
+            clock_wise = self.is_clock_wise(opt,id_list)
+
+            if(not clock_wise):
+                index_list = reversed(range(length-1))
+            else:
+                index_list = range(length-1)
+
+            for i in index_list:
                 prev_vertex_id = id_list.GetId((i-1)%length)
                 vertex_id = id_list.GetId(i)
                 next_vertex_id =  id_list.GetId((i+1)%length)
