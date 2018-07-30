@@ -41,11 +41,12 @@ class Skeletonize(VTKPythonAlgorithmBase):
         else:
             return False
     
-    def remove_collinear(self,polydata):
+    def merge_collinear_segment(self,polydata):
         out = vtk.vtkPolyData()
 
         contour = vtk.vtkCellArray()
         pts = vtk.vtkPoints()
+        pts.DeepCopy(polydata.GetPoints())
 
         line_iterator = polydata.GetLines()
         line_iterator.InitTraversal()
@@ -76,39 +77,35 @@ class Skeletonize(VTKPythonAlgorithmBase):
                 next_vertex = np.array(polydata.GetPoint(next_vertex_id))
                 
                 if(self.is_collinear(prev_vertex,vertex,next_vertex)):
-                    new_prev_v_id = pts.InsertNextPoint(prev_vertex)
-                    new_next_v_id = pts.InsertNextPoint(next_vertex)
-
-                    polyLine.GetPointIds().InsertUniqueId(new_prev_v_id)
-                    polyLine.GetPointIds().InsertUniqueId(new_next_v_id)
+                    polyLine.GetPointIds().InsertUniqueId(prev_vertex_id)
+                    polyLine.GetPointIds().InsertUniqueId(next_vertex_id)
 
                     deleted_ids.append(vertex_id)
-                else:
-                    new_prev_v_id = pts.InsertNextPoint(prev_vertex)
-                    new_v_id = pts.InsertNextPoint(vertex)
-                    new_next_v_id = pts.InsertNextPoint(next_vertex)
-                    
-                    polyLine.GetPointIds().InsertUniqueId(new_prev_v_id)
-                    polyLine.GetPointIds().InsertUniqueId(new_v_id)
-                    polyLine.GetPointIds().InsertUniqueId(new_next_v_id)
-            
-            new_id_num = polyLine.GetPointIds().GetNumberOfIds()
-            first_id = polyLine.GetPointIds().GetId(0)
-            last_id = polyLine.GetPointIds().GetId(new_id_num-1)
-
-            if(first_id != last_id):
-                polyLine.GetPointIds().InsertId(new_id_num,first_id)
+                else:                   
+                    polyLine.GetPointIds().InsertUniqueId(prev_vertex_id)
+                    polyLine.GetPointIds().InsertUniqueId(vertex_id)
+                    polyLine.GetPointIds().InsertUniqueId(next_vertex_id)
 
             contour.InsertNextCell(polyLine)
         
         out.SetPoints(pts)
         out.SetLines(contour)
-        return out
+
+        clean = vtk.vtkCleanPolyData()
+        clean.ConvertLinesToPointsOff()
+        clean.ConvertPolysToLinesOff()
+        clean.ConvertStripsToPolysOff()
+        clean.SetTolerance(out.GetLength()*0.001)
+        
+        clean.SetInputData(out)
+        clean.Update()
+
+        return clean.GetOutput()
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
-        opt.DeepCopy(self.remove_collinear(inp))
+        opt.ShallowCopy(self.merge_collinear_segment(inp))
         """
         line_iterator = opt.GetLines()
         line_iterator.InitTraversal()
