@@ -63,8 +63,13 @@ class Skeletonize(VTKPythonAlgorithmBase):
                 vertex_id = id_list.GetId(i)
                 next_vertex_id =  id_list.GetId((i+1)%length)
 
-                if(prev_vertex_id == vertex_id or (not prev_vertex_id in deleted_ids) ):
+                if(prev_vertex_id == vertex_id ):
                     prev_vertex_id = id_list.GetId((i-2)%length)
+                elif(not prev_vertex_id in deleted_ids):
+                    count = 2 
+                    while(prev_vertex_id in deleted_ids):
+                        prev_vertex_id = id_list.GetId((i-count)%length)
+                        count += 1
 
                 prev_vertex = np.array(polydata.GetPoint(prev_vertex_id))
                 vertex = np.array(polydata.GetPoint(vertex_id))
