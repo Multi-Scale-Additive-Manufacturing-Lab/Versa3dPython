@@ -45,6 +45,7 @@ class Skeletonize(VTKPythonAlgorithmBase):
         out = vtk.vtkPolyData()
 
         contour = vtk.vtkCellArray()
+        pts = vtk.vtkPoints()
 
         line_iterator = polydata.GetLines()
         line_iterator.InitTraversal()
@@ -54,7 +55,6 @@ class Skeletonize(VTKPythonAlgorithmBase):
         while(line_iterator.GetNextCell(id_list)):
             length = id_list.GetNumberOfIds()
             polyLine = vtk.vtkPolyLine()
-            idList = polyLine.GetPointIds()
 
             deleted_ids = []
 
@@ -71,23 +71,34 @@ class Skeletonize(VTKPythonAlgorithmBase):
                 next_vertex = np.array(polydata.GetPoint(next_vertex_id))
                 
                 if(self.is_collinear(prev_vertex,vertex,next_vertex)):
-                    idList.InsertUniqueId(prev_vertex_id)
-                    idList.InsertUniqueId(next_vertex_id)
+                    new_prev_v_id = pts.InsertNextPoint(prev_vertex)
+                    new_next_v_id = pts.InsertNextPoint(next_vertex)
+
+                    polyLine.GetPointIds().InsertUniqueId(new_prev_v_id)
+                    polyLine.GetPointIds().InsertUniqueId(new_next_v_id)
+
                     deleted_ids.append(vertex_id)
                 else:
-                    idList.InsertUniqueId(prev_vertex_id)
-                    idList.InsertUniqueId(vertex_id)
-                    idList.InsertUniqueId(next_vertex_id)
+                    new_prev_v_id = pts.InsertNextPoint(prev_vertex)
+                    new_v_id = pts.InsertNextPoint(vertex)
+                    new_next_v_id = pts.InsertNextPoint(next_vertex)
+                    
+                    polyLine.GetPointIds().InsertUniqueId(new_prev_v_id)
+                    polyLine.GetPointIds().InsertUniqueId(new_v_id)
+                    polyLine.GetPointIds().InsertUniqueId(new_next_v_id)
             
-            first_id = idList.GetId(0)
-            last_id = idList.GetId(idList.GetNumberOfIds()-1)
+            new_id_num = polyLine.GetPointIds().GetNumberOfIds()
+            first_id = polyLine.GetPointIds().GetId(0)
+            last_id = polyLine.GetPointIds().GetId(new_id_num-1)
 
             if(first_id != last_id):
-                idList.InsertId(idList.GetNumberOfIds(),first_id)
+                polyLine.GetPointIds().InsertId(new_id_num,first_id)
 
             contour.InsertNextCell(polyLine)
-
-        out.SetLines(contour)        
+        
+        out.SetPoints(pts)
+        out.SetLines(contour)
+        
         db.visualizer(out)
 
         return out
