@@ -83,15 +83,20 @@ def find_bisector(vertex,prev_vertex,next_vertex):
     edge1 = prev_vertex - vertex
     edge2 = next_vertex - vertex
     
-    ratio = np.linalg.norm(edge1)/np.linalg.norm(edge2)
+    norm_edge1 = np.linalg.norm(edge1)
+    norm_edge2 = np.linalg.norm(edge2)
 
-    edge3 = (prev_vertex - next_vertex)
+    normalized_edge1 = edge1/norm_edge1
+    normalized_edge2 = edge2/norm_edge2
 
-    bisector_point = np.linalg.norm(edge3)/(ratio+1)*edge3+next_vertex
-    vector = (bisector_point-vertex)
-    normalized_vector = vector/np.linalg.norm(vector)
-    
-    return normalized_vector+vertex
+    cross_product = np.cross(normalized_edge2,normalized_edge1)
+
+    if(cross_product[2] > 0 ):
+        bisector = normalized_edge1+normalized_edge2
+    else:
+        bisector = (normalized_edge1+normalized_edge2)*-1
+
+    return bisector/np.linalg.norm(bisector)
 
 def findInterceptPoint(line1, line2):
     origin1 = line1[0]
