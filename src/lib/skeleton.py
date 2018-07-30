@@ -103,9 +103,6 @@ class Skeletonize(VTKPythonAlgorithmBase):
         
         out.SetPoints(pts)
         out.SetLines(contour)
-        
-        db.visualizer(out)
-
         return out
 
     def RequestData(self, request, inInfo, outInfo):
