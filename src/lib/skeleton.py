@@ -2,6 +2,7 @@ import vtk
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import numpy as np
 import queue as q
+import test.debugHelper as db
 
 class Skeletonize(VTKPythonAlgorithmBase):
     def __init__(self):
@@ -29,12 +30,73 @@ class Skeletonize(VTKPythonAlgorithmBase):
             return True
         
         return False
+    
+    def is_collinear(self,prev_vertex,vertex,next_vertex):
+        edge1 = prev_vertex - vertex
+        edge2 = vertex - next_vertex
+
+        cross_product = np.cross(edge1,edge2)
+        if(np.linalg.norm(cross_product) == 0):
+            return True
+        else:
+            return False
+    
+    def remove_collinear(self,polydata):
+        out = vtk.vtkPolyData()
+
+        contour = vtk.vtkCellArray()
+
+        line_iterator = polydata.GetLines()
+        line_iterator.InitTraversal()
+
+        id_list = vtk.vtkIdList()
+
+        while(line_iterator.GetNextCell(id_list)):
+            length = id_list.GetNumberOfIds()
+            polyLine = vtk.vtkPolyLine()
+            idList = polyLine.GetPointIds()
+
+            deleted_ids = []
+
+            for i in range(length-1):
+                prev_vertex_id = id_list.GetId((i-1)%length)
+                vertex_id = id_list.GetId(i)
+                next_vertex_id =  id_list.GetId((i+1)%length)
+
+                if(prev_vertex_id == vertex_id or (not prev_vertex_id in deleted_ids) ):
+                    prev_vertex_id = id_list.GetId((i-2)%length)
+
+                prev_vertex = np.array(polydata.GetPoint(prev_vertex_id))
+                vertex = np.array(polydata.GetPoint(vertex_id))
+                next_vertex = np.array(polydata.GetPoint(next_vertex_id))
+                
+                if(self.is_collinear(prev_vertex,vertex,next_vertex)):
+                    idList.InsertUniqueId(prev_vertex_id)
+                    idList.InsertUniqueId(next_vertex_id)
+                    deleted_ids.append(vertex_id)
+                else:
+                    idList.InsertUniqueId(prev_vertex_id)
+                    idList.InsertUniqueId(vertex_id)
+                    idList.InsertUniqueId(next_vertex_id)
+            
+            first_id = idList.GetId(0)
+            last_id = idList.GetId(idList.GetNumberOfIds()-1)
+
+            if(first_id != last_id):
+                idList.InsertId(idList.GetNumberOfIds(),first_id)
+
+            contour.InsertNextCell(polyLine)
+
+        out.SetLines(contour)        
+        db.visualizer(out)
+
+        return out
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
-        opt.DeepCopy(inp)
-        
+        opt.DeepCopy(self.remove_collinear(inp))
+        """
         line_iterator = opt.GetLines()
         line_iterator.InitTraversal()
 
@@ -75,7 +137,7 @@ class Skeletonize(VTKPythonAlgorithmBase):
 
         for line in listOfBisector:
             line_iterator.InsertNextCell(line)
-
+        """
         return 1
 
 def find_bisector(vertex,prev_vertex,next_vertex):
