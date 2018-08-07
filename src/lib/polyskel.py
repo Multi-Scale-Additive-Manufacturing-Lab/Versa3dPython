@@ -527,6 +527,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         self._thickness = 0.1
         self._center = None
+        self._scaling_factor = 1000
 
     def is_ccw(self, polydata, id_list):
         length = id_list.GetNumberOfIds()
@@ -564,7 +565,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             for i in sequence:
                 vertex_id = id_list.GetId(i)
                 vertex = polydata.GetPoint(vertex_id)
-                polygon.append([vertex[i]*100 for i in range(2)])
+                polygon.append([vertex[i]*self._scaling_factor for i in range(2)])
 
             polygon_list.append(polygon)
 
@@ -587,7 +588,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 for sink in sinks:
                     vtk_line = vtk.vtkLine()
                     sink_id = vtk_points.InsertNextPoint(
-                        sink[0], sink[1], self._center[2])
+                        sink[0]/self._scaling_factor, sink[1]/self._scaling_factor, self._center[2])
                     vtk_line.GetPointIds().InsertId(0, source_id)
                     vtk_line.GetPointIds().InsertId(1, sink_id)
                     vtk_cell.InsertNextCell(vtk_line)
