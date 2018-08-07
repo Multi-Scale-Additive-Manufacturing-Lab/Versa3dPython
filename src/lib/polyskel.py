@@ -231,7 +231,9 @@ class _LAVertex:
 class _SLAV:
     def __init__(self, polygon, holes):
         contours = [_normalize_contour(polygon)]
-        contours.extend([_normalize_contour(hole) for hole in holes])
+        
+        if holes != None:
+            contours.extend([_normalize_contour(hole) for hole in holes])
 
         self._lavs = [_LAV.from_polygon(contour, self) for contour in contours]
 
@@ -524,13 +526,94 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                                         nOutputPorts=1, outputType='vtkPolyData')
 
         self._thickness = 0.1
+        self._center = None
+
+    def is_ccw(self, polydata, id_list):
+        length = id_list.GetNumberOfIds()
+        total = 0
+        for i in range(length-1):
+            vertex_id = id_list.GetId(i)
+            next_vertex_id = id_list.GetId(i+1)
+
+            vertex = polydata.GetPoint(vertex_id)
+            next_vertex = polydata.GetPoint(next_vertex_id)
+            total += (next_vertex[0]-vertex[0])*(next_vertex[1]+vertex[1])
+
+        if total >= 0:
+            return True
+
+        return False
+
+    def _convert_contour_to_list(self, polydata):
+        polygon_list = []
+
+        line_iterator = polydata.GetLines()
+        line_iterator.InitTraversal()
+
+        id_list = vtk.vtkIdList()
+        while(line_iterator.GetNextCell(id_list)):
+
+            length = id_list.GetNumberOfIds()
+            polygon = []
+
+            if(self.is_ccw(polydata, id_list)):
+                sequence = range(length-1)
+            else:
+                sequence = reversed(range(length-1))
+
+            for i in sequence:
+                vertex_id = id_list.GetId(i)
+                vertex = polydata.GetPoint(vertex_id)
+                polygon.append([vertex[i]*100 for i in range(2)])
+
+            polygon_list.append(polygon)
+
+        return polygon_list
+
+    def _convert_subtree_to_polyline(self, list_subtree):
+
+        vtk_cell = vtk.vtkCellArray()
+        vtk_points = vtk.vtkPoints()
+
+        for subtree in list_subtree:
+            for node in subtree:
+                source = node.source
+
+                source_id = vtk_points.InsertNextPoint(
+                    source[0], source[1], self._center[2])
+
+                sinks = node.sinks
+
+                for sink in sinks:
+                    vtk_line = vtk.vtkLine()
+                    sink_id = vtk_points.InsertNextPoint(
+                        sink[0], sink[1], self._center[2])
+                    vtk_line.GetPointIds().InsertId(0, source_id)
+                    vtk_line.GetPointIds().InsertId(1, sink_id)
+                    vtk_cell.InsertNextCell(vtk_line)
+        polydata = vtk.vtkPolyData()
+        polydata.SetPoints(vtk_points)
+        polydata.SetLines(vtk_cell)
+
+        return polydata
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
 
+        self._center = inp.GetCenter()
+
+        list_polygon = self._convert_contour_to_list(inp)
+
+        list_of_skeleton = []
+
+        for polygon in list_polygon:
+            list_of_skeleton.append(skeletonize(polygon))
+
+        opt.ShallowCopy(self._convert_subtree_to_polyline(list_of_skeleton))
+
         return 1
 
-    def set_thickness(self, thickness):
-            self._thickness = thickness
-            self.modified()
+    def set_shell_thickness(self, thickness):
+        self._thickness = thickness
+        self.Modified()

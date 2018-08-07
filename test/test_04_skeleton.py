@@ -2,6 +2,7 @@ import unittest
 import test.debugHelper as db
 import vtk
 import src.lib.polyskel as sk
+import numpy as np            
 
 class skeletonizeTest(unittest.TestCase):
 
@@ -27,10 +28,19 @@ class skeletonizeTest(unittest.TestCase):
         self.stripper.SetInputConnection(cutter.GetOutputPort())
         self.stripper.Update()
 
+        transform = vtk.vtkTransform()
+        transform.Translate([10,10,(bounds[5]-bounds[4])/2])
+
+        self.LocalToWorldCoordConverter = vtk.vtkTransformPolyDataFilter()
+        self.LocalToWorldCoordConverter.SetTransform(transform)
+        self.LocalToWorldCoordConverter.SetInputConnection(self.stripper.GetOutputPort())
+        self.LocalToWorldCoordConverter.Update()
+
     def test_generate_skeleton(self):
         skeleton = sk.vtk_skeletonize()
+        skeleton.DebugOn()
 
-        skeleton.SetInputConnection(self.stripper.GetOutputPort())
+        skeleton.SetInputConnection(self.LocalToWorldCoordConverter.GetOutputPort())
         skeleton.set_shell_thickness(0.2)
         skeleton.Update()
 
