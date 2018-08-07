@@ -1,7 +1,7 @@
 import unittest
 import test.debugHelper as db
 import vtk
-import src.lib.skeleton as sk
+import src.lib.polyskel as sk
 
 class skeletonizeTest(unittest.TestCase):
 
@@ -28,7 +28,7 @@ class skeletonizeTest(unittest.TestCase):
         self.stripper.Update()
 
     def test_generate_skeleton(self):
-        skeleton = sk.Skeletonize()
+        skeleton = sk.vtk_skeletonize()
 
         skeleton.SetInputConnection(self.stripper.GetOutputPort())
         skeleton.set_shell_thickness(0.2)
