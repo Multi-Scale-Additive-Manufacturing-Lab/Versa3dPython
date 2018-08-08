@@ -564,23 +564,25 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             for i in sequence:
                 vertex_id = id_list.GetId(i)
                 vertex = polydata.GetPoint(vertex_id)
-                polygon.append([vertex[i]*100 for i in range(2)])
+                polygon.append([vertex[i] for i in range(2)])
 
             polygon_list.append(polygon)
 
         return polygon_list
 
-    def _convert_subtree_to_polyline(self, list_subtree):
+    def _convert_subtree_to_polyline(self, list_subtree, inp_polydata):
 
         vtk_cell = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
 
+
         for subtree in list_subtree:
             for node in subtree:
                 source = node.source
-
+                height = node.height
+                
                 source_id = vtk_points.InsertNextPoint(
-                    source[0], source[1], self._center[2])
+                    source[0], source[1], height)
 
                 sinks = node.sinks
 
@@ -595,7 +597,16 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         polydata.SetPoints(vtk_points)
         polydata.SetLines(vtk_cell)
 
-        return polydata
+        merge = vtk.vtkAppendPolyData()
+        merge.AddInputData(polydata)
+        merge.AddInputData(inp_polydata)
+        merge.Update()
+
+        clean = vtk.vtkCleanPolyData()
+        clean.SetInputConnection(merge.GetOutputPort())
+        clean.Update()
+
+        return clean.GetOutput()
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
@@ -603,14 +614,23 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         self._center = inp.GetCenter()
 
-        list_polygon = self._convert_contour_to_list(inp)
+        transform = vtk.vtkTransform()
+        transform.Scale(100, 100, 1)
+
+        scaling_transform = vtk.vtkTransformPolyDataFilter()
+        scaling_transform.SetTransform(transform)
+        scaling_transform.SetInputData(inp)
+        scaling_transform.Update()
+
+        list_polygon = self._convert_contour_to_list(scaling_transform.GetOutput())
 
         list_of_skeleton = []
 
         for polygon in list_polygon:
             list_of_skeleton.append(skeletonize(polygon))
 
-        opt.ShallowCopy(self._convert_subtree_to_polyline(list_of_skeleton))
+        opt.ShallowCopy(self._convert_subtree_to_polyline(
+            list_of_skeleton, scaling_transform.GetOutput()))
 
         return 1
 
