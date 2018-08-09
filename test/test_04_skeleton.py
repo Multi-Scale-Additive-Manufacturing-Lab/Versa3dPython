@@ -1,8 +1,7 @@
 import unittest
 import test.debugHelper as db
 import vtk
-import src.lib.polyskel as sk
-import numpy as np            
+import src.lib.polyskel as sk       
 
 class skeletonizeTest(unittest.TestCase):
 
