@@ -604,8 +604,17 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         clean = vtk.vtkCleanPolyData()
         clean.SetInputConnection(merge.GetOutputPort())
         clean.Update()
+        
+        out_polydata = clean.GetOutput()
+        for subtree in list_subtree:
+            for node in subtree:
+                height = node.height
+                source = node.source
 
-        return clean.GetOutput()
+                source_id = out_polydata.FindPoint(source[0],source[1],self._center[2])
+                out_polydata.GetPoints().SetPoint(source_id,source[0],source[1],height+self._center[2])
+        
+        return out_polydata
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
