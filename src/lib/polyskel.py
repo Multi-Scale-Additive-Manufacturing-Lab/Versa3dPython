@@ -579,10 +579,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         for subtree in list_subtree:
             for node in subtree:
                 source = node.source
-                height = node.height
                 
                 source_id = vtk_points.InsertNextPoint(
-                    source[0], source[1], height)
+                    source[0], source[1], self._center[2])
 
                 sinks = node.sinks
 
