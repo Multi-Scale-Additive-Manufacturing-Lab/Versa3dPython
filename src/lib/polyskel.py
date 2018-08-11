@@ -570,7 +570,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         return polygon_list
 
-    def _convert_subtree_to_polyline(self, list_subtree, inp_polydata):
+    def _convert_subtree_to_polyline(self, list_subtree):
 
         vtk_cell = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
@@ -596,13 +596,8 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         polydata.SetPoints(vtk_points)
         polydata.SetLines(vtk_cell)
 
-        merge = vtk.vtkAppendPolyData()
-        merge.AddInputData(polydata)
-        merge.AddInputData(inp_polydata)
-        merge.Update()
-
         clean = vtk.vtkCleanPolyData()
-        clean.SetInputConnection(merge.GetOutputPort())
+        clean.SetInputData(polydata)
         clean.Update()
         
         out_polydata = clean.GetOutput()
@@ -615,6 +610,23 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 out_polydata.GetPoints().SetPoint(source_id,source[0],source[1],height+self._center[2])
         
         return out_polydata
+    
+    def _offset_calc(self,skeleton,contours):
+
+        line_iterator = contours.GetLines()
+        line_iterator.InitTraversal()
+
+        id_list = vtk.vtkIdList()
+        while(line_iterator.GetNextCell(id_list)):
+            length = id_list.GetNumberOfIds()
+
+            start_id = id_list.GetId(0)
+            start_vertex = contours.GetPoint(start_id)
+
+            skeleton_id = skeleton.FindPoint(start_vertex)
+            
+
+        return 1
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
@@ -636,9 +648,13 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         for polygon in list_polygon:
             list_of_skeleton.append(skeletonize(polygon))
+        
+        skeleton = self._convert_subtree_to_polyline(
+            list_of_skeleton)
 
-        opt.ShallowCopy(self._convert_subtree_to_polyline(
-            list_of_skeleton, scaling_transform.GetOutput()))
+        
+
+        opt.ShallowCopy()
 
         return 1
 
