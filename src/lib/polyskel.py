@@ -231,7 +231,7 @@ class _LAVertex:
 class _SLAV:
     def __init__(self, polygon, holes):
         contours = [_normalize_contour(polygon)]
-        
+
         if holes != None:
             contours.extend([_normalize_contour(hole) for hole in holes])
 
@@ -575,11 +575,10 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         vtk_cell = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
 
-
         for subtree in list_subtree:
             for node in subtree:
                 source = node.source
-                
+
                 source_id = vtk_points.InsertNextPoint(
                     source[0], source[1], self._center[2])
 
@@ -599,34 +598,19 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         clean = vtk.vtkCleanPolyData()
         clean.SetInputData(polydata)
         clean.Update()
-        
+
         out_polydata = clean.GetOutput()
         for subtree in list_subtree:
             for node in subtree:
                 height = node.height
                 source = node.source
 
-                source_id = out_polydata.FindPoint(source[0],source[1],self._center[2])
-                out_polydata.GetPoints().SetPoint(source_id,source[0],source[1],height+self._center[2])
-        
+                source_id = out_polydata.FindPoint(
+                    source[0], source[1], self._center[2])
+                out_polydata.GetPoints().SetPoint(
+                    source_id, source[0], source[1], height+self._center[2])
+
         return out_polydata
-    
-    def _offset_calc(self,skeleton,contours):
-
-        line_iterator = contours.GetLines()
-        line_iterator.InitTraversal()
-
-        id_list = vtk.vtkIdList()
-        while(line_iterator.GetNextCell(id_list)):
-            length = id_list.GetNumberOfIds()
-
-            start_id = id_list.GetId(0)
-            start_vertex = contours.GetPoint(start_id)
-
-            skeleton_id = skeleton.FindPoint(start_vertex)
-            
-
-        return 1
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
@@ -642,17 +626,16 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         scaling_transform.SetInputData(inp)
         scaling_transform.Update()
 
-        list_polygon = self._convert_contour_to_list(scaling_transform.GetOutput())
+        list_polygon = self._convert_contour_to_list(
+            scaling_transform.GetOutput())
 
         list_of_skeleton = []
 
         for polygon in list_polygon:
             list_of_skeleton.append(skeletonize(polygon))
-        
+
         skeleton = self._convert_subtree_to_polyline(
             list_of_skeleton)
-
-        
 
         opt.ShallowCopy()
 
@@ -661,3 +644,81 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
     def set_shell_thickness(self, thickness):
         self._thickness = thickness
         self.Modified()
+
+
+class offset_calculator():
+
+    def __init__(self, height, skeleton):
+        offset_curve = []
+
+        self._skeleton = skeleton
+        self._skeleton.BuildLinks()
+        self._is_traversed = []
+
+        cell_iterator = skeleton.NewCellIterator()
+        cell_iterator.InitTraversal()
+
+        while(not cell_iterator.IsDoneWithTraversal()):
+
+            if(cell_iterator.GetCellType() == vtk.VTK_LINE):
+                cell_id = cell_iterator.GetCellId()
+
+                if(not (cell_id in self._is_traversed) and self._does_it_contain_d(cell_id, height)):
+                    offset_curve.append(one_edge(cell_id, height))
+
+            cell_iterator.GotToNextCell()
+
+        return offset_curve
+
+    def one_edge(self, start_line, height):
+        edge = []
+        cell_id = start_line
+
+        while(True):
+            edge.append(self._point_at_d(height, cell_id))
+            self._is_traversed.append(cell_id)
+
+            while(True):
+
+                cell_id = self._go_next_line_cw(cell_id)
+                if(not self._does_it_contain_d(cell_id, height)):
+                    break
+
+            if(start_line == cell_id):
+                break
+
+        return edge
+
+    def _does_it_contain_d(self, cell_id, height):
+
+        line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
+        bound = line.GetBounds()
+
+        if(bound[4] < height < bound[4]):
+            return True
+        else:
+            return False
+
+    def _point_at_d(self, cell_id, height):
+
+        line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
+        bound = line.GetBounds()
+
+        v = np.array([bound[1]-bound[0], bound[3]-bound[2], bound[5]-bound[4]])
+        h = np.array([0, 0, height])
+
+        return v*np.dot(v, h)/np.linalg.norm(v)**2+arc[0]
+
+    def _go_next_line_cw(self, cell_id):
+        line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
+
+        v_id_list = line.PointsId()
+        edge_id = []
+        for i in range(2):
+            edge_id.append(v_id_list.GetId(i))
+
+        cell_id_list = vtk.vtkIdList()
+        self._skeleton.GetCellEdgeNeighbors(
+            cell_id, edge_id[0], edge_id[1], cell_id_list)
+
+        return 0
