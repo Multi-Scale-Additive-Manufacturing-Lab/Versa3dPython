@@ -637,7 +637,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         skeleton = self._convert_subtree_to_polyline(
             list_of_skeleton)
 
-        opt.ShallowCopy()
+        opt.ShallowCopy(skeleton)
 
         return 1
 
