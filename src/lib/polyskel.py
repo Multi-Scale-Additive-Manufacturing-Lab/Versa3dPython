@@ -649,7 +649,8 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 class offset_calculator():
 
     def __init__(self, height, skeleton):
-        offset_curve = []
+        offset_curve = vtk.vtkCellArray()
+        self._vtk_points = vtk.vtkPoints()
 
         self._skeleton = skeleton
         self._skeleton.BuildLinks()
@@ -664,23 +665,23 @@ class offset_calculator():
                 cell_id = cell_iterator.GetCellId()
 
                 if(not (cell_id in self._is_traversed) and self._does_it_contain_d(cell_id, height)):
-                    offset_curve.append(one_edge(cell_id, height))
+                    offset_curve.InsertNextCell(one_edge(cell_id, height))
 
             cell_iterator.GotToNextCell()
 
         return offset_curve
 
     def one_edge(self, start_line, height):
-        edge = []
+        edge = vtk.vtkLine()
         cell_id = start_line
 
         while(True):
-            edge.append(self._point_at_d(height, cell_id))
+            pt_id = self._vtk_points.InsertNextPoint(self._point_at_d(cell_id, height))
+            edge.GetPointIds().InsertNextId(pt_id)
             self._is_traversed.append(cell_id)
-
+            top_id = self._line_direction(self, cell_id)
             while(True):
-
-                cell_id = self._go_next_line_cw(cell_id)
+                cell_id, top_id  = self._go_next_line_cw(cell_id, top_id)
                 if(not self._does_it_contain_d(cell_id, height)):
                     break
 
@@ -707,18 +708,57 @@ class offset_calculator():
         v = np.array([bound[1]-bound[0], bound[3]-bound[2], bound[5]-bound[4]])
         h = np.array([0, 0, height])
 
-        return v*np.dot(v, h)/np.linalg.norm(v)**2+arc[0]
+        return v*np.dot(v, h)/np.linalg.norm(v)**2+np.array([bound[0], bound[2], bound[4]])
 
-    def _go_next_line_cw(self, cell_id):
+    def _line_direction(self, cell_id):
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
+        bound = line.GetBounds()
+        point_id_list = line.GetPointIds()
+        p_H_id = point_id_list.GetId(0)
+        p_H = self._skeleton.GetPoint(p_H_id)
 
-        v_id_list = line.PointsId()
-        edge_id = []
-        for i in range(2):
-            edge_id.append(v_id_list.GetId(i))
+        if(not p_H[2] == bound[5]):
+            p_H_id = point_id_list.GetId(1)
+
+        return p_H_id
+
+    def _go_next_line_cw(self, current_cell_id, init_top_id):
 
         cell_id_list = vtk.vtkIdList()
-        self._skeleton.GetCellEdgeNeighbors(
-            cell_id, edge_id[0], edge_id[1], cell_id_list)
+        self._skeleton.GetPointCells(init_top_id, cell_id_list)
 
-        return 0
+        v_1, p_1_bot_id = self._get_line_eq_2d(current_cell_id, init_top_id)
+
+        most_right_line = []
+
+        for i in range(cell_id_list.GetNumberOfIds()):
+            next_line_id = cell_id_list.GetId(i)
+            v_2, p_2_top_id = self._get_line_eq_2d(next_line_id, init_top_id, False)
+            cross_product = np.cross(v_1, v_2)
+            if(cross_product >= 0):
+                angle = np.arccos(np.dot(v_1, v_2) /
+                                  (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
+                most_right_line.append([angle, (next_line_id, p_2_top_id)])
+
+        most_right_line.sort()
+
+        return most_right_line[0][1]
+
+    def _get_line_eq_2d(self, cell_id, id_1, id_1_is_top=True):
+        line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
+        point_id_list = line.GetPointIds()
+
+        id_list_pos_1 = point_id_list.IsId(id_1)
+        vertex_1 = np.array(self._skeleton.GetPoint(id_1)[:2])
+
+        if(id_list_pos_1 == 0):
+            id_2 = point_id_list.GetId(1)
+        else:
+            id_2 = point_id_list.GetId(0)
+
+        vertex_2 = np.array(self._skeleton.GetPoint(id_2)[:2])
+
+        if(id_1_is_top):
+            return(vertex_1-vertex_2, id_2)
+        else:
+            return (vertex_2-vertex_1, id_2)
