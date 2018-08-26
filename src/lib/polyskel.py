@@ -526,7 +526,6 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                                         nOutputPorts=1, outputType='vtkPolyData')
 
         self._thickness = 0.1
-        self._center = None
 
     def is_ccw(self, polydata, id_list):
         length = id_list.GetNumberOfIds()
@@ -579,14 +578,14 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             source = node.source
 
             source_id = vtk_points.InsertNextPoint(
-                source[0], source[1], self._center[2])
+                source[0], source[1], 0)
 
             sinks = node.sinks
 
             for sink in sinks:
                 vtk_line = vtk.vtkLine()
                 sink_id = vtk_points.InsertNextPoint(
-                    sink[0], sink[1], self._center[2])
+                    sink[0], sink[1], 0)
                 vtk_line.GetPointIds().InsertId(0, source_id)
                 vtk_line.GetPointIds().InsertId(1, sink_id)
                 vtk_cell.InsertNextCell(vtk_line)
@@ -606,17 +605,15 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             source = node.source
 
             source_id = out_polydata.FindPoint(
-                source[0], source[1], self._center[2])
+                source[0], source[1], 0)
             out_polydata.GetPoints().SetPoint(
-                source_id, source[0], source[1], height+self._center[2])
+                source_id, source[0], source[1], height)
 
         return out_polydata
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
-
-        self._center = inp.GetCenter()
 
         transform = vtk.vtkTransform()
         transform.Scale(100, 100, 1)
@@ -639,7 +636,6 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         for skeleton in list_of_skeleton:
             polydata_skeleton = self._convert_subtree_to_polyline(
                 skeleton)
-
             offset = offset_calculator(0.1, polydata_skeleton)
             merge.AddInputData(offset.offset_curve)
 
@@ -663,6 +659,8 @@ class offset_calculator():
         self._vtk_points = vtk.vtkPoints()
 
         self._skeleton = skeleton
+        bounds = self._skeleton.GetBounds()
+
         self._skeleton.BuildLinks()
         self._is_traversed = []
 
@@ -673,9 +671,8 @@ class offset_calculator():
 
             if(cell_iterator.GetCellType() == vtk.VTK_LINE):
                 cell_id = cell_iterator.GetCellId()
-
                 if(not (cell_id in self._is_traversed) and self._does_it_contain_d(cell_id, height)):
-                    cell_array.InsertNextCell(one_edge(cell_id, height))
+                    cell_array.InsertNextCell(self.one_edge(cell_id, height))
 
             cell_iterator.GoToNextCell()
 
@@ -683,7 +680,7 @@ class offset_calculator():
         self.offset_curve.SetLines(cell_array)
 
     def one_edge(self, start_line, height):
-        edge = vtk.vtkLine()
+        edge = vtk.vtkPolyLine()
         cell_id = start_line
 
         while(True):
@@ -707,7 +704,7 @@ class offset_calculator():
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
         bound = line.GetBounds()
 
-        if(bound[4] < height < bound[4]):
+        if(bound[4] < height < bound[5]):
             return True
         else:
             return False
@@ -741,21 +738,21 @@ class offset_calculator():
 
         v_1, p_1_bot_id = self._get_line_eq_2d(current_cell_id, init_top_id)
 
-        most_right_line = []
+        most_left_line = []
 
         for i in range(cell_id_list.GetNumberOfIds()):
             next_line_id = cell_id_list.GetId(i)
             v_2, p_2_top_id = self._get_line_eq_2d(
                 next_line_id, init_top_id, False)
             cross_product = np.cross(v_1, v_2)
-            if(cross_product >= 0):
+            if(cross_product <= 0):
                 angle = np.arccos(np.dot(v_1, v_2) /
                                   (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
-                most_right_line.append([angle, (next_line_id, p_2_top_id)])
+                most_left_line.append([angle, (next_line_id, p_2_top_id)])
 
-        most_right_line.sort()
+        most_left_line.sort()
 
-        return most_right_line[0][1]
+        return most_left_line[-1][1]
 
     def _get_line_eq_2d(self, cell_id, id_1, id_1_is_top=True):
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
