@@ -660,7 +660,6 @@ class offset_calculator():
         self._vtk_points = vtk.vtkPoints()
 
         self._skeleton = skeleton
-        bounds = self._skeleton.GetBounds()
 
         self._skeleton.BuildLinks()
         self._is_traversed = []
