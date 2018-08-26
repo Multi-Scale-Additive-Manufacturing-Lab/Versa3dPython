@@ -11,6 +11,7 @@ from itertools import *
 from collections import namedtuple
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import vtk
+import numpy as np
 
 log = logging.getLogger("__name__")
 
@@ -684,11 +685,12 @@ class offset_calculator():
         cell_id = start_line
 
         while(True):
-            pt_id = self._vtk_points.InsertNextPoint(
-                self._point_at_d(cell_id, height))
+            pt = self._point_at_d(cell_id, height)
+            pt_id = self._vtk_points.InsertNextPoint(pt)
+
             edge.GetPointIds().InsertNextId(pt_id)
             self._is_traversed.append(cell_id)
-            top_id = self._line_direction(self, cell_id)
+            top_id = self._line_direction(cell_id)
             while(True):
                 cell_id, top_id = self._go_next_line_cw(cell_id, top_id)
                 if(not self._does_it_contain_d(cell_id, height)):
