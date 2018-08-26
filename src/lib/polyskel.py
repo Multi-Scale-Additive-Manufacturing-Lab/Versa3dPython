@@ -639,6 +639,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 skeleton)
             offset = offset_calculator(0.1, polydata_skeleton)
             merge.AddInputData(offset.offset_curve)
+            merge.AddInputData(polydata_skeleton)
 
         merge.Update()
 
