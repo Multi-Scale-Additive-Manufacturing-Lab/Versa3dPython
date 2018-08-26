@@ -693,7 +693,7 @@ class offset_calculator():
             top_id = self._line_direction(cell_id)
             while(True):
                 cell_id, top_id = self._go_next_line_cw(cell_id, top_id)
-                if(not self._does_it_contain_d(cell_id, height)):
+                if(self._does_it_contain_d(cell_id, height)):
                     break
 
             if(start_line == cell_id):
