@@ -744,13 +744,14 @@ class offset_calculator():
 
         for i in range(cell_id_list.GetNumberOfIds()):
             next_line_id = cell_id_list.GetId(i)
-            v_2, p_2_top_id = self._get_line_eq_2d(
-                next_line_id, init_top_id, False)
-            cross_product = np.cross(v_1, v_2)
-            if(cross_product <= 0):
-                angle = np.arccos(np.dot(v_1, v_2) /
-                                  (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
-                most_left_line.append([angle, (next_line_id, p_2_top_id)])
+            if(next_line_id != current_cell_id):
+                v_2, p_2_top_id = self._get_line_eq_2d(
+                    next_line_id, init_top_id, False)
+                cross_product = np.cross(v_1, v_2)
+                if(cross_product <= 0):
+                    angle = np.arccos(np.dot(v_1, v_2) /
+                                    (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
+                    most_left_line.append([angle, (next_line_id, p_2_top_id)])
 
         most_left_line.sort()
 
