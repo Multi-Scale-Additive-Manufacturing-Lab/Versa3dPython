@@ -570,27 +570,27 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         return polygon_list
 
-    def _convert_subtree_to_polyline(self, list_subtree):
+    def _convert_subtree_to_polyline(self, subtree):
 
         vtk_cell = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
 
-        for subtree in list_subtree:
-            for node in subtree:
-                source = node.source
+        for node in subtree:
+            source = node.source
 
-                source_id = vtk_points.InsertNextPoint(
-                    source[0], source[1], self._center[2])
+            source_id = vtk_points.InsertNextPoint(
+                source[0], source[1], self._center[2])
 
-                sinks = node.sinks
+            sinks = node.sinks
 
-                for sink in sinks:
-                    vtk_line = vtk.vtkLine()
-                    sink_id = vtk_points.InsertNextPoint(
-                        sink[0], sink[1], self._center[2])
-                    vtk_line.GetPointIds().InsertId(0, source_id)
-                    vtk_line.GetPointIds().InsertId(1, sink_id)
-                    vtk_cell.InsertNextCell(vtk_line)
+            for sink in sinks:
+                vtk_line = vtk.vtkLine()
+                sink_id = vtk_points.InsertNextPoint(
+                    sink[0], sink[1], self._center[2])
+                vtk_line.GetPointIds().InsertId(0, source_id)
+                vtk_line.GetPointIds().InsertId(1, sink_id)
+                vtk_cell.InsertNextCell(vtk_line)
+
         polydata = vtk.vtkPolyData()
         polydata.SetPoints(vtk_points)
         polydata.SetLines(vtk_cell)
@@ -600,15 +600,15 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         clean.Update()
 
         out_polydata = clean.GetOutput()
-        for subtree in list_subtree:
-            for node in subtree:
-                height = node.height
-                source = node.source
 
-                source_id = out_polydata.FindPoint(
-                    source[0], source[1], self._center[2])
-                out_polydata.GetPoints().SetPoint(
-                    source_id, source[0], source[1], height+self._center[2])
+        for node in subtree:
+            height = node.height
+            source = node.source
+
+            source_id = out_polydata.FindPoint(
+                source[0], source[1], self._center[2])
+            out_polydata.GetPoints().SetPoint(
+                source_id, source[0], source[1], height+self._center[2])
 
         return out_polydata
 
@@ -634,10 +634,18 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         for polygon in list_polygon:
             list_of_skeleton.append(skeletonize(polygon))
 
-        skeleton = self._convert_subtree_to_polyline(
-            list_of_skeleton)
+        merge = vtk.vtkAppendPolyData()
 
-        opt.ShallowCopy(skeleton)
+        for skeleton in list_of_skeleton:
+            polydata_skeleton = self._convert_subtree_to_polyline(
+                skeleton)
+
+            offset = offset_calculator(0.1, polydata_skeleton)
+            merge.AddInputData(offset.offset_curve)
+
+        merge.Update()
+
+        opt.ShallowCopy(merge.GetOutput())
 
         return 1
 
@@ -649,7 +657,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 class offset_calculator():
 
     def __init__(self, height, skeleton):
-        offset_curve = vtk.vtkCellArray()
+        self.offset_curve = vtk.vtkPolyData()
+
+        cell_array = vtk.vtkCellArray()
         self._vtk_points = vtk.vtkPoints()
 
         self._skeleton = skeleton
@@ -665,23 +675,25 @@ class offset_calculator():
                 cell_id = cell_iterator.GetCellId()
 
                 if(not (cell_id in self._is_traversed) and self._does_it_contain_d(cell_id, height)):
-                    offset_curve.InsertNextCell(one_edge(cell_id, height))
+                    cell_array.InsertNextCell(one_edge(cell_id, height))
 
-            cell_iterator.GotToNextCell()
+            cell_iterator.GoToNextCell()
 
-        return offset_curve
+        self.offset_curve.SetPoints(self._vtk_points)
+        self.offset_curve.SetLines(cell_array)
 
     def one_edge(self, start_line, height):
         edge = vtk.vtkLine()
         cell_id = start_line
 
         while(True):
-            pt_id = self._vtk_points.InsertNextPoint(self._point_at_d(cell_id, height))
+            pt_id = self._vtk_points.InsertNextPoint(
+                self._point_at_d(cell_id, height))
             edge.GetPointIds().InsertNextId(pt_id)
             self._is_traversed.append(cell_id)
             top_id = self._line_direction(self, cell_id)
             while(True):
-                cell_id, top_id  = self._go_next_line_cw(cell_id, top_id)
+                cell_id, top_id = self._go_next_line_cw(cell_id, top_id)
                 if(not self._does_it_contain_d(cell_id, height)):
                     break
 
@@ -733,7 +745,8 @@ class offset_calculator():
 
         for i in range(cell_id_list.GetNumberOfIds()):
             next_line_id = cell_id_list.GetId(i)
-            v_2, p_2_top_id = self._get_line_eq_2d(next_line_id, init_top_id, False)
+            v_2, p_2_top_id = self._get_line_eq_2d(
+                next_line_id, init_top_id, False)
             cross_product = np.cross(v_1, v_2)
             if(cross_product >= 0):
                 angle = np.arccos(np.dot(v_1, v_2) /
