@@ -616,8 +616,11 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
 
+        center = inp.GetCenter()
+
         transform = vtk.vtkTransform()
         transform.Scale(100, 100, 1)
+        transform.Translate(0,0,-center[2])
 
         scaling_transform = vtk.vtkTransformPolyDataFilter()
         scaling_transform.SetTransform(transform)
@@ -640,6 +643,8 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             offset = offset_calculator(0.1, polydata_skeleton)
             merge.AddInputData(offset.offset_curve)
             merge.AddInputData(polydata_skeleton)
+        
+        merge.AddInputData(scaling_transform.GetOutput())
 
         merge.Update()
 
