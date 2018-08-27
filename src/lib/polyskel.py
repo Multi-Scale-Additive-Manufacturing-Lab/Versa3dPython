@@ -531,9 +531,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
     def is_ccw(self, polydata, id_list):
         length = id_list.GetNumberOfIds()
         total = 0
-        for i in range(length-1):
-            vertex_id = id_list.GetId(i)
-            next_vertex_id = id_list.GetId(i+1)
+        for i in range(length):
+            vertex_id = id_list.GetId(i%length)
+            next_vertex_id = id_list.GetId((i+1)%length)
 
             vertex = polydata.GetPoint(vertex_id)
             next_vertex = polydata.GetPoint(next_vertex_id)
@@ -651,7 +651,6 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         self._thickness = thickness
         self.Modified()
 
-
 class offset_calculator():
 
     def __init__(self, height, skeleton):
@@ -746,33 +745,33 @@ class offset_calculator():
             if(next_line_id != current_cell_id):
                 v_2, p_2_top_id = self._get_line_eq_2d(
                     next_line_id, init_top_id, False)
-                
+
                 turn = self._area_turn_val(
                     [p_1_bot_id, init_top_id, p_2_top_id])
 
                 angle = np.pi-np.arccos(np.dot(v_1, v_2) /
-                                  (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
-                
-                if(turn < 0 ):
+                                        (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
+
+                if(turn < 0):
                     angle = 2*np.pi - angle
 
                 most_right_line.append([angle, (next_line_id, p_2_top_id)])
 
-
         most_right_line.sort()
         return most_right_line[0][1]
-    
+
     def _area_turn_val(self, sequence_pt_id):
         total = 0
-        for i in range(len(sequence_pt_id)-1):
-            pt_1_id = sequence_pt_id[i]
-            pt_2_id = sequence_pt_id[i+1]
+        length = len(sequence_pt_id)
+        for i in range(length):
+            pt_1_id = sequence_pt_id[i%length]
+            pt_2_id = sequence_pt_id[(i+1)%length]
 
             pt_1 = np.array(self._skeleton.GetPoint(pt_1_id))
             pt_2 = np.array(self._skeleton.GetPoint(pt_2_id))
 
             total += (pt_2[0]-pt_1[0])*(pt_2[1]+pt_1[1])
-    
+
         return total
 
     def _get_line_eq_2d(self, cell_id, id_1, id_1_is_top=True):
