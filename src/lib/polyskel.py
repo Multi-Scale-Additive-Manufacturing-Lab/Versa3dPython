@@ -683,7 +683,6 @@ class offset_calculator():
     def one_edge(self, start_line, height):
         edge = vtk.vtkPolyLine()
         cell_id = start_line
-
         while(True):
             pt = self._point_at_d(cell_id, height)
             pt_id = self._vtk_points.InsertNextPoint(pt)
@@ -691,6 +690,7 @@ class offset_calculator():
             edge.GetPointIds().InsertNextId(pt_id)
             self._is_traversed.append(cell_id)
             top_id = self._line_direction(cell_id)
+
             while(True):
                 cell_id, top_id = self._go_next_line_cw(cell_id, top_id)
                 if(self._does_it_contain_d(cell_id, height)):
@@ -737,27 +737,43 @@ class offset_calculator():
 
         cell_id_list = vtk.vtkIdList()
         self._skeleton.GetPointCells(init_top_id, cell_id_list)
-
         v_1, p_1_bot_id = self._get_line_eq_2d(current_cell_id, init_top_id)
 
-        most_left_line = []
+        most_right_line = []
 
         for i in range(cell_id_list.GetNumberOfIds()):
             next_line_id = cell_id_list.GetId(i)
             if(next_line_id != current_cell_id):
                 v_2, p_2_top_id = self._get_line_eq_2d(
                     next_line_id, init_top_id, False)
-                cross_product = np.cross(v_1, v_2)
-                angle = np.arccos(np.dot(v_1, v_2) /
-                                  (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
-                if(cross_product >= 0):
-                    angle = np.pi - angle
                 
-                most_left_line.append([angle, (next_line_id, p_2_top_id)])
+                turn = self._area_turn_val(
+                    [p_1_bot_id, init_top_id, p_2_top_id])
 
-        most_left_line.sort()
+                angle = np.pi-np.arccos(np.dot(v_1, v_2) /
+                                  (np.linalg.norm(v_1)*np.linalg.norm(v_2)))
+                
+                if(turn < 0 ):
+                    angle = 2*np.pi - angle
 
-        return most_left_line[-1][1]
+                most_right_line.append([angle, (next_line_id, p_2_top_id)])
+
+
+        most_right_line.sort()
+        return most_right_line[0][1]
+    
+    def _area_turn_val(self, sequence_pt_id):
+        total = 0
+        for i in range(len(sequence_pt_id)-1):
+            pt_1_id = sequence_pt_id[i]
+            pt_2_id = sequence_pt_id[i+1]
+
+            pt_1 = np.array(self._skeleton.GetPoint(pt_1_id))
+            pt_2 = np.array(self._skeleton.GetPoint(pt_2_id))
+
+            total += (pt_2[0]-pt_1[0])*(pt_2[1]+pt_1[1])
+    
+        return total
 
     def _get_line_eq_2d(self, cell_id, id_1, id_1_is_top=True):
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
@@ -772,7 +788,6 @@ class offset_calculator():
             id_2 = point_id_list.GetId(0)
 
         vertex_2 = np.array(self._skeleton.GetPoint(id_2)[:2])
-
         if(id_1_is_top):
             return(vertex_1-vertex_2, id_2)
         else:
