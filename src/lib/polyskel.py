@@ -532,8 +532,8 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         length = id_list.GetNumberOfIds()
         total = 0
         for i in range(length):
-            vertex_id = id_list.GetId(i%length)
-            next_vertex_id = id_list.GetId((i+1)%length)
+            vertex_id = id_list.GetId(i % length)
+            next_vertex_id = id_list.GetId((i+1) % length)
 
             vertex = polydata.GetPoint(vertex_id)
             next_vertex = polydata.GetPoint(next_vertex_id)
@@ -620,7 +620,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         transform = vtk.vtkTransform()
         transform.Scale(100, 100, 1)
-        transform.Translate(0,0,-center[2])
+        transform.Translate(0, 0, -center[2])
 
         scaling_transform = vtk.vtkTransformPolyDataFilter()
         scaling_transform.SetTransform(transform)
@@ -642,8 +642,8 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 skeleton)
             offset = offset_calculator(10, polydata_skeleton)
             merge.AddInputData(offset.offset_curve)
-            #merge.AddInputData(polydata_skeleton)
-        
+            # merge.AddInputData(polydata_skeleton)
+
         merge.AddInputData(scaling_transform.GetOutput())
 
         merge.Update()
@@ -655,6 +655,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
     def set_shell_thickness(self, thickness):
         self._thickness = thickness
         self.Modified()
+
 
 class offset_calculator():
 
@@ -732,7 +733,7 @@ class offset_calculator():
             p_1_id = line.GetPointIds().GetId(1)
             p_1 = self._skeleton.GetPoint(p_1_id)
             p_2_id = line.GetPointIds().GetId(0)
-            p_2 = self._skeleton.GetPoint(p_2_id)   
+            p_2 = self._skeleton.GetPoint(p_2_id)
 
         t = (height - p_1[2])/(p_2[2]-p_1[2])
 
@@ -787,8 +788,8 @@ class offset_calculator():
         total = 0
         length = len(sequence_pt_id)
         for i in range(length):
-            pt_1_id = sequence_pt_id[i%length]
-            pt_2_id = sequence_pt_id[(i+1)%length]
+            pt_1_id = sequence_pt_id[i % length]
+            pt_2_id = sequence_pt_id[(i+1) % length]
 
             pt_1 = np.array(self._skeleton.GetPoint(pt_1_id))
             pt_2 = np.array(self._skeleton.GetPoint(pt_2_id))
