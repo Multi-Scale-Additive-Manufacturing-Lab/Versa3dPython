@@ -609,6 +609,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 source[0], source[1], 0)
             out_polydata.GetPoints().SetPoint(
                 source_id, source[0], source[1], height)
+            out_polydata.Modified()
 
         return out_polydata
 
