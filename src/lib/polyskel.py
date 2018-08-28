@@ -719,13 +719,24 @@ class offset_calculator():
 
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
         bound = line.GetBounds()
+        p_1_id = line.GetPointIds().GetId(0)
+        p_1 = self._skeleton.GetPoint(p_1_id)
 
-        t = (height - bound[4])/(bound[5]-bound[4])
+        if(p_1[2] == bound[4]):
+            p_2_id = line.GetPointIds().GetId(1)
+            p_2 = self._skeleton.GetPoint(p_2_id)
+        else:
+            p_1_id = line.GetPointIds().GetId(1)
+            p_1 = self._skeleton.GetPoint(p_1_id)
+            p_2_id = line.GetPointIds().GetId(0)
+            p_2 = self._skeleton.GetPoint(p_2_id)   
+
+        t = (height - p_1[2])/(p_2[2]-p_1[2])
 
         vert = [0]*3
         vert[2] = height
         for i in range(2):
-            vert[i] = bound[2*i] + t * (bound[2*i+1]-bound[2*i])
+            vert[i] = p_1[i] + t * (p_2[i]-p_1[i])
 
         return vert
 
