@@ -640,9 +640,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         for skeleton in list_of_skeleton:
             polydata_skeleton = self._convert_subtree_to_polyline(
                 skeleton)
-            offset = offset_calculator(0.1, polydata_skeleton)
+            offset = offset_calculator(10, polydata_skeleton)
             merge.AddInputData(offset.offset_curve)
-            merge.AddInputData(polydata_skeleton)
+            #merge.AddInputData(polydata_skeleton)
         
         merge.AddInputData(scaling_transform.GetOutput())
 
@@ -710,7 +710,7 @@ class offset_calculator():
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
         bound = line.GetBounds()
 
-        if(bound[4] < height < bound[5]):
+        if(bound[4] <= height <= bound[5]):
             return True
         else:
             return False
@@ -720,10 +720,14 @@ class offset_calculator():
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
         bound = line.GetBounds()
 
-        v = np.array([bound[1]-bound[0], bound[3]-bound[2], bound[5]-bound[4]])
-        h = np.array([0, 0, height])
+        t = (height - bound[4])/(bound[5]-bound[4])
 
-        return v*np.dot(v, h)/np.linalg.norm(v)**2+np.array([bound[0], bound[2], bound[4]])
+        vert = [0]*3
+        vert[2] = height
+        for i in range(2):
+            vert[i] = bound[2*i] + t * (bound[2*i+1]-bound[2*i])
+
+        return vert
 
     def _line_direction(self, cell_id):
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
