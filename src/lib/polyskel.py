@@ -701,6 +701,9 @@ class offset_calculator():
                     break
 
             if(start_line == cell_id):
+                pt = self._point_at_d(cell_id, height)
+                pt_id = self._vtk_points.InsertNextPoint(pt)
+                edge.GetPointIds().InsertNextId(pt_id)
                 break
 
         return edge
