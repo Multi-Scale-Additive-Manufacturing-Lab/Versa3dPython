@@ -659,10 +659,6 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             
             merge.AddInputData(offset_curve)
 
-            # merge.AddInputData(polydata_skeleton)
-
-        merge.AddInputData(scaling_transform.GetOutput())
-
         merge.Update()
 
         opt.ShallowCopy(merge.GetOutput())
