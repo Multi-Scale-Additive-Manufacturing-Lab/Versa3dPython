@@ -12,6 +12,7 @@ from collections import namedtuple
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import vtk
 import numpy as np
+import scipy.optimize as so
 
 log = logging.getLogger("__name__")
 
@@ -528,24 +529,27 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         self._thickness = 0.1
 
-    def is_ccw(self, polydata, id_list):
-        length = id_list.GetNumberOfIds()
-        total = 0
-        for i in range(length):
-            vertex_id = id_list.GetId(i % length)
-            next_vertex_id = id_list.GetId((i+1) % length)
+    def _calc_area_and_perimeter(self, polydata, id_list):
+        num_vert = id_list.GetNumberOfIds()-1
+        Area = 0
+        Perimeter = 0
+        # use the shoelace formula to calc area
+        for i in range(num_vert):
+            vertex_id = id_list.GetId(i % num_vert)
+            next_vertex_id = id_list.GetId((i+1) % num_vert)
 
-            vertex = polydata.GetPoint(vertex_id)
-            next_vertex = polydata.GetPoint(next_vertex_id)
-            total += (next_vertex[0]-vertex[0])*(next_vertex[1]+vertex[1])
+            vertex = np.array(polydata.GetPoint(vertex_id))[0:2]
+            next_vertex = np.array(polydata.GetPoint(next_vertex_id))[0:2]
 
-        if total >= 0:
-            return True
-
-        return False
+            matrix = np.array([vertex, next_vertex])
+            Area += 0.5*np.linalg.det(matrix)
+            Perimeter += np.linalg.norm(next_vertex-vertex)
+        
+        return (Area, Perimeter)
 
     def _convert_contour_to_list(self, polydata):
         polygon_list = []
+        polygon_stat = []
 
         line_iterator = polydata.GetLines()
         line_iterator.InitTraversal()
@@ -556,7 +560,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             length = id_list.GetNumberOfIds()
             polygon = []
 
-            if(self.is_ccw(polydata, id_list)):
+            Area, Perimeter = self._calc_area_and_perimeter(polydata, id_list)
+
+            if(Area <= 0):
                 sequence = range(length-1)
             else:
                 sequence = reversed(range(length-1))
@@ -567,8 +573,9 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 polygon.append([vertex[i] for i in range(2)])
 
             polygon_list.append(polygon)
+            polygon_stat.append((Area,Perimeter))
 
-        return polygon_list
+        return (polygon_list, polygon_stat)
 
     def _convert_subtree_to_polyline(self, subtree):
 
@@ -628,7 +635,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         scaling_transform.SetInputData(inp)
         scaling_transform.Update()
 
-        list_polygon = self._convert_contour_to_list(
+        list_polygon, polygon_stat = self._convert_contour_to_list(
             scaling_transform.GetOutput())
 
         list_of_skeleton = []
@@ -638,11 +645,20 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
 
         merge = vtk.vtkAppendPolyData()
 
-        for skeleton in list_of_skeleton:
+        for i in range(len(list_of_skeleton)):
             polydata_skeleton = self._convert_subtree_to_polyline(
-                skeleton)
-            offset = offset_calculator(10, polydata_skeleton)
-            merge.AddInputData(offset.offset_curve)
+                list_of_skeleton[i])
+            bounds = polydata_skeleton.GetBounds()
+
+            outer_area, outer_perimeter = polygon_stat[i]
+            
+            offset_curve = vtk.vtkPolyData()
+
+            so.brentq(self.compute_offset, bounds[4], bounds[5], args=(
+                self._thickness, outer_area, outer_perimeter, polydata_skeleton, offset_curve))
+            
+            merge.AddInputData(offset_curve)
+
             # merge.AddInputData(polydata_skeleton)
 
         merge.AddInputData(scaling_transform.GetOutput())
@@ -656,6 +672,24 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
     def set_shell_thickness(self, thickness):
         self._thickness = thickness
         self.Modified()
+    
+    def compute_offset(self, height, offset, outer_area, outer_perimeter, polydata_skeleton, offset_curve):
+        offset_calc = offset_calculator(height, polydata_skeleton)
+        offset_curve.DeepCopy(offset_calc.offset_curve)
+
+        line_iterator = offset_curve.GetLines()
+        line_iterator.InitTraversal()
+
+        id_list = vtk.vtkIdList()
+        inner_area = 0
+        while(line_iterator.GetNextCell(id_list)):
+            Area, Perimeter = self._calc_area_and_perimeter(offset_curve, id_list)
+            inner_area += Area
+        
+        average_thickness = (outer_area - inner_area)/outer_perimeter
+
+        return average_thickness-offset
+
 
 
 class offset_calculator():
