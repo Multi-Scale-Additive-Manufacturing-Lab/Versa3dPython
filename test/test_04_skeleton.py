@@ -17,7 +17,7 @@ class skeletonizeTest(unittest.TestCase):
         cut_plane = vtk.vtkPlane()
         cut_plane.SetOrigin(0,0,0)
         cut_plane.SetNormal(0,0,1)
-        cut_plane.SetOrigin(0,0,(bounds[5]-bounds[4])/2)
+        cut_plane.SetOrigin(0,0,0.1)
 
         cutter = vtk.vtkCutter()
         cutter.SetCutFunction(cut_plane)
@@ -38,13 +38,14 @@ class skeletonizeTest(unittest.TestCase):
     def test_generate_skeleton(self):
         skeleton = sk.vtk_skeletonize()
         skeleton.DebugOn()
-
+        #db.visualizer(self.LocalToWorldCoordConverter.GetOutput())
+        
         skeleton.SetInputConnection(self.LocalToWorldCoordConverter.GetOutputPort())
         skeleton.set_shell_thickness(0.2)
         skeleton.Update()
 
         db.visualizer(skeleton.GetOutputDataObject(0))
-
+        
     
     def tearDown(self):
         pass

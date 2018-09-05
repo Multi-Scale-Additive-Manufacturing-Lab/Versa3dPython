@@ -544,7 +544,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             matrix = np.array([vertex, next_vertex])
             Area += 0.5*np.linalg.det(matrix)
             Perimeter += np.linalg.norm(next_vertex-vertex)
-        
+
         return (Area, Perimeter)
 
     def _convert_contour_to_list(self, polydata):
@@ -573,7 +573,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
                 polygon.append([vertex[i] for i in range(2)])
 
             polygon_list.append(polygon)
-            polygon_stat.append((Area,Perimeter))
+            polygon_stat.append((Area, Perimeter))
 
         return (polygon_list, polygon_stat)
 
@@ -639,25 +639,35 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
             scaling_transform.GetOutput())
 
         list_of_skeleton = []
+        
+        hole_detec = hole_detector(list_polygon)
+        hole_contour = hole_detec.detect()
 
-        for polygon in list_polygon:
-            list_of_skeleton.append(skeletonize(polygon))
-
+        for contour, holes in hole_contour.items():
+            holes_list = []
+            for hole in holes:
+                holes_list.append(reversed(list_polygon[hole]))
+            polygon = list_polygon[contour]
+            list_of_skeleton.append(skeletonize(polygon, holes_list))
+        
         merge = vtk.vtkAppendPolyData()
 
         for i in range(len(list_of_skeleton)):
             polydata_skeleton = self._convert_subtree_to_polyline(
                 list_of_skeleton[i])
             bounds = polydata_skeleton.GetBounds()
-
-            outer_area, outer_perimeter = polygon_stat[i]
             
+            outer_area, outer_perimeter = polygon_stat[i]
+
             offset_curve = vtk.vtkPolyData()
 
             so.brentq(self.compute_offset, bounds[4], bounds[5], args=(
                 self._thickness, outer_area, outer_perimeter, polydata_skeleton, offset_curve))
-            
+
             merge.AddInputData(offset_curve)
+            
+            merge.AddInputData(polydata_skeleton)
+        
 
         merge.Update()
 
@@ -668,7 +678,7 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
     def set_shell_thickness(self, thickness):
         self._thickness = thickness
         self.Modified()
-    
+
     def compute_offset(self, height, offset, outer_area, outer_perimeter, polydata_skeleton, offset_curve):
         offset_calc = offset_calculator(height, polydata_skeleton)
         offset_curve.DeepCopy(offset_calc.offset_curve)
@@ -679,13 +689,107 @@ class vtk_skeletonize(VTKPythonAlgorithmBase):
         id_list = vtk.vtkIdList()
         inner_area = 0
         while(line_iterator.GetNextCell(id_list)):
-            Area, Perimeter = self._calc_area_and_perimeter(offset_curve, id_list)
+            Area, Perimeter = self._calc_area_and_perimeter(
+                offset_curve, id_list)
             inner_area += Area
-        
+
         average_thickness = (outer_area - inner_area)/outer_perimeter
 
         return average_thickness-offset
 
+    def _find_hole(self, list_polygon):
+
+        list_contour = []
+        list_holes = []
+
+        for i in range(len(list_polygon_3d)):
+
+            if(len(list_contour) == 0):
+                list_contour.append(i)
+            else:
+                for contour in list_contour:
+                    check()
+
+        return holes_list
+
+
+class hole_detector():
+
+    def __init__(self, list_polygon):
+
+        self._num_of_poly = len(list_polygon)
+        self._normal = [0, 0, 1]
+
+        self._list_polygon_3d = []
+        self._list_of_bound = []
+        for polygon in list_polygon:
+
+            polygon_3d = [(v[0], v[1], 0) for v in polygon]
+            self._list_polygon_3d.append(polygon_3d)
+
+            min_x = min(polygon, key=lambda x: x[0])[0]
+            max_x = max(polygon, key=lambda x: x[0])[0]
+            min_y = min(polygon, key=lambda x: x[1])[1]
+            max_y = max(polygon, key=lambda x: x[1])[1]
+
+            self._list_of_bound.append([min_x, max_x, min_y, max_y, 0, 0])
+
+        self.list_contour = []
+        self.list_holes = []
+
+    def detect(self):
+        list_contour_tree = {}
+
+        for i in range(len(self._list_polygon_3d)):
+            if(len(list_contour_tree) == 0):
+                list_contour_tree[i] = []
+            else:
+                for contour in list(list_contour_tree):
+                    holes = list_contour_tree[contour]
+                    is_i_inside_c = self.check(i, contour)
+                    if(is_i_inside_c):
+                        is_i_inside_hole = False
+                        for hole in holes:
+                            if(i != hole):
+                                is_i_inside_hole = self.check(i, hole)
+                                if(is_i_inside_hole):
+                                    list_contour_tree[i] = []
+                                    break
+
+                        if(not is_i_inside_hole):
+                            holes.append(i)
+                    else:
+                        is_c_inside_i = self.check(contour, i)
+                        if(is_c_inside_i):
+                            for hole in holes:
+                                list_contour_tree[hole] = []
+                            list_contour_tree[i] = [contour]
+                        else:
+                            list_contour_tree[i] = []
+        return list_contour_tree
+
+    def check(self, poly_1_index, poly_2_index):
+        """check if poly_1 is inside poly_2
+
+        Arguments:
+            poly_1_index {int} -- index to list of polygon
+            poly_2_index {int} -- index to list of polygon
+
+        Returns:
+            bool -- return True or False
+        """
+
+        poly_2 = list(chain(*self._list_polygon_3d[poly_2_index]))
+        poly_1 = self._list_polygon_3d[poly_1_index]
+        bound = self._list_of_bound[poly_2_index]
+        num_vert = len(poly_2)
+
+        for vert in poly_1:
+            state = vtk.vtkPolygon.PointInPolygon(
+                vert, num_vert, poly_2, bound, self._normal)
+            if(state == 0 or state == -1):
+                return False
+        return True
 
 
 class offset_calculator():
@@ -745,7 +849,7 @@ class offset_calculator():
         line = vtk.vtkLine.SafeDownCast(self._skeleton.GetCell(cell_id))
         bound = line.GetBounds()
 
-        if(bound[4] <= height <= bound[5]):
+        if(bound[4] < height < bound[5]):
             return True
         else:
             return False

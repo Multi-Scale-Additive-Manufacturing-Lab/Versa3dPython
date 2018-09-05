@@ -212,4 +212,4 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         mergedPoly.ComputeBounds()
         bound = mergedPoly.GetBounds()
 
-        listOfContour = slicePoly(bound[4:6],self._thickness,mergedPoly)
+        listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
