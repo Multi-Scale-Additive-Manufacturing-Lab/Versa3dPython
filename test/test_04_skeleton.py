@@ -17,7 +17,7 @@ class skeletonizeTest(unittest.TestCase):
         cut_plane = vtk.vtkPlane()
         cut_plane.SetOrigin(0,0,0)
         cut_plane.SetNormal(0,0,1)
-        cut_plane.SetOrigin(0,0,0.1)
+        cut_plane.SetOrigin(0,0,2.5)
 
         cutter = vtk.vtkCutter()
         cutter.SetCutFunction(cut_plane)
@@ -36,15 +36,20 @@ class skeletonizeTest(unittest.TestCase):
         self.LocalToWorldCoordConverter.Update()
 
     def test_generate_skeleton(self):
-        skeleton = sk.vtk_skeletonize()
+        skeleton = sk.VtkSkeletonize()
         skeleton.DebugOn()
         #db.visualizer(self.LocalToWorldCoordConverter.GetOutput())
         
         skeleton.SetInputConnection(self.LocalToWorldCoordConverter.GetOutputPort())
-        skeleton.set_shell_thickness(0.2)
+        skeleton.set_shell_thickness(10)
         skeleton.Update()
 
-        db.visualizer(skeleton.GetOutputDataObject(0))
+        merge = vtk.vtkAppendPolyData()
+        merge.AddInputData(skeleton.GetOutputDataObject(0))
+        merge.AddInputData(self.LocalToWorldCoordConverter.GetOutput())
+        merge.Update()
+
+        db.visualizer(merge.GetOutput())
         
     
     def tearDown(self):
