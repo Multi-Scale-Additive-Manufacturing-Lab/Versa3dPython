@@ -60,18 +60,20 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
             if(not orientation_c):
                 contour = reversed(contour)
             pco.AddPath(contour, pc.JT_ROUND, pc.ET_CLOSEDPOLYGON)
+            offset = pco.Execute(-1*self._thickness)
+            list_offset.append(offset)
 
             for hole_index in holes:
+                pco_h = pc.PyclipperOffset()
                 hole = list_path[hole_index]
                 orientation_h = pc.Orientation(hole)
                 if(orientation_h):
                     hole = reversed(hole)
                 
-                pco.AddPath(hole, pc.JT_ROUND, pc.ET_CLOSEDPOLYGON)
-            
-            offset = pco.Execute(-1*self._thickness)
-            list_offset.append(offset)
-
+                pco_h.AddPath(hole, pc.JT_ROUND, pc.ET_CLOSEDPOLYGON)
+                hole_offset = pco_h.Execute(self._thickness)
+                list_offset.append(hole_offset)
+                
         polydata = vtk.vtkPolyData()
         vtk_cell_array = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
