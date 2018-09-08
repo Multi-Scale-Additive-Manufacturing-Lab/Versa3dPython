@@ -29,7 +29,7 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
                 vertex = polydata.GetPoint(vertex_id)
                 path.append(vertex[0:2])
 
-            list_path.append(path)
+            list_path.append(pc.scale_to_clipper(path))
 
         return list_path
 
@@ -37,10 +37,11 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
         inp = vtk.vtkPolyData.GetData(inInfo[0])
         opt = vtk.vtkPolyData.GetData(outInfo)
 
+        delta = pc.scale_to_clipper(self._thickness)
+
         center = inp.GetCenter()
 
         transform = vtk.vtkTransform()
-        transform.Scale(1000, 1000, 1)
         transform.Translate(0, 0, -center[2])
 
         scaling_transform = vtk.vtkTransformPolyDataFilter()
@@ -60,8 +61,9 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
             if(not orientation_c):
                 contour = reversed(contour)
             pco.AddPath(contour, pc.JT_ROUND, pc.ET_CLOSEDPOLYGON)
-            offset = pco.Execute(-1*self._thickness)
-            list_offset.append(offset)
+            offset = pco.Execute(-1*delta)
+            if(len(offset) != 0):
+                list_offset.append(offset)
 
             for hole_index in holes:
                 pco_h = pc.PyclipperOffset()
@@ -69,24 +71,24 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
                 orientation_h = pc.Orientation(hole)
                 if(orientation_h):
                     hole = reversed(hole)
-                
+
                 pco_h.AddPath(hole, pc.JT_ROUND, pc.ET_CLOSEDPOLYGON)
-                hole_offset = pco_h.Execute(self._thickness)
-                list_offset.append(hole_offset)
-                
+                hole_offset = pco_h.Execute(delta)
+                if(len(hole_offset) != 0):
+                    list_offset.append(hole_offset)
+
         polydata = vtk.vtkPolyData()
         vtk_cell_array = vtk.vtkCellArray()
         vtk_points = vtk.vtkPoints()
         for offset in list_offset:
             vtk_polyline = vtk.vtkPolyLine()
             for i in range(len(offset[0])):
-                v = offset[0][i]
-                v_id = vtk_points.InsertNextPoint(v[0],v[1],0)
+                v = pc.scale_from_clipper(offset[0][i])
+                v_id = vtk_points.InsertNextPoint(v[0], v[1], 0)
                 vtk_polyline.GetPointIds().InsertNextId(v_id)
 
             first_v = vtk_polyline.GetPointIds().GetId(0)
             vtk_polyline.GetPointIds().InsertNextId(first_v)
-
             vtk_cell_array.InsertNextCell(vtk_polyline)
 
         polydata.SetPoints(vtk_points)
@@ -97,7 +99,7 @@ class VtkSkeletonize(VTKPythonAlgorithmBase):
         revert.SetInputData(polydata)
         revert.Update()
 
-        opt.ShallowCopy(revert.GetOutput())        
+        opt.ShallowCopy(revert.GetOutput())
 
         return 1
 
