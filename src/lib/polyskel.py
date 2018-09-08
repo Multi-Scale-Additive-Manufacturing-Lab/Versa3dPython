@@ -146,7 +146,6 @@ class HoleDetector():
                     if(is_c_in_i):
                         node.insert_child(contour)
                         list_contour_tree.remove(contour)
-                        is_outside = False
             if(is_outside):
                 list_contour_tree.append(node)
 
