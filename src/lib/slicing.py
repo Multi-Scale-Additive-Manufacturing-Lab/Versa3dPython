@@ -1,7 +1,7 @@
 import vtk
 import numpy as np
 from src.lib.versa3dConfig import config
-import src.lib.polyskel as sk  
+import src.lib.polyskel as sk
 import math
 
 from test.debugHelper import visualizer
@@ -219,6 +219,9 @@ class CheckerBoardImageSlicer(VoxelSlicer):
     def __init__(self, config):
         super().__init__(config)
 
+        self.shell_thickness = 0.1
+        self.fill_density = 0.80
+
     def slice(self):
 
         mergedPoly = self._mergePoly()
@@ -241,9 +244,8 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         grey_image = vtk.vtkImageData()
         grey_image.SetSpacing(self._spacing)
         grey_image.SetDimensions(imgDim)
-        grey_image.AllocateScalars(vtk.VTK_UNSIGNED_CHAR,1)
-        grey_image.GetPointData().GetScalars().Fill(255*0.80)
-
+        grey_image.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        grey_image.GetPointData().GetScalars().Fill(255*self.fill_density)
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
@@ -262,8 +264,8 @@ class CheckerBoardImageSlicer(VoxelSlicer):
 
             if(contour.GetNumberOfLines() > 0):
                 skeletonizer = sk.VtkSkeletonize()
-                skeletonizer.set_shell_thickness(0.1)
-                skeletonizer.AddInputDataObject(0,contour)
+                skeletonizer.set_shell_thickness(self.shell_thickness)
+                skeletonizer.AddInputDataObject(0, contour)
                 skeletonizer.Update()
 
                 merge = vtk.vtkAppendPolyData()
@@ -286,7 +288,7 @@ class CheckerBoardImageSlicer(VoxelSlicer):
                 int_extruder.SetVector(0, 0, 1)
                 int_extruder.SetInputData(skeletonizer.GetOutputDataObject(0))
                 int_extruder.Update()
-                
+
                 int_poly_sten = vtk.vtkPolyDataToImageStencil()
                 # important for when SetVector is 0,0,1
                 int_poly_sten.SetTolerance(0)
@@ -296,11 +298,13 @@ class CheckerBoardImageSlicer(VoxelSlicer):
                 int_poly_sten.Update()
 
                 int_img_stenc = vtk.vtkImageStencil()
-                int_img_stenc.SetStencilConnection(int_poly_sten.GetOutputPort())
+                int_img_stenc.SetStencilConnection(
+                    int_poly_sten.GetOutputPort())
                 int_img_stenc.SetInputData(grey_image)
-                int_img_stenc.SetBackgroundInputData(self._imgstenc.GetOutput())
+                int_img_stenc.SetBackgroundInputData(
+                    self._imgstenc.GetOutput())
                 int_img_stenc.Update()
-                
+
                 image.ShallowCopy(int_img_stenc.GetOutput())
                 IndividualSlice.setImage(image)
                 self._sliceStack.append(IndividualSlice)
