@@ -110,7 +110,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         np_array = vtk_to_numpy(vtk_array).reshape(size[0],-1)
 
         OriImage = Image.fromarray(np_array, mode = "L")
-        OriImage = OriImage.convert(mode = "1", matrix = None, dither = None)
+        OriImage = OriImage.convert(mode = "1", matrix = None)
         OriImage = OriImage.rotate(-90)
 
         OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
