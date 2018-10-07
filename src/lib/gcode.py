@@ -85,7 +85,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
             self.generateGCodeLayer(count,OriginalImg,imageFolder)
 
-            xmlFileName = "layer.%d.xml"%(count)
+            xmlFileName = "Layer.%d.xml"%(count)
             count = count + 1
             xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
 
@@ -221,8 +221,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         for i in range(0,NumberOfImage):
             position = listofPosition[i]
             #step 10 allign printhead with the printing area - move to lower left corner of image
-            step10 = self.Gantry(True,0,3,[0,58],2,self.gantryXYVelocity[1],"")
-            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(58))
+            step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
+            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
 
             #step 11 allign printhead with the printing area 
             step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
@@ -233,8 +233,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
             #step 13 execute printing motion in Y direction - move to right
-            step13 = self.Gantry(True,0,3,[0,38],2,self.DefaultPrintVelocity,"")
-            self.makeStep(defaultStep,step13,"step 13 move to y: 38")
+            step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
+            self.makeStep(defaultStep,step13,"step 13 move to y: 70")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
