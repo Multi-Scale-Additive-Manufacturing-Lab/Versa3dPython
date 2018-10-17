@@ -11,27 +11,20 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._file_name = "default.bmp"
         self._dpm_array = [23622, 23622]
-        self._margin_size = None
 
-        self._x_img_size_limit = None
         self._split_img_bool = False
+        self._x_img_size_limit = None
+        self._margin_size = None
 
         self._f = None
 
-    def set_split_img_bool(self, val):
-        self._split_img_bool = val
-
-    def set_margin_size(self, size):
-        """set margin size
-
-        Arguments:
-            size {int} -- number of pixel in margin
-        """
-
+    def set_split_img_true(self, size, x_limit):
+        self._split_img_bool = True
+        self._x_img_size_limit = x_limit
         self._margin_size = size
 
-    def set_x_size_limit(self, limit):
-        self._x_img_size_limit = limit
+    def set_split_img_false(self):
+        self._split_img_bool = False
 
     def set_file_name(self, name):
         self._file_name = name
@@ -113,22 +106,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         else:
             return "0"
 
-    def RequestData(self, request, inInfo, outInfo):
-        inp = vtk.vtkImageData.GetData(inInfo[0])
-
-        self._init_file()
-
-        dim = inp.GetDimensions()
-
-        # in bit
-        line_size = dim[0]
-        padding = 32 - dim[0] % 32
-
-        # in bytes
-        total_line_size = int((line_size + padding)/8)
-
-        self._init_header(dim[0], dim[1], total_line_size)
-
+    def regular_print(self, inp, total_line_size, padding):
         extent = inp.GetExtent()
         # write image
         for i in range(extent[0], extent[1]+1):
@@ -150,6 +128,27 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 byte_array[byte_array_loc] = int(bit_row, base=2)
 
             self._f.write(byte_array)
+
+    def RequestData(self, request, inInfo, outInfo):
+        inp = vtk.vtkImageData.GetData(inInfo[0])
+
+        self._init_file()
+
+        dim = inp.GetDimensions()
+
+        # in bit
+        line_size = dim[0]
+        padding = 32 - dim[0] % 32
+
+        # in bytes
+        total_line_size = int((line_size + padding)/8)
+
+        self._init_header(dim[0], dim[1], total_line_size)
+
+        if(self._split_img_bool):
+            pass
+        else:
+            self.regular_print(inp, total_line_size, padding)
 
         self._close_file()
 
