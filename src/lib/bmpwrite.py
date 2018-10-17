@@ -100,14 +100,14 @@ class BmpWriter(VTKPythonAlgorithmBase):
                     bit_row += "0"
                 
                 if(len(bit_row) == 8):
-                    byte_array[byte_array_loc] = int(bit_row[::-1], base=2)
+                    byte_array[byte_array_loc] = int(bit_row, base=2)
                     bit_row = ""
                     byte_array_loc += 1
 
             if(len(bit_row) != 0):
                 padding =8-len(bit_row)%8
                 bit_row += padding*"0"
-                byte_array[byte_array_loc] = int(bit_row[::-1], base=2)
+                byte_array[byte_array_loc] = int(bit_row, base=2)
             
             f.write(byte_array)
     
