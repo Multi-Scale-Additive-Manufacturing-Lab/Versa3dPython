@@ -55,7 +55,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
                      1,
                      1,
                      0,
-                     line_size*dim[1],
+                     total_line_size*dim[1],
                      23622,
                      23622,
                      0,
@@ -70,6 +70,9 @@ class BmpWriter(VTKPythonAlgorithmBase):
         # write image
         for i in range(extent[0], extent[1]+1):
             bit_row = ""
+            byte_array = bytearray(total_line_size)
+            byte_array_loc = 0
+
             for j in range(extent[2], extent[3]+1):
                 old_val = inp.GetScalarComponentAsFloat(i, j, 0, 0)
                 new_val = self.find_closest_color(old_val)
@@ -96,12 +99,17 @@ class BmpWriter(VTKPythonAlgorithmBase):
                     count += 1
                     bit_row += "0"
                 
-                if(len(bit_row) == 31):
-                    f.write(pack('<i', int(bit_row[::-1], base=2)))
+                if(len(bit_row) == 8):
+                    byte_array[byte_array_loc] = int(bit_row[::-1], base=2)
                     bit_row = ""
+                    byte_array_loc += 1
 
-            bit_row += padding*"0"
-            f.write(pack('<i', int(bit_row[::-1], base=2)))
+            if(len(bit_row) != 0):
+                padding =8-len(bit_row)%8
+                bit_row += padding*"0"
+                byte_array[byte_array_loc] = int(bit_row[::-1], base=2)
+            
+            f.write(byte_array)
     
         f.close()
         #print("black count:{}\n".format(count))
