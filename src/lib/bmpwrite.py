@@ -106,34 +106,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         else:
             return "0"
 
-    def regular_print(self, inp, total_line_size, padding):
-        extent = inp.GetExtent()
-        # write image
-        for i in range(extent[0], extent[1]+1):
-            bit_row = ""
-            byte_array = bytearray(total_line_size)
-            byte_array_loc = 0
-
-            for j in range(extent[2], extent[3]+1):
-                bit_row += self.dithering(inp, i, j)
-
-                if(len(bit_row) == 8):
-                    byte_array[byte_array_loc] = int(bit_row, base=2)
-                    bit_row = ""
-                    byte_array_loc += 1
-
-            if(not bit_row):
-                padding = 8-len(bit_row) % 8
-                bit_row += padding*"0"
-                byte_array[byte_array_loc] = int(bit_row, base=2)
-
-            self._f.write(byte_array)
-
-    def RequestData(self, request, inInfo, outInfo):
-        inp = vtk.vtkImageData.GetData(inInfo[0])
-
-        self._init_file()
-
+    def regular_print(self, inp):
         dim = inp.GetDimensions()
 
         # in bit
@@ -145,10 +118,62 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._init_header(dim[0], dim[1], total_line_size)
 
+        extent = inp.GetExtent()
+        # write image
+        for j in range(extent[2], extent[3]+1):
+            bit_row = ""
+            byte_array = bytearray(total_line_size)
+            byte_array_loc = 0
+            for i in range(extent[0], extent[1]+1):
+                bit_row += self.dithering(inp, i, j)
+
+                if(len(bit_row) == 8):
+                    byte_array[byte_array_loc] = int(bit_row, base=2)
+                    bit_row = ""
+                    byte_array_loc += 1
+
+            if(not bit_row):
+                padding_8 = 8-len(bit_row) % 8
+                bit_row += padding_8*"0"
+                byte_array[byte_array_loc] = int(bit_row, base=2)
+                byte_array_loc += 1
+
+            self._f.write(byte_array)
+    
+    def split_print(self, inp, padding):
+        extent = inp.GetExtent()
+
+        dim = inp.GetDimensions()
+        extent = inp.GetExtent()
+
+        h_limit = self._x_img_size_limit - 2*self._margin_size
+
+        number_sub_image = math.ceil(dim[1]/h_limit)
+
+        # in bit
+        line_size = dim[0]*number_sub_image
+        padding = 32 - dim[0] % 32
+
+        # in bytes
+        total_line_size = int((line_size + padding)/8)
+
+        self._init_header(dim[0], dim[1], total_line_size)
+
+        for i in range(extent[0],extent[0]+dim[0]*number_sub_image):
+            bit_row = ""
+            byte_array = bytearray(total_line_size)
+            for j in range(extent[2], h_limit):
+                pass
+
+    def RequestData(self, request, inInfo, outInfo):
+        inp = vtk.vtkImageData.GetData(inInfo[0])
+
+        self._init_file()
+
         if(self._split_img_bool):
             pass
         else:
-            self.regular_print(inp, total_line_size, padding)
+            self.regular_print(inp)
 
         self._close_file()
 
