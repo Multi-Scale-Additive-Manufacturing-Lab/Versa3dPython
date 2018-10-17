@@ -15,6 +15,8 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._x_img_size_limit = None
         self._split_img_bool = False
+
+        self._f = None
     
     def set_split_img_bool(self, val):
         self._split_img_bool = val
@@ -44,15 +46,52 @@ class BmpWriter(VTKPythonAlgorithmBase):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
         img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
+    
+    def _init_file(self):
+        self._f = open(self._file_name, 'wb')
+    
+    def _close_file(self):
+        self._f.close()
+    
+    def _init_header(self, w, h, total_line_size):
+        bmp_header_size = 14
+        dib_header_size = 40
+
+        a_offset = bmp_header_size + dib_header_size
+        a_size = total_line_size*h
+        total_size = bmp_header_size + dib_header_size + a_size
+
+        # BMP header
+        self._f.write(pack('<HLHHL',
+                     19778,
+                     total_size,
+                     0,
+                     0,
+                     a_offset))
+
+        self._f.write(pack('<LllHHLLllLL',
+                     dib_header_size,
+                     w,
+                     h,
+                     1,
+                     1,
+                     0,
+                     a_size,
+                     self._dpm_array[0],
+                     self._dpm_array[1],
+                     0,
+                     0))
+        
+        # RGBQUAD Array
+        self._f.write(pack('<BBBB', 0, 0, 0, 0))
+        self._f.write(pack('<BBBB', 255, 255, 255, 0))
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkImageData.GetData(inInfo[0])
 
-        dim = inp.GetDimensions()
+        self._init_file()
 
-        f = open(self._file_name, 'wb')
-        bmp_header_size = 14
-        dib_header_size = 40
+        dim = inp.GetDimensions()
 
         #in bit
         line_size = dim[0]
@@ -60,34 +99,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         #in bytes
         total_line_size = int((line_size + padding)/8)
-
-        a_size = total_line_size*dim[1]
-        total_size = bmp_header_size + dib_header_size + a_size
-        a_offset = bmp_header_size + dib_header_size
-        # BMP header
-        f.write(pack('<HLHHL',
-                     19778,
-                     total_size,
-                     0,
-                     0,
-                     a_offset))
-        # DIB Header
-        f.write(pack('<LllHHLLllLL',
-                     dib_header_size,
-                     dim[0],
-                     dim[1],
-                     1,
-                     1,
-                     0,
-                     total_line_size*dim[1],
-                     self._dpm_array[0],
-                     self._dpm_array[1],
-                     0,
-                     0))
-
-        # RGBQUAD Array
-        f.write(pack('<BBBB', 0, 0, 0, 0))
-        f.write(pack('<BBBB', 255, 255, 255, 0))
+        self._init_header(dim[0],dim[1],total_line_size)
 
         extent = inp.GetExtent()
         # write image
@@ -131,8 +143,8 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 bit_row += padding*"0"
                 byte_array[byte_array_loc] = int(bit_row, base=2)
             
-            f.write(byte_array)
+            self._f.write(byte_array)
     
-        f.close()
+        self._close_file()
 
         return 1
