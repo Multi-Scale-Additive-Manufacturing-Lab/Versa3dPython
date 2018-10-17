@@ -62,10 +62,11 @@ class BmpWriter(VTKPythonAlgorithmBase):
                      0))
 
         # RGBQUAD Array
+        f.write(pack('<BBBB', 0, 0, 0, 0))
         f.write(pack('<BBBB', 255, 255, 255, 0))
 
         extent = inp.GetExtent()
-
+        count = 0
         # write image
         for i in range(extent[0], extent[1]+1):
             bit_row = ""
@@ -92,6 +93,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 if(new_val == 255):
                     bit_row += "1"
                 else:
+                    count += 1
                     bit_row += "0"
                 
                 if(len(bit_row) == 31):
@@ -102,5 +104,6 @@ class BmpWriter(VTKPythonAlgorithmBase):
             f.write(pack('<i', int(bit_row[::-1], base=2)))
     
         f.close()
+        #print("black count:{}\n".format(count))
 
         return 1
