@@ -1,6 +1,7 @@
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from struct import pack
 import vtk
+import math
 
 
 class BmpWriter(VTKPythonAlgorithmBase):
@@ -9,12 +10,35 @@ class BmpWriter(VTKPythonAlgorithmBase):
             self, nInputPorts=1, inputType='vtkImageData')
 
         self._file_name = "default.bmp"
+        self._dpm_array = [23622,23622]
+        self._margin_size = None
+
+        self._x_img_size_limit = None
+        self._split_img_bool = False
+    
+    def set_split_img_bool(self, val):
+        self._split_img_bool = val
+
+    def set_margin_size(self, size):
+        """set margin size
+        
+        Arguments:
+            size {int} -- number of pixel in margin
+        """
+
+        self._margin_size = size
+    
+    def set_x_size_limit(self, limit):
+        self._x_img_size_limit = limit
 
     def set_file_name(self, name):
         self._file_name = name
 
     def find_closest_color(self, old_val):
         return round(old_val/255)*255
+    
+    def set_dpm(self,dpm_array):
+        self._dpm_array = dpm_array
 
     def append_error(self, img, i, j, error):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
@@ -56,8 +80,8 @@ class BmpWriter(VTKPythonAlgorithmBase):
                      1,
                      0,
                      total_line_size*dim[1],
-                     23622,
-                     23622,
+                     self._dpm_array[0],
+                     self._dpm_array[1],
                      0,
                      0))
 
@@ -66,7 +90,6 @@ class BmpWriter(VTKPythonAlgorithmBase):
         f.write(pack('<BBBB', 255, 255, 255, 0))
 
         extent = inp.GetExtent()
-        count = 0
         # write image
         for i in range(extent[0], extent[1]+1):
             bit_row = ""
@@ -96,7 +119,6 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 if(new_val == 255):
                     bit_row += "1"
                 else:
-                    count += 1
                     bit_row += "0"
                 
                 if(len(bit_row) == 8):
@@ -112,6 +134,5 @@ class BmpWriter(VTKPythonAlgorithmBase):
             f.write(byte_array)
     
         f.close()
-        #print("black count:{}\n".format(count))
 
         return 1
