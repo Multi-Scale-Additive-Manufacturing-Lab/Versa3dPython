@@ -10,26 +10,26 @@ class BmpWriter(VTKPythonAlgorithmBase):
             self, nInputPorts=1, inputType='vtkImageData')
 
         self._file_name = "default.bmp"
-        self._dpm_array = [23622,23622]
+        self._dpm_array = [23622, 23622]
         self._margin_size = None
 
         self._x_img_size_limit = None
         self._split_img_bool = False
 
         self._f = None
-    
+
     def set_split_img_bool(self, val):
         self._split_img_bool = val
 
     def set_margin_size(self, size):
         """set margin size
-        
+
         Arguments:
             size {int} -- number of pixel in margin
         """
 
         self._margin_size = size
-    
+
     def set_x_size_limit(self, limit):
         self._x_img_size_limit = limit
 
@@ -38,21 +38,21 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
     def find_closest_color(self, old_val):
         return round(old_val/255)*255
-    
-    def set_dpm(self,dpm_array):
+
+    def set_dpm(self, dpm_array):
         self._dpm_array = dpm_array
 
     def append_error(self, img, i, j, error):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
         img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
-    
+
     def _init_file(self):
         self._f = open(self._file_name, 'wb')
-    
+
     def _close_file(self):
         self._f.close()
-    
+
     def _init_header(self, w, h, total_line_size):
         bmp_header_size = 14
         dib_header_size = 40
@@ -63,28 +63,55 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         # BMP header
         self._f.write(pack('<HLHHL',
-                     19778,
-                     total_size,
-                     0,
-                     0,
-                     a_offset))
+                           19778,
+                           total_size,
+                           0,
+                           0,
+                           a_offset))
 
         self._f.write(pack('<LllHHLLllLL',
-                     dib_header_size,
-                     w,
-                     h,
-                     1,
-                     1,
-                     0,
-                     a_size,
-                     self._dpm_array[0],
-                     self._dpm_array[1],
-                     0,
-                     0))
-        
+                           dib_header_size,
+                           w,
+                           h,
+                           1,
+                           1,
+                           0,
+                           a_size,
+                           self._dpm_array[0],
+                           self._dpm_array[1],
+                           0,
+                           0))
+
         # RGBQUAD Array
         self._f.write(pack('<BBBB', 0, 0, 0, 0))
         self._f.write(pack('<BBBB', 255, 255, 255, 0))
+
+    def dithering(self, img, i, j):
+        old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
+        new_val = self.find_closest_color(old_val)
+
+        extent = img.GetExtent()
+
+        img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
+
+        quant_error = old_val-new_val
+
+        if((i+1) <= extent[1] and quant_error != 0):
+            self.append_error(img, i+1, j, quant_error*7/16)
+
+        if ((i-1) >= extent[0] and (j+1) <= extent[3] and quant_error != 0):
+            self.append_error(img, i-1, j, quant_error*3/16)
+
+        if ((j+1) <= extent[3] and quant_error != 0):
+            self.append_error(img, i, j+1, quant_error*5/16)
+
+        if ((i+1) <= extent[1] and (j+1) <= extent[3] and quant_error != 0):
+            self.append_error(img, i, j+1, quant_error*1/16)
+
+        if(new_val == 255):
+            return "1"
+        else:
+            return "0"
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkImageData.GetData(inInfo[0])
@@ -93,13 +120,14 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         dim = inp.GetDimensions()
 
-        #in bit
+        # in bit
         line_size = dim[0]
-        padding = 32 - dim[0]%32
+        padding = 32 - dim[0] % 32
 
-        #in bytes
+        # in bytes
         total_line_size = int((line_size + padding)/8)
-        self._init_header(dim[0],dim[1],total_line_size)
+
+        self._init_header(dim[0], dim[1], total_line_size)
 
         extent = inp.GetExtent()
         # write image
@@ -109,42 +137,20 @@ class BmpWriter(VTKPythonAlgorithmBase):
             byte_array_loc = 0
 
             for j in range(extent[2], extent[3]+1):
-                old_val = inp.GetScalarComponentAsFloat(i, j, 0, 0)
-                new_val = self.find_closest_color(old_val)
+                bit_row += self.dithering(inp, i, j)
 
-                inp.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
-
-                quant_error = old_val-new_val
-
-                if((i+1) <= extent[1] and quant_error != 0 ):
-                    self.append_error(inp, i+1, j, quant_error*7/16)
-
-                if ((i-1) >= extent[0] and (j+1) <= extent[3] and quant_error != 0):
-                    self.append_error(inp, i-1, j, quant_error*3/16)
-
-                if ((j+1) <= extent[3] and quant_error != 0):
-                    self.append_error(inp, i, j+1, quant_error*5/16)
-
-                if ((i+1) <= extent[1] and (j+1) <= extent[3] and quant_error != 0):
-                    self.append_error(inp, i, j+1, quant_error*1/16)
-                
-                if(new_val == 255):
-                    bit_row += "1"
-                else:
-                    bit_row += "0"
-                
                 if(len(bit_row) == 8):
                     byte_array[byte_array_loc] = int(bit_row, base=2)
                     bit_row = ""
                     byte_array_loc += 1
 
-            if(len(bit_row) != 0):
-                padding =8-len(bit_row)%8
+            if(not bit_row):
+                padding = 8-len(bit_row) % 8
                 bit_row += padding*"0"
                 byte_array[byte_array_loc] = int(bit_row, base=2)
-            
+
             self._f.write(byte_array)
-    
+
         self._close_file()
 
         return 1
