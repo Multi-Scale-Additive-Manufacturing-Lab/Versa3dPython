@@ -18,10 +18,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._f = None
 
-    def set_split_img_true(self, size, x_limit):
+    def set_split_img_true(self, margin_size, x_limit):
         self._split_img_bool = True
         self._x_img_size_limit = x_limit
-        self._margin_size = size
+        self._margin_size = margin_size
 
     def set_split_img_false(self):
         self._split_img_bool = False
@@ -46,12 +46,11 @@ class BmpWriter(VTKPythonAlgorithmBase):
     def _close_file(self):
         self._f.close()
 
-    def _init_header(self, w, h, total_line_size):
+    def _init_header(self, w, h, a_size):
         bmp_header_size = 14
         dib_header_size = 40
 
         a_offset = bmp_header_size + dib_header_size
-        a_size = total_line_size*h
         total_size = bmp_header_size + dib_header_size + a_size
 
         # BMP header
@@ -76,8 +75,8 @@ class BmpWriter(VTKPythonAlgorithmBase):
                            0))
 
         # RGBQUAD Array
-        self._f.write(pack('<BBBB', 0, 0, 0, 0))
         self._f.write(pack('<BBBB', 255, 255, 255, 0))
+        self._f.write(pack('<BBBB', 0, 0, 0, 0))
 
     def dithering(self, img, i, j):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
@@ -102,9 +101,9 @@ class BmpWriter(VTKPythonAlgorithmBase):
             self.append_error(img, i, j+1, quant_error*1/16)
 
         if(new_val == 255):
-            return "1"
-        else:
             return "0"
+        else:
+            return "1"
 
     def regular_print(self, inp):
         dim = inp.GetDimensions()
@@ -116,7 +115,9 @@ class BmpWriter(VTKPythonAlgorithmBase):
         # in bytes
         total_line_size = int((line_size + padding)/8)
 
-        self._init_header(dim[0], dim[1], total_line_size)
+        pixel_size = total_line_size*dim[1]
+
+        self._init_header(dim[0], dim[1], pixel_size)
 
         extent = inp.GetExtent()
         # write image
@@ -140,7 +141,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
             self._f.write(byte_array)
     
-    def split_print(self, inp, padding):
+    def split_print(self, inp):
         extent = inp.GetExtent()
 
         dim = inp.GetDimensions()
@@ -152,18 +153,45 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         # in bit
         line_size = dim[0]*number_sub_image
-        padding = 32 - dim[0] % 32
+        padding = 32 - line_size % 32
 
         # in bytes
         total_line_size = int((line_size + padding)/8)
 
-        self._init_header(dim[0], dim[1], total_line_size)
+        pixel_map_size = total_line_size*self._x_img_size_limit
 
-        for i in range(extent[0],extent[0]+dim[0]*number_sub_image):
+        self._init_header(line_size, self._x_img_size_limit, pixel_map_size)
+
+        for j in range(extent[2], h_limit):
             bit_row = ""
             byte_array = bytearray(total_line_size)
-            for j in range(extent[2], h_limit):
-                pass
+            byte_array_loc = 0
+            
+            #add margin
+            if(j % h_limit):
+                empty_line = bytearray(total_line_size*self._margin_size)
+                self._f.write(empty_line)
+
+            for i in range(extent[0],extent[0]+line_size):
+                
+                pseudo_j = j + h_limit*int(i/dim[0])
+                
+                #check to not go out of bound
+                if(pseudo_j < dim[1]):
+                    bit_row += self.dithering(inp, i%dim[0], j + h_limit*int(i/dim[0]))
+
+                if(len(bit_row) == 8):
+                    byte_array[byte_array_loc] = int(bit_row, base=2)
+                    bit_row = ""
+                    byte_array_loc += 1
+                                
+            if(not bit_row):
+                padding_8 = 8-len(bit_row) % 8
+                bit_row += padding_8*"0"
+                byte_array[byte_array_loc] = int(bit_row, base=2)
+                byte_array_loc += 1
+
+            self._f.write(byte_array)
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkImageData.GetData(inInfo[0])
@@ -171,7 +199,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._init_file()
 
         if(self._split_img_bool):
-            pass
+            self.split_print(inp)
         else:
             self.regular_print(inp)
 
