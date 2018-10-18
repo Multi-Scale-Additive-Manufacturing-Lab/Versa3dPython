@@ -123,7 +123,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         bmpWriter.Update()
 
-        return listofPosition[::-1]
+        return listofPosition
 
     def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
 
