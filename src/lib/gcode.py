@@ -1,12 +1,12 @@
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 from src.lib.versa3dConfig import config
+from src.lib.bmpwrite import BmpWriter
 from lxml import etree
 from lxml.builder import E
 from copy import deepcopy
 import math
 import os
-from PIL import Image
 import string
 import numpy
 
@@ -102,56 +102,28 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         
         return root
     
-    def imageWriter(self,Slice, imgFullPath):
+    def imageWriter(self, Slice, imgFullPath):
         size = Slice.GetDimensions()
         origin = list(Slice.GetOrigin())
 
-        vtk_array = Slice.GetPointData().GetScalars()
-        np_array = vtk_to_numpy(vtk_array).reshape(size[0],-1)
-
-        OriImage = Image.fromarray(np_array, mode = "L")
-        OriImage = OriImage.convert(mode = "1", matrix = None)
-        OriImage = OriImage.rotate(-90)
+        bmpWriter = BmpWriter()
+        bmpWriter.set_file_name(imgFullPath)
+        bmpWriter.SetInputDataObject(0, Slice)
+        bmpWriter.set_split_img_true(self.imgMarginSize,self.XImageSizeLimit)
 
         OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
 
         NumSubImage = math.ceil(size[1]/self.XImageSizeLimit)
         listofPosition = []
-        listofSubImg = []
-
-        yStart = 0
         pos = [5+origin[0],38+origin[1]]
 
         for i in range(0,NumSubImage):
-            yEnd = yStart+self.XImageSizeLimit-self.imgMarginSize*2
-
-            if (size[1]-1) <= yEnd:
-                yEnd = size[1]-1
-
-            box = (0,yStart,size[0],yEnd)
-
-            croppedImg = OriImage.crop(box)
-            
-            if(croppedImg.histogram()[0] != 0):
-                if((box[3]-box[1]) < self.XImageSizeLimit):
-                    expandedImg = Image.new('1',(box[2]-box[0],self.XImageSizeLimit),color=1)
-                    expandedImg.paste(croppedImg,(box[0],self.imgMarginSize))
-                    listofSubImg.append(expandedImg)
-                else:
-                    listofSubImg.append(croppedImg)
-                listofPosition.append(pos.copy())
-            yStart = yEnd+1
+            listofPosition.append(pos.copy())
             pos[0] += OffsetRealCoord
         
-        finalImgWidth = len(listofSubImg)*size[1]
-        finalImg = Image.new('1',(finalImgWidth,self.XImageSizeLimit),color = 1)
+        bmpWriter.Update()
 
-        for i in range(0,len(listofSubImg)):
-            finalImg.paste(listofSubImg[i],(i*size[1],0))
-        
-        finalImg.save(imgFullPath,dpi=(2.54,2.54))
-
-        return listofPosition
+        return listofPosition[::-1]
 
     def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
 
