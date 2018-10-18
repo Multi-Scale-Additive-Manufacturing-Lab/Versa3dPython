@@ -5,11 +5,13 @@ import os
 import fnmatch
 import shutil
 import math
-from src.lib.slicing import slicerFactory, FullBlackImageSlicer,CheckerBoardImageSlicer , VoxelSlicer
+from src.lib.slicing import slicerFactory, FullBlackImageSlicer, CheckerBoardImageSlicer, VoxelSlicer
 from src.lib.versa3dConfig import config
+from src.lib.bmpwrite import BmpWriter
 
-def writer(folderPath,BuildVtkImage):
-    bmpWriter = vtk.vtkBMPWriter()
+
+def writer(folderPath, BuildVtkImage):
+    bmpWriter = BmpWriter()
 
     if(not os.path.isdir(folderPath)):
         os.mkdir(folderPath)
@@ -20,12 +22,13 @@ def writer(folderPath,BuildVtkImage):
     count = 0
     for image in BuildVtkImage:
         vtkimg = image.getImage()
-        imgFullPath = os.path.join(folderPath,'img_%d.bmp'%(count))
-        bmpWriter.SetFileName(imgFullPath)
-        bmpWriter.SetInputData(vtkimg)
+        img_full_path = os.path.join(folderPath, 'img_%d.bmp' % (count))
+        bmpWriter.set_file_name(img_full_path)
+        bmpWriter.SetInputDataObject(0, vtkimg)
         vtkimg.ComputeBounds()
         count += 1
-        bmpWriter.Write()  
+        bmpWriter.Update()
+
 
 class TestSlicer(unittest.TestCase):
 
@@ -61,19 +64,20 @@ class TestSlicer(unittest.TestCase):
         newPosition[0] = self.printBedSize[0]/4
         newPosition[1] = self.printBedSize[1]/4
 
-        if(zRange[0]<0):
+        if(zRange[0] < 0):
             newPosition[2] = oldPosition[2]-zRange[0]
         else:
             newPosition[2] = oldPosition[2]
 
         self.PositionOfActor1 = newPosition
-        self.PositionOfActor2 = [newPosition[0]*2,newPosition[1]*3,newPosition[2]]
-        
+        self.PositionOfActor2 = [newPosition[0]
+                                 * 2, newPosition[1]*3, newPosition[2]]
+
         self.stlActor.SetPosition(self.PositionOfActor1)
-        self.stlActor.RotateZ(45)   
+        self.stlActor.RotateZ(45)
         self.stlActor2.SetPosition(self.PositionOfActor2)
-        self.stlActor2.RotateZ(90)        
-        
+        self.stlActor2.RotateZ(90)
+
         XRange = self.stlActor.GetXRange()
         YRange = self.stlActor.GetYRange()
 
@@ -84,48 +88,47 @@ class TestSlicer(unittest.TestCase):
         self.assertEqual(FullBlackImageSlicer, type(AllBlackSlicer))
 
         NullCase = slicerFactory(None)
-        self.assertEqual(None,NullCase)
+        self.assertEqual(None, NullCase)
 
     def test_blackSlicing(self):
-        
+
         blackSlicer = FullBlackImageSlicer(self.test_config)
 
         blackSlicer.addActor(self.stlActor)
-        blackSlicer.addActor(self.stlActor2)
+        # blackSlicer.addActor(self.stlActor2)
 
         BuildVtkImage = blackSlicer.slice()
 
-        self.assertNotEqual(len(BuildVtkImage),0)
-        
+        self.assertNotEqual(len(BuildVtkImage), 0)
+
         BuildBedSize = self.test_config.getMachineSetting('printbedsize')
         dpi = self.test_config.getPrintHeadSetting('dpi')
         thickness = self.test_config.getPrintSetting('layer_thickness')
         BuildHeight = self.test_config.getMachineSetting('buildheight')
 
         BuildBedVoxSize = [0]*3
-        for i in range(0,2):
-            BuildBedVoxSize[i]=int(math.ceil(BuildBedSize[i]*dpi[i]/(0.0254*1000)))
+        for i in range(0, 2):
+            BuildBedVoxSize[i] = int(
+                math.ceil(BuildBedSize[i]*dpi[i]/(0.0254*1000)))
 
         BuildBedVoxSize[2] = math.ceil(BuildHeight/thickness)
 
         folderPath = './test/testOutput/FullBlack'
 
-        writer(folderPath,BuildVtkImage)
-    
+        writer(folderPath, BuildVtkImage)
+
     def test_checkerBoard(self):
         checkerBoardSlicer = CheckerBoardImageSlicer(self.test_config)
-        
+
         checkerBoardSlicer.addActor(self.stlActor)
 
         BuildVtkImage = checkerBoardSlicer.slice()
 
-        self.assertNotEqual(len(BuildVtkImage),0)
+        self.assertNotEqual(len(BuildVtkImage), 0)
 
         folderPath = './test/testOutput/CheckerBoard'
 
-        writer(folderPath,BuildVtkImage)
-
-
+        writer(folderPath, BuildVtkImage)
 
     def tearDown(self):
         shutil.rmtree(self.testFileFolder)
