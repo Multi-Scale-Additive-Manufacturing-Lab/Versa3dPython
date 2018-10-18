@@ -49,9 +49,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
     def _init_header(self, w, h, a_size):
         bmp_header_size = 14
         dib_header_size = 40
+        rgb_color_table = 8
 
-        a_offset = bmp_header_size + dib_header_size
-        total_size = bmp_header_size + dib_header_size + a_size
+        a_offset = bmp_header_size + dib_header_size + rgb_color_table
+        total_size = bmp_header_size + dib_header_size + a_size + rgb_color_table
 
         # BMP header
         self._f.write(pack('<HLHHL',
@@ -140,7 +141,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 byte_array_loc += 1
 
             self._f.write(byte_array)
-    
+
     def split_print(self, inp):
         extent = inp.GetExtent()
 
@@ -166,25 +167,26 @@ class BmpWriter(VTKPythonAlgorithmBase):
             bit_row = ""
             byte_array = bytearray(total_line_size)
             byte_array_loc = 0
-            
-            #add margin
-            if(j == extent[2] ):
+
+            # add margin
+            if(j == extent[2]):
                 empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
-            for i in range(extent[0],extent[0]+line_size):
-                
+            for i in range(extent[0], extent[0]+line_size):
+
                 pseudo_j = j + h_limit*int(i/dim[0])
-                
-                #check to not go out of bound
+
+                # check to not go out of bound
                 if(pseudo_j < dim[1]):
-                    bit_row += self.dithering(inp, i%dim[0], j + h_limit*int(i/dim[0]))
+                    bit_row += self.dithering(inp, i %
+                                              dim[0], j + h_limit*int(i/dim[0]))
 
                 if(len(bit_row) == 8):
                     byte_array[byte_array_loc] = int(bit_row, base=2)
                     bit_row = ""
                     byte_array_loc += 1
-                                
+
             if(not bit_row):
                 padding_8 = 8-len(bit_row) % 8
                 bit_row += padding_8*"0"
