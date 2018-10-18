@@ -168,7 +168,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
             byte_array_loc = 0
             
             #add margin
-            if(j % h_limit):
+            if(j == extent[2] ):
                 empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
@@ -192,6 +192,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 byte_array_loc += 1
 
             self._f.write(byte_array)
+
+            if(j == h_limit - 1):
+                empty_line = bytearray(total_line_size*self._margin_size)
+                self._f.write(empty_line)
 
     def RequestData(self, request, inInfo, outInfo):
         inp = vtk.vtkImageData.GetData(inInfo[0])
