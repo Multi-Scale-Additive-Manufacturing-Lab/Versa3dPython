@@ -10,7 +10,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
             self, nInputPorts=1, inputType='vtkImageData')
 
         self._file_name = "default.bmp"
-        self._dpm_array = [23622, 23622]
+        self._dpm_array = [23623, 23623]
 
         self._split_img_bool = False
         self._x_img_size_limit = None
@@ -121,7 +121,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         extent = inp.GetExtent()
         # write image
-        for j in range(extent[2], extent[3]+1):
+        for j in range(extent[3], extent[2]-1, -1):
             bit_row = ""
             byte_array = bytearray(total_line_size)
             byte_array_loc = 0
@@ -162,7 +162,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._init_header(line_size, self._x_img_size_limit, pixel_map_size)
 
-        for j in range(extent[2], h_limit):
+        for j in range(h_limit-1, extent[2]-1, -1):
             bit_row = ""
             byte_array = bytearray(total_line_size)
             byte_array_loc = 0
