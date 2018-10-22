@@ -57,6 +57,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.Thickness = config.getPrintSetting('layer_thickness')
         self.AbsPathBMVlaseaComputerBool = config.getVersa3dSetting('imgbmvlasealocalpath')
         self.AbsPathBMVlaseaComputer = config.getVersa3dSetting('imgbmlasealocalpathstr')
+        self.NumberOfPass = config.getPrintSetting('passnum')
         
         self.dpi = config.getPrintHeadSetting('dpi')
 
@@ -219,22 +220,23 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.makeStep(defaultStep,step9,"step 9 - lower feed bed by -(H+W)")
 
         for i in range(0,NumberOfImage):
-            position = listofPosition[i]
-            #step 10 allign printhead with the printing area - move to lower left corner of image
-            step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
-            self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
+            for j in range(0,self.NumberOfPass):
+                position = listofPosition[i]
+                #step 10 allign printhead with the printing area - move to lower left corner of image
+                step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
+                self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
 
-            #step 11 allign printhead with the printing area 
-            step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
-            self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position[0]))
+                #step 11 allign printhead with the printing area 
+                step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
+                self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position[0]))
 
-            #step 12 turn ON printhead and get ready to print buffer i
-            step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
-            self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
+                #step 12 turn ON printhead and get ready to print buffer i
+                step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
+                self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
-            #step 13 execute printing motion in Y direction - move to right
-            step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
-            self.makeStep(defaultStep,step13,"step 13 move to y: 70")
+                #step 13 execute printing motion in Y direction - move to right
+                step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
+                self.makeStep(defaultStep,step13,"step 13 move to y: 70")
             
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
