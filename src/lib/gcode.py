@@ -91,7 +91,16 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
             tree = etree.ElementTree(self.XMLRoot)
             tree.write(xmlFullPath, pretty_print=True)
+    
+    def test_spread(self):
+        self.XMLRoot = self.BuildSequenceCluster(0)
+        self.generate_spread()
 
+        xmlFileName = "Layer.1.xml"
+        xmlFullPath = os.path.join(self._Folderpath,xmlFileName)
+
+        tree = etree.ElementTree(self.XMLRoot)
+        tree.write(xmlFullPath, pretty_print=True)
 
     def BuildSequenceCluster(self,Dimsize):
         root = (E.Array(
@@ -152,6 +161,37 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         finalImg.save(imgFullPath,dpi=(2.54,2.54))
 
         return listofPosition
+    
+    def generate_spread(self):
+        defaultStep = self.create_default_Step()
+
+        #step 1 - move gantry to X1 = 0 
+        step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
+        self.makeStep(defaultStep,step1,"step 1 - move gantry to X1 = 0")
+
+        #step 2 - move to Y = 0
+        step2 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
+        self.makeStep(defaultStep,step2,"step 2 - move to Y = 0")
+
+        #step 3 - turn on roller
+        step3 = self.Roller(True,6,1,self.rollerRotVel)
+        self.makeStep(defaultStep,step3,"step 3 - turn on roller")
+
+        #step 4 - material handling raise feed bed by = H+T+S
+        step4 = self.MaterialHandling(True,2,2,self.H+self.Thickness+self.S,self.FeedBedSel,self.feedBedVelocity,0,0)
+        self.makeStep(defaultStep,step4,"step 4 - material handling raise feed bed by = H+T+S")
+
+        #step 5 - material handling raise build bed by = H-T
+        step5 = self.MaterialHandling(True,2,2,self.H-self.Thickness,3,self.buildBedVelocity,0,0)
+        self.makeStep(defaultStep,step5,"step 5 - material handling raise build bed by = H-T")
+
+        #step 6 - spread the powder by moving in X-coordinate 300
+        step6 = self.Gantry(True,0,3,[300,0],0,self.rollerLinVel,"")
+        self.makeStep(defaultStep,step6,"step 6 - spread the powder by moving in X-coordinate 300")
+
+        #step 7 - turn off roller
+        step7 = self.Roller(True,6,1,0)
+        self.makeStep(defaultStep,step7,"step 7 - turn off roller")
 
     def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
 
