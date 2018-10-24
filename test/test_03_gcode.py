@@ -83,5 +83,18 @@ class gcodeTest(unittest.TestCase):
         gcodewriter.SetInput(checker_board_slicer)
         gcodewriter.generateGCode()
 
+    def test_generate_spread(self):
+
+        output_folder_check = './test/testOutput/Spread'
+
+        if(not os.path.isdir(output_folder_check)):
+            os.mkdir(output_folder_check)
+        else:
+            shutil.rmtree(output_folder_check)
+            os.mkdir(output_folder_check)
+        
+        gcodewriter = gcodeWriterVlaseaBM(self.test_config, output_folder_check)
+        gcodewriter.test_spread()
+
     def tearDown(self):
         shutil.rmtree(self.testConfigFolder)
