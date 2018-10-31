@@ -113,7 +113,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
 
-        NumSubImage = math.ceil(size[1]/self.XImageSizeLimit)
+        NumSubImage = math.ceil(size[1]/(self.XImageSizeLimit - 2*self.imgMarginSize) )
         listofPosition = []
         pos = [5+origin[0],38+origin[1]]
 
