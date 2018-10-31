@@ -45,6 +45,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         self.DefaultPrintVelocity = config.getPrintHeadSetting('printheadvelocity')
         self.DefaultPrintHeadAddr = config.getMachineSetting('defaultprintheadaddr')
         self.BuildBedSize = config.getMachineSetting('printbedsize')
+        self.print_bed_offset = config.getMachineSetting('printcoordoffset')
 
         self.NumberOfBuffer = config.getPrintHeadSetting('buffernumber')
         self.XImageSizeLimit = config.getPrintHeadSetting('buffersizelimit')[0]
@@ -115,7 +116,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         NumSubImage = math.ceil(size[1]/(self.XImageSizeLimit - 2*self.imgMarginSize) )
         listofPosition = []
-        pos = [5+origin[0],38+origin[1]]
+        pos = [self.print_bed_offset[0]+origin[0],self.print_bed_offset[1]+origin[1]]
 
         for i in range(0,NumSubImage):
             listofPosition.append(pos.copy())
