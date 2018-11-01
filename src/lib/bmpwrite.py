@@ -38,7 +38,13 @@ class BmpWriter(VTKPythonAlgorithmBase):
     def append_error(self, img, i, j, error):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
-        img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
+
+        if(new_val >= 255):
+            img.SetScalarComponentFromFloat(i, j, 0, 0, 255)
+        elif(new_val <= 0):
+            img.SetScalarComponentFromFloat(i, j, 0, 0, 0)
+        else:
+            img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
 
     def _init_file(self):
         self._f = open(self._file_name, 'wb')
@@ -93,13 +99,13 @@ class BmpWriter(VTKPythonAlgorithmBase):
             self.append_error(img, i+1, j, quant_error*7/16)
 
         if ((i-1) >= extent[0] and (j+1) <= extent[3] and quant_error != 0):
-            self.append_error(img, i-1, j, quant_error*3/16)
+            self.append_error(img, i-1, j+1, quant_error*3/16)
 
         if ((j+1) <= extent[3] and quant_error != 0):
             self.append_error(img, i, j+1, quant_error*5/16)
 
         if ((i+1) <= extent[1] and (j+1) <= extent[3] and quant_error != 0):
-            self.append_error(img, i, j+1, quant_error*1/16)
+            self.append_error(img, i+1, j+1, quant_error*1/16)
 
         if(new_val == 255):
             return "0"
