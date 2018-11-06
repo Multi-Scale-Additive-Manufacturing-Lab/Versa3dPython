@@ -125,7 +125,13 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._file_name = name
 
     def find_closest_color(self, old_val):
-        return round(old_val/255)*255
+
+        if(old_val < 0):
+            return 0
+        elif(old_val > 255):
+            return 255
+        else:
+            return round(old_val/255)*255
 
     def set_dpm(self, dpm_array):
         self._dpm_array = dpm_array
@@ -137,12 +143,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
 
-        if(new_val >= 255):
-            img.SetScalarComponentFromFloat(i, j, 0, 0, 255)
-        elif(new_val <= 0):
-            img.SetScalarComponentFromFloat(i, j, 0, 0, 0)
-        else:
-            img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
+        img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
 
     def _init_file(self):
         self._f = open(self._file_name, 'wb')
@@ -193,13 +194,14 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
 
-        quant_error = old_val-new_val
-
-        for dx, dy, ratio in diffusion_map:
-            x = i + dx
-            y = j + dy
-            if (extent[0] <= x <= extent[1]) and (extent[2] <= y <= extent[3]):
-                self.append_error(img, x, y, ratio*quant_error)
+        quant_error = old_val - new_val
+        
+        if(quant_error != 0):
+            for dx, dy, ratio in diffusion_map:
+                x = i + dx
+                y = j + dy
+                if (extent[0] <= x <= extent[1]) and (extent[2] <= y <= extent[3]):
+                    self.append_error(img, x, y, ratio*quant_error)
 
         if(new_val == 255):
             return "0"
