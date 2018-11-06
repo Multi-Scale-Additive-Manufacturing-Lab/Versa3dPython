@@ -4,6 +4,100 @@ import vtk
 import math
 
 
+_DIFFUSION_MAPS = {
+    'floyd-steinberg': (
+        (1, 0,  7 / 16),
+        (-1, 1, 3 / 16),
+        (0, 1,  5 / 16),
+        (1, 1,  1 / 16)
+    ),
+    'atkinson': (
+        (1, 0,  1 / 8),
+        (2, 0,  1 / 8),
+        (-1, 1, 1 / 8),
+        (0, 1,  1 / 8),
+        (1, 1,  1 / 8),
+        (0, 2,  1 / 8),
+    ),
+    'jarvis-judice-ninke': (
+        (1, 0,  7 / 48),
+        (2, 0,  5 / 48),
+        (-2, 1, 3 / 48),
+        (-1, 1, 5 / 48),
+        (0, 1,  7 / 48),
+        (1, 1,  5 / 48),
+        (2, 1,  3 / 48),
+        (-2, 2, 1 / 48),
+        (-1, 2, 3 / 48),
+        (0, 2,  5 / 48),
+        (1, 2,  3 / 48),
+        (2, 2,  1 / 48),
+    ),
+    'stucki': (
+        (1, 0,  8 / 42),
+        (2, 0,  4 / 42),
+        (-2, 1, 2 / 42),
+        (-1, 1, 4 / 42),
+        (0, 1,  8 / 42),
+        (1, 1,  4 / 42),
+        (2, 1,  2 / 42),
+        (-2, 2, 1 / 42),
+        (-1, 2, 2 / 42),
+        (0, 2,  4 / 42),
+        (1, 2,  2 / 42),
+        (2, 2,  1 / 42),
+    ),
+    'burkes': (
+        (1, 0,  8 / 32),
+        (2, 0,  4 / 32),
+        (-2, 1, 2 / 32),
+        (-1, 1, 4 / 32),
+        (0, 1,  8 / 32),
+        (1, 1,  4 / 32),
+        (2, 1,  2 / 32),
+    ),
+    'sierra3': (
+        (1, 0,  5 / 32),
+        (2, 0,  3 / 32),
+        (-2, 1, 2 / 32),
+        (-1, 1, 4 / 32),
+        (0, 1,  5 / 32),
+        (1, 1,  4 / 32),
+        (2, 1,  2 / 32),
+        (-1, 2, 2 / 32),
+        (0, 2,  3 / 32),
+        (1, 2,  2 / 32),
+    ),
+    'sierra2': (
+        (1, 0,  4 / 16),
+        (2, 0,  3 / 16),
+        (-2, 1, 1 / 16),
+        (-1, 1, 2 / 16),
+        (0, 1,  3 / 16),
+        (1, 1,  2 / 16),
+        (2, 1,  1 / 16),
+    ),
+    'sierra-2-4a': (
+        (1, 0,  2 / 4),
+        (-1, 1, 1 / 4),
+        (0, 1,  1 / 4),
+    ),
+    'stevenson-arce': (
+        (2, 0,   32 / 200),
+        (-3, 1,  12 / 200),
+        (-1, 1,  26 / 200),
+        (1, 1,   30 / 200),
+        (3, 1,   30 / 200),
+        (-2, 2,  12 / 200),
+        (0, 2,   26 / 200),
+        (2, 2,   12 / 200),
+        (-3, 3,   5 / 200),
+        (-1, 3,  12 / 200),
+        (1, 3,   12 / 200),
+        (3, 3,    5 / 200)
+    )
+}
+
 class BmpWriter(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
@@ -17,6 +111,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._margin_size = None
 
         self._f = None
+        self._dithering = 'floyd-steinberg'
 
     def set_split_img_true(self, margin_size, x_limit):
         self._split_img_bool = True
@@ -34,7 +129,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
     def set_dpm(self, dpm_array):
         self._dpm_array = dpm_array
-
+    
+    def set_dithering(self, dithering):
+        self._dithering = dithering.lower()
+        
     def append_error(self, img, i, j, error):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
@@ -89,23 +187,19 @@ class BmpWriter(VTKPythonAlgorithmBase):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = self.find_closest_color(old_val)
 
+        diffusion_map = _DIFFUSION_MAPS[self._dithering]
+
         extent = img.GetExtent()
 
         img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
 
         quant_error = old_val-new_val
 
-        if((i+1) <= extent[1] and quant_error != 0):
-            self.append_error(img, i+1, j, quant_error*7/16)
-
-        if ((i-1) >= extent[0] and (j+1) <= extent[3] and quant_error != 0):
-            self.append_error(img, i-1, j+1, quant_error*3/16)
-
-        if ((j+1) <= extent[3] and quant_error != 0):
-            self.append_error(img, i, j+1, quant_error*5/16)
-
-        if ((i+1) <= extent[1] and (j+1) <= extent[3] and quant_error != 0):
-            self.append_error(img, i+1, j+1, quant_error*1/16)
+        for dx, dy, ratio in diffusion_map:
+            x = i + dx
+            y = j + dy
+            if (extent[0] <= x <= extent[1]) and (extent[2] <= y <= extent[3]):
+                self.append_error(img, x, y, ratio*quant_error)
 
         if(new_val == 255):
             return "0"
