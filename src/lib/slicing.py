@@ -220,7 +220,7 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         super().__init__(config)
 
         self.shell_thickness = 0.1
-        self.fill_density = 0.80
+        self.fill_density = 0.50
 
     def slice(self):
 
