@@ -98,6 +98,7 @@ _DIFFUSION_MAPS = {
     )
 }
 
+
 class BmpWriter(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
@@ -135,10 +136,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
     def set_dpm(self, dpm_array):
         self._dpm_array = dpm_array
-    
+
     def set_dithering(self, dithering):
         self._dithering = dithering.lower()
-        
+
     def append_error(self, img, i, j, error):
         old_val = img.GetScalarComponentAsFloat(i, j, 0, 0)
         new_val = old_val + error
@@ -195,7 +196,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         img.SetScalarComponentFromFloat(i, j, 0, 0, new_val)
 
         quant_error = old_val - new_val
-        
+
         if(quant_error != 0):
             for dx, dy, ratio in diffusion_map:
                 x = i + dx
