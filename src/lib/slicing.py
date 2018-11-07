@@ -179,7 +179,7 @@ class FullBlackImageSlicer(VoxelSlicer):
         whiteImage = vtk.vtkImageData()
         whiteImage.SetSpacing(self._spacing)
         whiteImage.SetDimensions(imgDim)
-        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        whiteImage.AllocateScalars(vtk.VTK_FLOAT, 1)
         whiteImage.GetPointData().GetScalars().Fill(255)
         self._imgstenc.SetInputData(whiteImage)
 
@@ -220,7 +220,7 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         super().__init__(config)
 
         self.shell_thickness = 0.1
-        self.fill_density = 0.80
+        self.fill_density = 0.50
 
     def slice(self):
 
@@ -237,14 +237,14 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         whiteImage = vtk.vtkImageData()
         whiteImage.SetSpacing(self._spacing)
         whiteImage.SetDimensions(imgDim)
-        whiteImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        whiteImage.AllocateScalars(vtk.VTK_FLOAT, 1)
         whiteImage.GetPointData().GetScalars().Fill(255)
         self._imgstenc.SetInputData(whiteImage)
 
         grey_image = vtk.vtkImageData()
         grey_image.SetSpacing(self._spacing)
         grey_image.SetDimensions(imgDim)
-        grey_image.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        grey_image.AllocateScalars(vtk.VTK_FLOAT, 1)
         grey_image.GetPointData().GetScalars().Fill(255*self.fill_density)
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
