@@ -183,20 +183,20 @@ class FullBlackImageSlicer(VoxelSlicer):
         imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
                                 self._spacing[i]))+1 for i in range(2)]
 
-        whiteImage = create_2d_vtk_image(
+        white_image = create_2d_vtk_image(
             255, imgDim[0], imgDim[1], self._spacing)
-        self._imgstenc.SetInputData(whiteImage)
+        self._imgstenc.SetInputData(white_image)
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
         for contour in listOfContour:
-            individual_slice = self.full_black_slice(contour, bound, whiteImage)
+            individual_slice = self.full_black_slice(contour, bound, white_image)
             if(individual_slice != None):
                 self._sliceStack.append(individual_slice)
 
         return self._sliceStack
     
-    def full_black_slice(self, contour, bound, whiteImage):
+    def full_black_slice(self, contour, bound, white_image):
         origin = [0]*3
         ContourBounds = contour.GetBounds()
         origin[0] = bound[0]
