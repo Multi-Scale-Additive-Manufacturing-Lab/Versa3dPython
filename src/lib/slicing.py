@@ -223,13 +223,14 @@ class FullBlackImageSlicer(VoxelSlicer):
         
         return None
 
-class CheckerBoardImageSlicer(VoxelSlicer):
+class CheckerBoardImageSlicer(FullBlackImageSlicer):
 
     def __init__(self, config):
         super().__init__(config)
 
         self.shell_thickness = 0.1
         self.fill_density = 0.50
+        self.bottom_thickness = 3
 
     def slice(self):
 
@@ -250,9 +251,13 @@ class CheckerBoardImageSlicer(VoxelSlicer):
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
-        for contour in listOfContour:
-
-            individual_slice = self.checkerboard_slice(contour, bound, white_image, grey_image)
+        for i in range(len(listOfContour)):
+            contour = listOfContour[i]
+            
+            if(i <= self.bottom_thickness):
+                individual_slice = self.full_black_slice(contour, bound, white_image)
+            else:
+                individual_slice = self.checkerboard_slice(contour, bound, white_image, grey_image)
             
             if(individual_slice != None):
                 self._sliceStack.append(individual_slice)
