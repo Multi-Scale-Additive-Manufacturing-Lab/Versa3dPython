@@ -238,84 +238,84 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         mergedPoly.ComputeBounds()
         bound = mergedPoly.GetBounds()
 
-        imgDim = [1]*3
-        for i in range(0, 2):
-            imgDim[i] = int(
-                math.ceil((bound[2*i+1]-bound[2*i])/self._spacing[i]))+1
+        imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
+                                self._spacing[i]))+1 for i in range(2)]
 
-        whiteImage = vtk.vtkImageData()
-        whiteImage.SetSpacing(self._spacing)
-        whiteImage.SetDimensions(imgDim)
-        whiteImage.AllocateScalars(vtk.VTK_FLOAT, 1)
-        whiteImage.GetPointData().GetScalars().Fill(255)
+        whiteImage = create_2d_vtk_image(
+            255, imgDim[0], imgDim[1], self._spacing)
         self._imgstenc.SetInputData(whiteImage)
 
-        grey_image = vtk.vtkImageData()
-        grey_image.SetSpacing(self._spacing)
-        grey_image.SetDimensions(imgDim)
-        grey_image.AllocateScalars(vtk.VTK_FLOAT, 1)
-        grey_image.GetPointData().GetScalars().Fill(255*self.fill_density)
+        grey_image = create_2d_vtk_image(
+            255*self.fill_density, imgDim[0], imgDim[1], self._spacing)
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
         for contour in listOfContour:
 
-            origin = [0]*3
-            ContourBounds = contour.GetBounds()
-            origin[0] = bound[0]
-            origin[1] = bound[2]
-            origin[2] = ContourBounds[4]
-
-            IndividualSlice = slice(origin[2], self._thickness)
-
-            # white image origin and stencil origin must line up
-            whiteImage.SetOrigin(origin)
-
-            if(contour.GetNumberOfLines() > 0):
-                skeletonizer = sk.VtkSkeletonize()
-                skeletonizer.set_shell_thickness(self.shell_thickness)
-                skeletonizer.AddInputDataObject(0, contour)
-                skeletonizer.Update()
-
-                merge = vtk.vtkAppendPolyData()
-                merge.AddInputData(contour)
-                merge.AddInputData(skeletonizer.GetOutputDataObject(0))
-                merge.Update()
-
-                self._extruder.SetInputData(merge.GetOutput())
-                self._extruder.Update()
-
-                self._poly2Sten.SetOutputOrigin(origin)
-                self._poly2Sten.Update()
-
-                self._imgstenc.Update()
-                image = vtk.vtkImageData()
-
-                int_extruder = vtk.vtkLinearExtrusionFilter()
-                int_extruder.SetScaleFactor(1.)
-                int_extruder.SetExtrusionTypeToNormalExtrusion()
-                int_extruder.SetVector(0, 0, 1)
-                int_extruder.SetInputData(skeletonizer.GetOutputDataObject(0))
-                int_extruder.Update()
-
-                int_poly_sten = vtk.vtkPolyDataToImageStencil()
-                # important for when SetVector is 0,0,1
-                int_poly_sten.SetTolerance(0)
-                int_poly_sten.SetOutputSpacing(self._spacing)
-                int_poly_sten.SetInputConnection(int_extruder.GetOutputPort())
-                int_poly_sten.SetOutputOrigin(origin)
-                int_poly_sten.Update()
-
-                int_img_stenc = vtk.vtkImageStencil()
-                int_img_stenc.SetStencilConnection(
-                    int_poly_sten.GetOutputPort())
-                int_img_stenc.SetInputData(grey_image)
-                int_img_stenc.SetBackgroundInputData(
-                    self._imgstenc.GetOutput())
-                int_img_stenc.Update()
-
-                image.ShallowCopy(int_img_stenc.GetOutput())
-                IndividualSlice.setImage(image)
-                self._sliceStack.append(IndividualSlice)
+            individual_slice = self.checkerboard_slice(contour, bound, whiteImage, grey_image)
+            
+            if(individual_slice != None):
+                self._sliceStack.append(individual_slice)
 
         return self._sliceStack
+
+    def checkerboard_slice(self, contour, bound, whiteImage, grey_image):
+        origin = [0]*3
+        ContourBounds = contour.GetBounds()
+        origin[0] = bound[0]
+        origin[1] = bound[2]
+        origin[2] = ContourBounds[4]
+
+        IndividualSlice = slice(origin[2], self._thickness)
+
+        # white image origin and stencil origin must line up
+        whiteImage.SetOrigin(origin)
+
+        if(contour.GetNumberOfLines() > 0):
+            skeletonizer = sk.VtkSkeletonize()
+            skeletonizer.set_shell_thickness(self.shell_thickness)
+            skeletonizer.AddInputDataObject(0, contour)
+            skeletonizer.Update()
+
+            merge = vtk.vtkAppendPolyData()
+            merge.AddInputData(contour)
+            merge.AddInputData(skeletonizer.GetOutputDataObject(0))
+            merge.Update()
+
+            self._extruder.SetInputData(merge.GetOutput())
+            self._extruder.Update()
+
+            self._poly2Sten.SetOutputOrigin(origin)
+            self._poly2Sten.Update()
+
+            self._imgstenc.Update()
+            image = vtk.vtkImageData()
+
+            int_extruder = vtk.vtkLinearExtrusionFilter()
+            int_extruder.SetScaleFactor(1.)
+            int_extruder.SetExtrusionTypeToNormalExtrusion()
+            int_extruder.SetVector(0, 0, 1)
+            int_extruder.SetInputData(skeletonizer.GetOutputDataObject(0))
+            int_extruder.Update()
+
+            int_poly_sten = vtk.vtkPolyDataToImageStencil()
+            # important for when SetVector is 0,0,1
+            int_poly_sten.SetTolerance(0)
+            int_poly_sten.SetOutputSpacing(self._spacing)
+            int_poly_sten.SetInputConnection(int_extruder.GetOutputPort())
+            int_poly_sten.SetOutputOrigin(origin)
+            int_poly_sten.Update()
+
+            int_img_stenc = vtk.vtkImageStencil()
+            int_img_stenc.SetStencilConnection(
+                int_poly_sten.GetOutputPort())
+            int_img_stenc.SetInputData(grey_image)
+            int_img_stenc.SetBackgroundInputData(
+                self._imgstenc.GetOutput())
+            int_img_stenc.Update()
+
+            image.ShallowCopy(int_img_stenc.GetOutput())
+            IndividualSlice.setImage(image)
+
+            return IndividualSlice
+        return None
