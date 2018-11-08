@@ -7,6 +7,15 @@ import math
 from test.debugHelper import visualizer
 
 
+def create_2d_vtk_image(val, x, y, spacing):
+    img = vtk.vtkImageData()
+    img.SetSpacing(spacing)
+    img.SetDimensions([x, y, 1])
+    img.AllocateScalars(vtk.VTK_FLOAT, 1)
+    img.GetPointData().GetScalars().Fill(val)
+    return img
+
+
 def slicerFactory(config):
 
     if(config != None):
@@ -171,48 +180,48 @@ class FullBlackImageSlicer(VoxelSlicer):
         mergedPoly.ComputeBounds()
         bound = mergedPoly.GetBounds()
 
-        imgDim = [1]*3
-        for i in range(0, 2):
-            imgDim[i] = int(
-                math.ceil((bound[2*i+1]-bound[2*i])/self._spacing[i]))+1
+        imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
+                                self._spacing[i]))+1 for i in range(2)]
 
-        whiteImage = vtk.vtkImageData()
-        whiteImage.SetSpacing(self._spacing)
-        whiteImage.SetDimensions(imgDim)
-        whiteImage.AllocateScalars(vtk.VTK_FLOAT, 1)
-        whiteImage.GetPointData().GetScalars().Fill(255)
+        whiteImage = create_2d_vtk_image(
+            255, imgDim[0], imgDim[1], self._spacing)
         self._imgstenc.SetInputData(whiteImage)
 
         listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
         for contour in listOfContour:
-
-            origin = [0]*3
-            ContourBounds = contour.GetBounds()
-            origin[0] = bound[0]
-            origin[1] = bound[2]
-            origin[2] = ContourBounds[4]
-
-            IndividualSlice = slice(origin[2], self._thickness)
-
-            # white image origin and stencil origin must line up
-            whiteImage.SetOrigin(origin)
-
-            if(contour.GetNumberOfLines() > 0):
-                self._extruder.SetInputData(contour)
-                self._extruder.Update()
-
-                self._poly2Sten.SetOutputOrigin(origin)
-                self._poly2Sten.Update()
-
-                self._imgstenc.Update()
-                image = vtk.vtkImageData()
-                image.ShallowCopy(self._imgstenc.GetOutput())
-                IndividualSlice.setImage(image)
-                self._sliceStack.append(IndividualSlice)
+            individual_slice = self.full_black_slice(contour, bound, whiteImage)
+            if(individual_slice != None):
+                self._sliceStack.append(individual_slice)
 
         return self._sliceStack
+    
+    def full_black_slice(self, contour, bound, whiteImage):
+        origin = [0]*3
+        ContourBounds = contour.GetBounds()
+        origin[0] = bound[0]
+        origin[1] = bound[2]
+        origin[2] = ContourBounds[4]
 
+        IndividualSlice = slice(origin[2], self._thickness)
+
+        # white image origin and stencil origin must line up
+        whiteImage.SetOrigin(origin)
+
+        if(contour.GetNumberOfLines() > 0):
+            self._extruder.SetInputData(contour)
+            self._extruder.Update()
+
+            self._poly2Sten.SetOutputOrigin(origin)
+            self._poly2Sten.Update()
+
+            self._imgstenc.Update()
+            image = vtk.vtkImageData()
+            image.ShallowCopy(self._imgstenc.GetOutput())
+            IndividualSlice.setImage(image)
+            return IndividualSlice
+        
+        return None
 
 class CheckerBoardImageSlicer(VoxelSlicer):
 
