@@ -241,9 +241,9 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
                                 self._spacing[i]))+1 for i in range(2)]
 
-        whiteImage = create_2d_vtk_image(
+        white_image = create_2d_vtk_image(
             255, imgDim[0], imgDim[1], self._spacing)
-        self._imgstenc.SetInputData(whiteImage)
+        self._imgstenc.SetInputData(white_image)
 
         grey_image = create_2d_vtk_image(
             255*self.fill_density, imgDim[0], imgDim[1], self._spacing)
@@ -252,14 +252,14 @@ class CheckerBoardImageSlicer(VoxelSlicer):
 
         for contour in listOfContour:
 
-            individual_slice = self.checkerboard_slice(contour, bound, whiteImage, grey_image)
+            individual_slice = self.checkerboard_slice(contour, bound, white_image, grey_image)
             
             if(individual_slice != None):
                 self._sliceStack.append(individual_slice)
 
         return self._sliceStack
 
-    def checkerboard_slice(self, contour, bound, whiteImage, grey_image):
+    def checkerboard_slice(self, contour, bound, white_image, grey_image):
         origin = [0]*3
         ContourBounds = contour.GetBounds()
         origin[0] = bound[0]
@@ -269,7 +269,7 @@ class CheckerBoardImageSlicer(VoxelSlicer):
         IndividualSlice = slice(origin[2], self._thickness)
 
         # white image origin and stencil origin must line up
-        whiteImage.SetOrigin(origin)
+        white_image.SetOrigin(origin)
 
         if(contour.GetNumberOfLines() > 0):
             skeletonizer = sk.VtkSkeletonize()
