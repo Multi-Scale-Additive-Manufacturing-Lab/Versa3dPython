@@ -206,7 +206,7 @@ class FullBlackImageSlicer(VoxelSlicer):
         IndividualSlice = slice(origin[2], self._thickness)
 
         # white image origin and stencil origin must line up
-        whiteImage.SetOrigin(origin)
+        white_image.SetOrigin(origin)
 
         if(contour.GetNumberOfLines() > 0):
             self._extruder.SetInputData(contour)
