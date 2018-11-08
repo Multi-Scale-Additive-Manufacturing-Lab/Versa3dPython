@@ -21,13 +21,14 @@ def writer(folderPath, BuildVtkImage):
 
     count = 0
     for image in BuildVtkImage:
-        vtkimg = image.getImage()
-        img_full_path = os.path.join(folderPath, 'img_%d.bmp' % (count))
-        bmpWriter.set_file_name(img_full_path)
-        bmpWriter.SetInputDataObject(0, vtkimg)
-        vtkimg.ComputeBounds()
-        count += 1
-        bmpWriter.Update()
+        for s in image:
+            vtkimg = s.getImage()
+            img_full_path = os.path.join(folderPath, 'img_%d.bmp' % (count))
+            bmpWriter.set_file_name(img_full_path)
+            bmpWriter.SetInputDataObject(0, vtkimg)
+            vtkimg.ComputeBounds()
+            count += 1
+            bmpWriter.Update()
 
 
 class TestSlicer(unittest.TestCase):
