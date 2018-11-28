@@ -199,7 +199,8 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
             imgFullPath = os.path.join(imageFolder,imgfileName)
             offset = len(list_img_pos)
-            list_img_pos += self.imageWriter(img.getImage(),imgFullPath)
+            list_pos = self.imageWriter(img.getImage(),imgFullPath)
+            list_img_pos += list_pos
             count += 1
 
             if(self.AbsPathBMVlaseaComputerBool):
@@ -209,7 +210,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 baseFolder = os.path.join("./","image")
                 imgPath = os.path.join(baseFolder,imgfileName)
             #step 0 - turn ON printhead and get ready to print buffer BNumber
-            textStr = "%T{},{},{}".format(str(1).zfill(2),65,number_of_image)
+            textStr = "%T{},{},{}".format(str(1).zfill(2),65,len(list_pos))
             step0 = self.ImtechPrintHead(True,8,1,0,offset,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
             self.makeStep(defaultStep,step0,"step load - turn ON printhead and save font")
 
