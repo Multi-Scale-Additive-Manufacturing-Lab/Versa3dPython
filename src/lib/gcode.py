@@ -9,6 +9,7 @@ import math
 import os
 import string
 import numpy
+import itertools
 
 def gcodeFactory(type, config):
     
@@ -80,12 +81,10 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         os.mkdir(imageFolder)
 
         count = 1
-        for IndividualSlice in SliceStack:
-            OriginalImg = IndividualSlice.getImage()
-
+        for individual_layer in SliceStack:
             self.XMLRoot = self.BuildSequenceCluster(0)
 
-            self.generateGCodeLayer(count,OriginalImg,imageFolder)
+            self.generateGCodeLayer(count, individual_layer, imageFolder)
 
             xmlFileName = "Layer.%d.xml"%(count)
             count = count + 1
@@ -191,35 +190,29 @@ class gcodeWriterVlaseaBM(gcodeWriter):
             step17 = self.MaterialHandling(True,2,2,self.W, self.FeedBedSel,self.feedBedVelocity, 0,0)
             self.makeStep(defaultStep,step17,"step 13 raise feed bed")
 
-    def generateGCodeLayer(self,layerNum,imgSlice,imageFolder):
+    def generateGCodeLayer(self,layerNum,img_layer,imageFolder):
 
         defaultStep = self.create_default_Step()
+        count = 0
+        list_img_pos = []
+        for img in img_layer:
+            imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
+            imgFullPath = os.path.join(imageFolder,imgfileName)
+            offset = len(list_img_pos)
+            list_img_pos += self.imageWriter(img.getImage(),imgFullPath)
+            count += 1
 
-        origin = imgSlice.GetOrigin()
-        (xDim, yDim,zDim) = imgSlice.GetDimensions()
-
-        listOfLetter = string.ascii_uppercase
-
-        imgfileName = "slice_{0:d}.bmp".format(layerNum)
-        imgFullPath = os.path.join(imageFolder,imgfileName)
-
-        listofPosition = self.imageWriter(imgSlice,imgFullPath)
-
-        if(self.AbsPathBMVlaseaComputerBool):
-            baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
-            imgPath = baseFolder+imgfileName
-        else:
-            baseFolder = os.path.join("./","image")
-            imgPath = os.path.join(baseFolder,imgfileName)
-
-        NumberOfImage = len(listofPosition)
-
-        if(NumberOfImage):
+            if(self.AbsPathBMVlaseaComputerBool):
+                baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
+                imgPath = baseFolder+imgfileName
+            else:
+                baseFolder = os.path.join("./","image")
+                imgPath = os.path.join(baseFolder,imgfileName)
             #step 0 - turn ON printhead and get ready to print buffer BNumber
-            textStr = "%T{},{},{}".format(str(1).zfill(2),65,NumberOfImage)
-            step0 = self.ImtechPrintHead(True,8,1,0,0,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
-            self.makeStep(defaultStep,step0,"step 0 - turn ON printhead and save font")
-        
+            textStr = "%T{},{},{}".format(str(1).zfill(2),65,number_of_image)
+            step0 = self.ImtechPrintHead(True,8,1,0,offset,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+            self.makeStep(defaultStep,step0,"step load - turn ON printhead and save font")
+
         #step 1 - move gantry to X1 = 0 
         step1 = self.Gantry(True,0,3,[0,0],0,self.gantryXYVelocity[0],"")
         self.makeStep(defaultStep,step1,"step 1 - move gantry to X1 = 0")
@@ -256,9 +249,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         step9 = self.MaterialHandling(True,2,2,(-1)*(self.H+self.W),self.FeedBedSel,self.feedBedVelocity,0,0)
         self.makeStep(defaultStep,step9,"step 9 - lower feed bed by -(H+W)")
 
-        for i in range(0,NumberOfImage):
+        for i, position in enumerate(list_img_pos):
+
             for j in range(0,self.NumberOfPass):
-                position = listofPosition[i]
                 #step 10 allign printhead with the printing area - move to lower left corner of image
                 step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
                 self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
@@ -274,7 +267,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 #step 13 execute printing motion in Y direction - move to right
                 step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
                 self.makeStep(defaultStep,step13,"step 13 move to y: 70")
-            
+                
         #step 14 move back to origin in Y -direction Y=0(former step 16)
         step14 = self.Gantry(True,0,3,[0,0],2,self.gantryXYVelocity[1],"")
         self.makeStep(defaultStep,step14,"step 14 move back to origin y")
