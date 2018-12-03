@@ -1,5 +1,4 @@
 import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 from src.lib.versa3dConfig import config
 from src.lib.bmpwrite import BmpWriter
 from lxml import etree
@@ -7,9 +6,7 @@ from lxml.builder import E
 from copy import deepcopy
 import math
 import os
-import string
-import numpy
-import itertools
+
 
 def gcodeFactory(type, config):
     
