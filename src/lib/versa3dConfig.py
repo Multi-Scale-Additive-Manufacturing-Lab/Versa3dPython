@@ -231,6 +231,18 @@ class Print_Settings(setting):
         self._settingList['layer_thickness'].type = 'float'
         self._settingList['layer_thickness'].sidetext = 'mm'
 
+        self._settingList['fill_density'] = Versa3dOption(0.50)
+        self._settingList['fill_density'].label = 'fill density'
+        self._settingList['fill_density'].category = 'BinderJet'
+        self._settingList['fill_density'].subcategory = 'InFill'
+        self._settingList['fill_density'].type = 'float'
+
+        self._settingList['shell_thickness'] = Versa3dOption(0.10)
+        self._settingList['shell_thickness'].label = 'fill density'
+        self._settingList['shell_thickness'].category = 'BinderJet'
+        self._settingList['shell_thickness'].subcategory = 'InFill'
+        self._settingList['shell_thickness'].type = 'float'
+
         self._settingList['passnum'] = Versa3dOption(1)
         self._settingList['passnum'].label = 'number of pass of the print area'
         self._settingList['passnum'].category = 'BinderJet'

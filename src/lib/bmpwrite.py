@@ -266,6 +266,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
         self._init_header(line_size, self._x_img_size_limit, pixel_map_size)
 
+        "Pixel in bitmap are stored bottom-up"
         for j in range(h_limit-1, extent[2]-1, -1):
             bit_row = ""
             byte_array = bytearray(total_line_size)
