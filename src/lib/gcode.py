@@ -194,11 +194,11 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
         defaultStep = self.create_default_Step()
         count = 0
+        offset = 0
         list_img_pos = []
         for img in img_layer:
             imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
             imgFullPath = os.path.join(imageFolder,imgfileName)
-            offset = len(list_img_pos)
             list_pos = self.imageWriter(img.getImage(),imgFullPath)
             list_img_pos += list_pos
             count += 1
@@ -210,8 +210,9 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 baseFolder = os.path.join("./","image")
                 imgPath = os.path.join(baseFolder,imgfileName)
             #step 0 - turn ON printhead and get ready to print buffer BNumber
-            textStr = "%T{},{},{}".format(str(1).zfill(2),65,len(list_pos))
-            step0 = self.ImtechPrintHead(True,8,1,0,offset,0,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+            textStr = "%T{},{},{}".format(str(count).zfill(2),65,len(list_pos))
+            step0 = self.ImtechPrintHead(True,8,1,0,0,offset,0,textStr,self.DefaultPrintHeadAddr,imgPath)
+            offset = len(list_img_pos)
             self.makeStep(defaultStep,step0,"step load - turn ON printhead and save font")
 
         #step 1 - move gantry to X1 = 0 
