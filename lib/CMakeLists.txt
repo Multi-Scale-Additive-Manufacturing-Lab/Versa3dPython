@@ -1,8 +1,18 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.5)
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
-pybind11_add_module(${CMAKE_PROJECT_NAME} src/test.cc)
+set(LIB_HEADERS 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/converter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/bmpwriter.h
+)
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${VTK_LIBRARIES})
+set(LIB_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/bmpwriter.cc
+)
+
+pybind11_add_module(Versa3dLib ${LIB_SRC} ${LIB_HEADERS})
+
+target_link_libraries(Versa3dLib PRIVATE vtkCommonCore)
+target_include_directories(Versa3dLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include) 
