@@ -2,6 +2,18 @@ cmake_minimum_required(VERSION 3.5)
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
+SET(VTK_COMPONENT
+    vtkCommonCore
+    vtkCommonDataModel
+    vtkFiltersCore
+    vtkFiltersModeling
+    vtkInteractionStyle
+    vtkIOImage
+    vtkImagingCore
+    vtkImagingGeneral
+    vtkImagingStatistics
+    vtkImagingStencil
+)
 
 set(LIB_HEADERS 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/converter.h
@@ -13,6 +25,7 @@ set(LIB_SRC
 )
 
 pybind11_add_module(Versa3dLib ${LIB_SRC} ${LIB_HEADERS})
+message(${VTK_LIBRARIES})
 
-target_link_libraries(Versa3dLib PRIVATE vtkCommonCore)
+target_link_libraries(Versa3dLib PRIVATE ${VTK_COMPONENT})
 target_include_directories(Versa3dLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include) 
