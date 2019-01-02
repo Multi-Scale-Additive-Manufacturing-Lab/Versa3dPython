@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
+
 SET(VTK_COMPONENT
     vtkCommonCore
     vtkCommonDataModel
@@ -27,5 +28,7 @@ set(LIB_SRC
 pybind11_add_module(Versa3dLib ${LIB_SRC} ${LIB_HEADERS})
 message(${VTK_LIBRARIES})
 
+#in conda vtk pkg, HDF5 dependencies path are hard coded
+#target_link_libraries(Versa3lib PRIVATE ${VTK_LIBRARIES}) Fails
 target_link_libraries(Versa3dLib PRIVATE ${VTK_COMPONENT})
 target_include_directories(Versa3dLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include) 
