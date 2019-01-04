@@ -1,9 +1,8 @@
+#ifndef BMPWRITER_H
+#define BMPWRITER_H
+
 #include <pybind11/pybind11.h>
 #include <vtkImageData.h>
-
-using namespace std;
-
-namespace py = pybind11;
 
 class bmpwriter
 {
@@ -12,6 +11,8 @@ class bmpwriter
 
     public:
         bmpwriter();
-        //void set_input(vtkImageData* img);
+        void set_input(vtkImageData * img);
         void write_to_file();
 };
+
+#endif
