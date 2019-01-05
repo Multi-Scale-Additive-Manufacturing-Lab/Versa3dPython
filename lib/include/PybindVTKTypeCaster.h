@@ -25,7 +25,7 @@
 protected:                                                              \
 VTK_OBJ* value;                                                         \
 public:                                                                 \
-static constexpr auto name = _(#VTK_OBJ);                               \
+static PYBIND11_DESCR name() { return type_descr(_(#VTK_OBJ)); }        \
 template <typename T_,                                                  \
           enable_if_t<std::is_same<VTK_OBJ,                             \
                                    remove_cv_t<T_>>::value, int> = 0>   \
