@@ -17,8 +17,7 @@ SET(VTK_COMPONENT
     vtkWrappingPythonCore
 )
 
-set(LIB_HEADERS 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/converter.h
+set(LIB_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/bmpwriter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/PybindVTKTypeCaster.h
 )
