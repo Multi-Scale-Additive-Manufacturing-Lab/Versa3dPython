@@ -248,10 +248,10 @@ class BmpWriter(VTKPythonAlgorithmBase):
     
     def dither_img(self, inp):
         dim = inp.GetDimensions()
-        img = np.zeros(dim[0:2],dtype = int)
+        img = np.zeros(dim[0:2],dtype=int)
         for i in range(dim[0]):
             for j in range(dim[1]):
-                img[i,j] = self.dithering(inp, i, j)
+                img[i, j] = self.dithering(inp, i, j)
         return img
 
     def split_print(self, inp):
@@ -301,9 +301,14 @@ class BmpWriter(VTKPythonAlgorithmBase):
 
             bit_row = "".join(str(val) for val in new_img[:, j])
             bit_row = bit_row.join("0"*padding)
-
+            
+            byte_array = bytearray(total_line_size)
+            byte_array_loc = 0
             for k in range(int(len(bit_row)/8)):
-                self._f.write(pack('i', int(bit_row[8*k:8*k+8], 2)))
+                byte_array[byte_array_loc] = int(bit_row[8*k:8*k+8], base=2)
+                byte_array_loc += 1
+            
+            self._f.write(byte_array)
 
             if(j == extent[2]):
                 empty_line = bytearray(total_line_size*self._margin_size)
