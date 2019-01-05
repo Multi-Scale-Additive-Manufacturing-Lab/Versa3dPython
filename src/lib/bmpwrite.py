@@ -251,7 +251,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         img = np.zeros(dim[0:2],dtype = int)
         for i in range(dim[0]):
             for j in range(dim[1]):
-                img[i][j] = self.dithering(inp, i, j)
+                img[i,j] = self.dithering(inp, i, j)
         return img
 
     def split_print(self, inp):
@@ -265,17 +265,19 @@ class BmpWriter(VTKPythonAlgorithmBase):
         new_img = None
         index_start = []
         for slice_num in range(number_of_slice):
-            chunk = img[:][slice_num*h_limit:slice_num*h_limit+h_limit]
+            top = slice_num*h_limit+h_limit
+            chunk = img[:, slice_num*h_limit:top]
+            chunk_shape = np.shape(chunk)
+            if(chunk_shape[1] != h_limit):
+                left_over = (chunk_shape[0], h_limit-chunk_shape[1])
+                chunk = np.concatenate((chunk, np.zeros(left_over)), axis=1)
+
             if(np.sum(chunk) != 0):
-                chunk_shape = np.shape(chunk)
                 if(new_img is not None):
-                    if(np.shape(new_img)[1] != np.shape(chunk)[1]):
-                        left_over = h_limit - chunk_shape[1]
-                        chunk = np.append(chunk, np.zeros((chunk_shape[0], left_over)), axis = 0)
-                    new_img = np.concatenate((new_img, chunk), axis=1)
+                    new_img = np.concatenate((new_img, chunk), axis=0)
                 else:
                     new_img = chunk
-                index_start.append(slice_num*h_limit)
+                index_start.append(top)
         
         number_sub_image = len(index_start)
 
@@ -291,16 +293,16 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._init_header(line_size, self._x_img_size_limit, pixel_map_size)
 
         "Pixel in bitmap are stored bottom-up"
-        for j in reversed(range(self._x_img_size_limit)):
+        for j in reversed(range(h_limit)):
             # add margin
             if(j == h_limit - 1):
                 empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
-            bit_row = "".join(str(val) for val in new_img[:][j])
-            bit_row.join("0"*padding)
+            bit_row = "".join(str(val) for val in new_img[:, j])
+            bit_row = bit_row.join("0"*padding)
 
-            for k in range(len(bit_row)/8):
+            for k in range(int(len(bit_row)/8)):
                 self._f.write(pack('i', int(bit_row[8*k:8*k+8], 2)))
 
             if(j == extent[2]):
