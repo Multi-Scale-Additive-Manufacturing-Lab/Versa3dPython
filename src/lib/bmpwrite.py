@@ -111,6 +111,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._split_img_bool = False
         self._x_img_size_limit = None
         self._margin_size = None
+        self.slice_y_position_list = []
 
         self._f = None
         self._dithering = 'floyd-steinberg'
@@ -277,7 +278,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
                     new_img = np.concatenate((new_img, chunk), axis=0)
                 else:
                     new_img = chunk
-                index_start.append(top)
+                index_start.append(slice_num*h_limit)
         
         number_sub_image = len(index_start)
 
