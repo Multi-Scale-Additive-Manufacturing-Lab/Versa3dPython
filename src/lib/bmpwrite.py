@@ -299,15 +299,21 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
-            bit_row = "".join(str(val) for val in new_img[:, j])
-            bit_row = bit_row.join("0"*padding)
-            
+            line = new_img[:, j]
             byte_array = bytearray(total_line_size)
             byte_array_loc = 0
-            for k in range(int(len(bit_row)/8)):
-                byte_array[byte_array_loc] = int(bit_row[8*k:8*k+8], base=2)
-                byte_array_loc += 1
-            
+            bit_row = ""
+            for k in range(line_size + padding):
+                if(k < line_size):
+                    bit_row += str(line[k])
+                else:
+                    bit_row += "0"
+
+                if(len(bit_row) == 8):
+                    byte_array[byte_array_loc] = int(bit_row, base=2)
+                    bit_row = ""
+                    byte_array_loc += 1
+                
             self._f.write(byte_array)
 
             if(j == extent[2]):
