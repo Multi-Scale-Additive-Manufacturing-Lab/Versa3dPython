@@ -251,7 +251,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
         img = np.zeros(dim[0:2],dtype=int)
         for i in range(dim[0]):
             for j in range(dim[1]):
-                img[i, j] = self.dithering(inp, i, j)
+                img[i, j] = int(self.dithering(inp, i, j))
         return img
 
     def split_print(self, inp):
@@ -295,29 +295,20 @@ class BmpWriter(VTKPythonAlgorithmBase):
         "Pixel in bitmap are stored bottom-up"
         for j in reversed(range(h_limit)):
             # add margin
+            empty_line = bytearray(total_line_size*self._margin_size)
             if(j == h_limit - 1):
-                empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
             line = new_img[:, j]
             byte_array = bytearray(total_line_size)
-            byte_array_loc = 0
-            bit_row = ""
-            for k in range(line_size + padding):
-                if(k < line_size):
-                    bit_row += str(line[k])
-                else:
-                    bit_row += "0"
-
-                if(len(bit_row) == 8):
-                    byte_array[byte_array_loc] = int(bit_row, base=2)
-                    bit_row = ""
-                    byte_array_loc += 1
+            for k in range(total_line_size):
+                if(8*k < line_size):
+                    bit_row = "".join(str(int(val)) for val in line[8*k:8*k+8])
+                    byte_array[k] = int(bit_row, base=2)
                 
             self._f.write(byte_array)
 
             if(j == extent[2]):
-                empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
     def RequestData(self, request, inInfo, outInfo):
