@@ -21,6 +21,7 @@ spyder_crash.log
 .idea/
 .cache
 .coverage*
+*.egg-info/
 
 # git .orig files
 *.orig
