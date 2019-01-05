@@ -2,6 +2,7 @@ from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from struct import pack
 import vtk
 import math
+import numpy as np
 
 
 _DIFFUSION_MAPS = {
@@ -205,9 +206,9 @@ class BmpWriter(VTKPythonAlgorithmBase):
                     self.append_error(img, x, y, ratio*quant_error)
 
         if(new_val == 255):
-            return "0"
+            return 0
         else:
-            return "1"
+            return 1
 
     def regular_print(self, inp):
         dim = inp.GetDimensions()
@@ -230,7 +231,7 @@ class BmpWriter(VTKPythonAlgorithmBase):
             byte_array = bytearray(total_line_size)
             byte_array_loc = 0
             for i in range(extent[0], extent[1]+1):
-                bit_row += self.dithering(inp, i, j)
+                bit_row += str(self.dithering(inp, i, j))
 
                 if(len(bit_row) == 8):
                     byte_array[byte_array_loc] = int(bit_row, base=2)
@@ -244,16 +245,39 @@ class BmpWriter(VTKPythonAlgorithmBase):
                 byte_array_loc += 1
 
             self._f.write(byte_array)
+    
+    def dither_img(self, inp):
+        dim = inp.GetDimensions()
+        img = np.zeros(dim[0:2],dtype = int)
+        for i in range(dim[0]):
+            for j in range(dim[1]):
+                img[i][j] = self.dithering(inp, i, j)
+        return img
 
     def split_print(self, inp):
-        extent = inp.GetExtent()
+        img = self.dither_img(inp)
 
         dim = inp.GetDimensions()
         extent = inp.GetExtent()
 
         h_limit = self._x_img_size_limit - 2*self._margin_size
-
-        number_sub_image = math.ceil(dim[1]/h_limit)
+        number_of_slice = math.ceil(dim[1]/h_limit)
+        new_img = None
+        index_start = []
+        for slice_num in range(number_of_slice):
+            chunk = img[:][slice_num*h_limit:slice_num*h_limit+h_limit]
+            if(np.sum(chunk) != 0):
+                chunk_shape = np.shape(chunk)
+                if(new_img is not None):
+                    if(np.shape(new_img)[1] != np.shape(chunk)[1]):
+                        left_over = h_limit - chunk_shape[1]
+                        chunk = np.append(chunk, np.zeros((chunk_shape[0], left_over)), axis = 0)
+                    new_img = np.concatenate((new_img, chunk), axis=1)
+                else:
+                    new_img = chunk
+                index_start.append(slice_num*h_limit)
+        
+        number_sub_image = len(index_start)
 
         # in bit
         line_size = dim[0]*number_sub_image
@@ -267,37 +291,17 @@ class BmpWriter(VTKPythonAlgorithmBase):
         self._init_header(line_size, self._x_img_size_limit, pixel_map_size)
 
         "Pixel in bitmap are stored bottom-up"
-        for j in range(h_limit-1, extent[2]-1, -1):
-            bit_row = ""
-            byte_array = bytearray(total_line_size)
-            byte_array_loc = 0
-
+        for j in reversed(range(self._x_img_size_limit)):
             # add margin
             if(j == h_limit - 1):
                 empty_line = bytearray(total_line_size*self._margin_size)
                 self._f.write(empty_line)
 
-            for i in range(extent[0], extent[0]+line_size):
+            bit_row = "".join(str(val) for val in new_img[:][j])
+            bit_row.join("0"*padding)
 
-                pseudo_j = j + h_limit*int(i/dim[0])
-
-                # check to not go out of bound
-                if(pseudo_j < dim[1]):
-                    bit_row += self.dithering(inp, i %
-                                              dim[0], j + h_limit*int(i/dim[0]))
-
-                if(len(bit_row) == 8):
-                    byte_array[byte_array_loc] = int(bit_row, base=2)
-                    bit_row = ""
-                    byte_array_loc += 1
-
-            if(not bit_row):
-                padding_8 = 8-len(bit_row) % 8
-                bit_row += padding_8*"0"
-                byte_array[byte_array_loc] = int(bit_row, base=2)
-                byte_array_loc += 1
-
-            self._f.write(byte_array)
+            for k in range(len(bit_row)/8):
+                self._f.write(pack('i', int(bit_row[8*k:8*k+8], 2)))
 
             if(j == extent[2]):
                 empty_line = bytearray(total_line_size*self._margin_size)
