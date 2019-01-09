@@ -6,7 +6,7 @@ namespace py = pybind11;
 
 PYBIND11_VTK_TYPECASTER(vtkImageData)
 
-PYBIND11_MODULE(Versa3dPython, m)
+PYBIND11_MODULE(Versa3dLib, m)
 {
 	py::class_<bmpwriter>(m,"bmpwriter")
 		.def(py::init<const char *,vtkImageData *>())
