@@ -21,11 +21,6 @@ SET(VTK_COMPONENT
     vtkWrappingPythonCore
 )
 
-
-add_subdirectory(thirdparty/pybind11)
-add_subdirectory(lib)
-
-
 ## google test ##
 
 # Download and unpack googletest at configure time
@@ -44,3 +39,8 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 # and gmock_main
 add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
                  "${CMAKE_BINARY_DIR}/googletest-build")
+
+########################
+add_subdirectory(thirdparty/pybind11)
+add_subdirectory(lib)
+
