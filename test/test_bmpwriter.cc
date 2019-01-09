@@ -25,7 +25,7 @@ class bmpwriterTest : public ::testing::Test
 
 TEST_F(bmpwriterTest, print_white)
 {
-    char path[] = "./test/testOutput/bmpwriter_output"; 
+    char path[] = "./test/testOutput/bmpwriter_output/image.bmp"; 
     unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,white_img);
     writer->write_to_file();
 }
