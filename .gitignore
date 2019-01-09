@@ -28,3 +28,4 @@ spyder_crash.log
 
 # visual code ignore
 .vscode/
+*.pyd
