@@ -1,5 +1,6 @@
 #include "bmpwriter.h"
 #include <iostream>
+#include <errno.h>
 #include <fstream>
 #include <bitset>
 
@@ -7,7 +8,12 @@ using namespace std;
 
 bmpwriter::bmpwriter(const char *file_path, vtkImageData *img)
 {
-	this->bmp_file = fopen(file_path, "wb");
+	errno_t err;
+	if( (err = fopen_s(&this->bmp_file,file_path, "wb")) != 0)
+	{
+		fprintf(stderr, "cannot open file '%s': %s\n",
+            file_path, strerror(err));
+	}
 	this->data = img;
 }
 
@@ -85,7 +91,6 @@ void bmpwriter::init_header(int w, int h, int array_size)
 
 	unsigned char* file_header = this->create_bmp_file_header(w, h, total_size, a_offet);
 	unsigned char* info_header = this->create_bmp_info_header(h,w,dib_header_size,array_size,this->dpm);
-
 	fwrite(file_header,1, bmp_header_size, this->bmp_file);
 	fwrite(info_header,1, dib_header_size, this->bmp_file);
 
@@ -106,8 +111,7 @@ void bmpwriter::write_to_file()
 
 	this->init_header(dim[0], dim[1], total_line_size*dim[1]);
 
-	std::bitset<4> b;
-
+	std::bitset<32> b;
 	int *extent = this->data->GetExtent();
 	int bit_loc = 0;
 	for(int j = extent[3]; j>=extent[2]; j--)
@@ -117,26 +121,26 @@ void bmpwriter::write_to_file()
 			float val =  this->data->GetScalarComponentAsFloat(i, j, 0, 0);
 			if(val == 255.0)
 			{
-				b.set(bit_loc, true);
+				b.set(bit_loc, false);
 			}else
 			{
-				b.set(bit_loc, false);
+				b.set(bit_loc, true);
 			}
 			bit_loc++;
 
-			if(bit_loc == 4)
+			if(bit_loc == 32)
 			{
 				unsigned long temp = b.to_ulong();
 				bit_loc = 0;
+				fwrite(reinterpret_cast<unsigned char*>(&temp), 1,4,this->bmp_file);
 				b.reset();
-				fwrite(reinterpret_cast<unsigned char*>(&temp),1,1,this->bmp_file);
 			}
 		}
-		int byte_padding = padding/8;
-		for(int p = 0; p<byte_padding; p++)
-		{
-			fwrite({0},1,1,this->bmp_file);
-		}
+
+		unsigned long temp = b.to_ulong();
+		fwrite(reinterpret_cast<unsigned char*>(&temp), 1,4,this->bmp_file);
+		b.reset();
+		bit_loc = 0;
 	}
 
 	fclose(this->bmp_file);
