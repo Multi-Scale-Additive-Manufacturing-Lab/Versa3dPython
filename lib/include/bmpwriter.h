@@ -8,12 +8,7 @@ class bmpwriter
 {
     private:
         vtkWeakPointer<vtkImageData> data;
-        FILE* bmp_file;
-        int dpm[2] = {23623, 23623};
-
-        unsigned char* create_bmp_file_header(int height, int width, int file_size, int a_offset);
-        unsigned char* create_bmp_info_header(int height, int width, int dib_header_size, int a_size, int dpm[]);
-        void init_header(int w, int h, int array_size);
+        const char *file_path;
 
     public:
         bmpwriter(const char *file_path, vtkImageData *img);

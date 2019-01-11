@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 set(LIB_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bmpwriter.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/EasyBMP.cpp
 )
 
 set(LIB_SRC_WRAP
