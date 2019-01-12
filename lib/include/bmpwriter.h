@@ -8,6 +8,7 @@
 
 using namespace std;
 
+
 class bmpwriter
 {
     private:
@@ -21,6 +22,7 @@ class bmpwriter
 
     public:
         bmpwriter(const char *file_path, vtkImageData *img);
+        void set_dither_map(int map);
         void write_to_file();
 };
 
