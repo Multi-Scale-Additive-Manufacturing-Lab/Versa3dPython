@@ -34,27 +34,27 @@ class bmpwriterTest : public ::testing::Test
 TEST_F(bmpwriterTest, print_black)
 {
     char path[] = "./test/testOutput/bmpwriter_output/image.bmp"; 
-    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,black_img);
-    writer->write_to_file();
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(black_img);
+    writer->write_to_file(path);
 }
 
 TEST_F(bmpwriterTest, print_grey)
 {
     char path[] = "./test/testOutput/bmpwriter_output/image_g.bmp"; 
-    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,grey_img);
-    writer->write_to_file();
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(grey_img);
+    writer->write_to_file(path);
 }
 
 TEST_F(bmpwriterTest, split_print_black)
 {
     char path[] = "./test/testOutput/bmpwriter_output/image_split_b.bmp"; 
-    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,black_img);
-    writer->split_print(10,150);
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(black_img);
+    writer->split_print(path,10,150);
 }
 
 TEST_F(bmpwriterTest, split_print_grey)
 {
     char path[] = "./test/testOutput/bmpwriter_output/image_split_g.bmp"; 
-    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,grey_img);
-    writer->split_print(10,150);
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(grey_img);
+    writer->split_print(path,10,150);
 }

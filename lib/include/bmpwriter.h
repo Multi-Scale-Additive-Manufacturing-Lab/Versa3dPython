@@ -13,17 +13,16 @@ class bmpwriter
   private:
     map<int, vector<vector<float>>> diffusion_map;
     vtkNew<vtkImageData> data;
-    const char *file_path;
     float dither(int i, int j);
     int dither_map;
     float find_closest_color(float val);
     void propagate_error(int i, int j, float error);
 
   public:
-    bmpwriter(const char *file_path, vtkImageData *img);
+    bmpwriter(vtkImageData *img);
     void set_dither_map(int map);
-    void write_to_file();
-    const vector<int> &split_print(int margin, int size_limit);
+    void write_to_file(const char *file_path);
+    const vector<int> &split_print(const char *file_path,int margin, int size_limit);
 };
 
 #endif

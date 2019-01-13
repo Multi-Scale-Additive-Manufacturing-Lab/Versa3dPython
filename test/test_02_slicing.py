@@ -21,9 +21,9 @@ def writer(folderPath, BuildVtkImage):
         for s in image:
             vtkimg = s.getImage()
             img_full_path = os.path.join(folderPath, 'img_%d.bmp' % (count))
-            bmpWriter = bmpwriter(img_full_path, vtkimg)
+            bmpWriter = bmpwriter(vtkimg)
             count += 1
-            bmpWriter.write_to_file()
+            bmpWriter.write_to_file(img_full_path)
 
 
 class TestSlicer(unittest.TestCase):

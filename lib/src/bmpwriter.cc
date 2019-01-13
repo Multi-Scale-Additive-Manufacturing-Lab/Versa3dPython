@@ -15,9 +15,8 @@ enum _diffusion_map : int
 	stevenson_arce
 };
 
-bmpwriter::bmpwriter(const char *file_path, vtkImageData *img)
+bmpwriter::bmpwriter(vtkImageData *img)
 {
-	this->file_path = file_path;
 	this->data->DeepCopy(img);
 
 	this->dither_map = floyd_steinberg;
@@ -161,7 +160,7 @@ float bmpwriter::dither(int i, int j)
 	return val;
 }
 
-void bmpwriter::write_to_file()
+void bmpwriter::write_to_file(const char *file_path)
 {
 	BMP img;
 	int *dim = this->data->GetDimensions();
@@ -192,10 +191,10 @@ void bmpwriter::write_to_file()
 		}
 	}
 
-	img.WriteToFile(this->file_path);
+	img.WriteToFile(file_path);
 }
 
-const vector<int> & bmpwriter::split_print(int margin, int size_limit)
+const vector<int> & bmpwriter::split_print(const char *file_path,int margin, int size_limit)
 {
 	int *dim = this->data->GetDimensions();
 	int *extent = this->data->GetExtent();
@@ -252,17 +251,15 @@ const vector<int> & bmpwriter::split_print(int margin, int size_limit)
 	
 	for (int l = 0; l < non_empty_slice_num; l++)
 	{
-		shared_ptr<BMP> temp(list_slice[l]);
-		RangedPixelToPixelCopy(*temp, 0, dim[0] - 1, 0, max_j_size - 1, img, dim[0] * l, margin);
+		RangedPixelToPixelCopy(*list_slice[l], 0, dim[0] - 1, 0, max_j_size - 1, img, dim[0] * l, margin);
 	}
 	
 	try{
-		cout << "print file c++:"<< this->file_path << endl;
-		img.WriteToFile(this->file_path);
+		img.WriteToFile(file_path);
 	}catch(exception& e)
 	{
 		 cout << "Standard exception: " << e.what() << endl;
-		 cout << "at file:"<< this->file_path << endl;
+		 cout << "at file:"<< file_path << endl;
 	}
 	return list_index;
 }
