@@ -1,8 +1,6 @@
 import unittest
 import vtk
-import re
 import os
-import fnmatch
 import shutil
 import math
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer, CheckerBoardImageSlicer, VoxelSlicer
