@@ -13,7 +13,7 @@ class bmpwriterTest : public ::testing::Test
     protected:
         void SetUp() override {
             black_img->SetSpacing(0.04,0.04,0.01);
-            black_img->SetDimensions(20,20,1);
+            black_img->SetDimensions(360,360,1);
             black_img->AllocateScalars(VTK_FLOAT, 1);
             vtkWeakPointer<vtkPointData> vtk_point_data = black_img->GetPointData();
             vtkWeakPointer<vtkDataArray> array = vtk_point_data->GetScalars();
@@ -43,4 +43,18 @@ TEST_F(bmpwriterTest, print_grey)
     char path[] = "./test/testOutput/bmpwriter_output/image_g.bmp"; 
     unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,grey_img);
     writer->write_to_file();
+}
+
+TEST_F(bmpwriterTest, split_print_black)
+{
+    char path[] = "./test/testOutput/bmpwriter_output/image_split_b.bmp"; 
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,black_img);
+    writer->split_print(10,150);
+}
+
+TEST_F(bmpwriterTest, split_print_grey)
+{
+    char path[] = "./test/testOutput/bmpwriter_output/image_split_g.bmp"; 
+    unique_ptr<bmpwriter> writer = make_unique<bmpwriter>(path,grey_img);
+    writer->split_print(10,150);
 }
