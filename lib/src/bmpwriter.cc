@@ -170,9 +170,9 @@ void bmpwriter::write_to_file()
 
 	int *extent = this->data->GetExtent();
 
-	for (int j = extent[3]; j >= extent[2]; j--)
+	for (int j = extent[2]; j <= extent[3]; j++)
 	{
-		for (int i = extent[0]; i <= extent[1]; i++)
+		for (int i = extent[1]; i >= extent[0]; i--)
 		{
 			int p_j = extent[3] - j;
 			int p_i = i - extent[0];
@@ -193,4 +193,76 @@ void bmpwriter::write_to_file()
 	}
 
 	img.WriteToFile(this->file_path);
+}
+
+const vector<int> & bmpwriter::split_print(int margin, int size_limit)
+{
+	int *dim = this->data->GetDimensions();
+	int *extent = this->data->GetExtent();
+	vector<shared_ptr<BMP>> list_slice;
+	vector<int> list_index;
+
+	float max_j_size = (float)(size_limit - 2 * margin);
+	float num_slice = ceil(dim[1] / max_j_size);
+
+	int count = 0;
+	for (int k = 0; k < num_slice; k++)
+	{
+		shared_ptr<BMP> slice = make_shared<BMP>();
+		slice->SetBitDepth(1);
+		slice->SetSize(dim[0], max_j_size);
+		for (int j = max_j_size * k; j < max_j_size * k + max_j_size; j++)
+		{
+			if (j <= extent[3])
+			{
+				for (int i = extent[1]; i >= extent[0]; i--)
+				{
+					int p_i = extent[1] - i;
+					int p_j = j - max_j_size * k;
+					RGBApixel color;
+					if (this->dither(i, j) == 0)
+					{
+						count++;
+						color.Red = 0;
+						color.Green = 0;
+						color.Blue = 0;
+					}
+					else
+					{
+						color.Red = 255;
+						color.Green = 255;
+						color.Blue = 255;
+					}
+					slice->SetPixel(p_i,p_j, color);
+				}
+			}
+		}
+		if (count != 0)
+		{
+			list_slice.push_back(slice);
+			list_index.push_back(max_j_size * k);
+		}
+		count = 0;
+	}
+	
+	int non_empty_slice_num = list_slice.size();
+	BMP img;
+	img.SetBitDepth(1);
+	img.SetSize(dim[0] * non_empty_slice_num, size_limit);
+	
+	for (int l = 0; l < non_empty_slice_num; l++)
+	{
+		shared_ptr<BMP> temp(list_slice[l]);
+		RangedPixelToPixelCopy(*temp, 0, dim[0] - 1, 0, max_j_size - 1, img, dim[0] * l, margin);
+	}
+	
+	try{
+		cout << "print file c++:"<< this->file_path << endl;
+		img.WriteToFile(this->file_path);
+	}catch(exception& e)
+	{
+		 cout << "Standard exception: " << e.what() << endl;
+		 cout << "at file:"<< this->file_path << endl;
+	}
+	return list_index;
 }

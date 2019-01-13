@@ -23,7 +23,7 @@ class bmpwriter
     bmpwriter(const char *file_path, vtkImageData *img);
     void set_dither_map(int map);
     void write_to_file();
-    float *split_print();
+    const vector<int> &split_print(int margin, int size_limit);
 };
 
 #endif
