@@ -327,7 +327,7 @@ class Printers_Settings(setting):
         self._settingList['feedbedsel'].label = 'feed bed selection'
 
         self._settingList['printcoordoffset'] = Versa3d2dPointOption([
-                                                                     25.0, 38.0])
+                                                                     20, 0])
         self._settingList['printcoordoffset'].category = "BMVLasea"
         self._settingList['printcoordoffset'].type = '2dPoint'
         self._settingList['printcoordoffset'].label = 'print bed coord offset'

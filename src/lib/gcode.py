@@ -242,11 +242,11 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
             for j in range(0,self.NumberOfPass):
                 #step 10 allign printhead with the printing area - move to lower left corner of image
-                step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
+                step10 = self.Gantry(True,0,3,[0,self.print_bed_offset[1]],2,self.gantryXYVelocity[1],"")
                 self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
 
                 #step 11 allign printhead with the printing area 
-                step11 = self.Gantry(True,0,3,[position,0],0,self.gantryXYVelocity[0],"")
+                step11 = self.Gantry(True,0,3,[self.print_bed_offset[0]+position,0],0,self.gantryXYVelocity[0],"")
                 self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position))
 
                 #step 12 turn ON printhead and get ready to print buffer i
@@ -254,7 +254,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
                 #step 13 execute printing motion in Y direction - move to right
-                step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
+                step13 = self.Gantry(True,0,3,[0,150],2,self.DefaultPrintVelocity,"")
                 self.makeStep(defaultStep,step13,"step 13 move to y: 70")
                 
         #step 14 move back to origin in Y -direction Y=0(former step 16)
