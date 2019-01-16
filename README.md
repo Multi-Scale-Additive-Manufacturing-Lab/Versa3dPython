@@ -22,6 +22,11 @@ conda install -c anaconda pyqt
 ```
 conda install -c conda-forge vtk
 ```
+#### tbb installation 
+```
+conda install -c conda-forge tbb-devel
+```
+
 
 ### Usage
 in terminal cd to the folder with main.py and type the following command.

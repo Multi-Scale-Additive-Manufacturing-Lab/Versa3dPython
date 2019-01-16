@@ -1,6 +1,6 @@
 import vtk
 from src.lib.versa3dConfig import config
-from src.lib.bmpwrite import BmpWriter
+from Versa3dLib import bmpwriter
 from lxml import etree
 from lxml.builder import E
 from copy import deepcopy
@@ -112,25 +112,15 @@ class gcodeWriterVlaseaBM(gcodeWriter):
     def imageWriter(self, Slice, imgFullPath):
         size = Slice.GetDimensions()
         origin = list(Slice.GetOrigin())
+        spacing = Slice.GetSpacing()
 
-        bmpWriter = BmpWriter()
-        bmpWriter.set_file_name(imgFullPath)
-        bmpWriter.SetInputDataObject(0, Slice)
-        bmpWriter.set_split_img_true(self.imgMarginSize,self.XImageSizeLimit)
+        bmp_writer = bmpwriter(Slice)
+        list_index = bmp_writer.split_print(imgFullPath, self.imgMarginSize,self.XImageSizeLimit)
+        list_pos_offset = []
+        for index in list_index:
+            list_pos_offset.append(origin[1]+index*spacing[1])
 
-        OffsetRealCoord = ((150.0-2*self.imgMarginSize)/self.dpi[0])*25.4
-
-        NumSubImage = math.ceil(size[1]/(self.XImageSizeLimit - 2*self.imgMarginSize) )
-        listofPosition = []
-        pos = [self.print_bed_offset[0]+origin[0],self.print_bed_offset[1]+origin[1]]
-
-        for i in range(0,NumSubImage):
-            listofPosition.append(pos.copy())
-            pos[0] += OffsetRealCoord
-        
-        bmpWriter.Update()
-
-        return listofPosition
+        return list_pos_offset
     
     def generate_spread(self):
         defaultStep = self.create_default_Step()
@@ -196,7 +186,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
         for img in img_layer:
             imgfileName = "slice_{0:d}_{1:d}.bmp".format(layerNum,count)
             imgFullPath = os.path.join(imageFolder,imgfileName)
-            list_pos = self.imageWriter(img.getImage(),imgFullPath)
+            list_pos = self.imageWriter(img.getImage(),imgFullPath.encode())
             list_img_pos += list_pos
             count += 1
 
@@ -204,7 +194,7 @@ class gcodeWriterVlaseaBM(gcodeWriter):
                 baseFolder = "{}\{}\image\\".format(self.AbsPathBMVlaseaComputer,os.path.basename(self._Folderpath))
                 imgPath = baseFolder+imgfileName
             else:
-                baseFolder = os.path.join("./","image")
+                baseFolder = os.path.join(".","image")
                 imgPath = os.path.join(baseFolder,imgfileName)
             #step 0 - turn ON printhead and get ready to print buffer BNumber
             textStr = "%T{},{},{}".format(str(count).zfill(2),65,len(list_pos))
@@ -252,19 +242,19 @@ class gcodeWriterVlaseaBM(gcodeWriter):
 
             for j in range(0,self.NumberOfPass):
                 #step 10 allign printhead with the printing area - move to lower left corner of image
-                step10 = self.Gantry(True,0,3,[0,43],2,self.gantryXYVelocity[1],"")
+                step10 = self.Gantry(True,0,3,[0,self.print_bed_offset[1]],2,self.gantryXYVelocity[1],"")
                 self.makeStep(defaultStep,step10,"step 10 align to y : {}".format(43))
 
                 #step 11 allign printhead with the printing area 
-                step11 = self.Gantry(True,0,3,[position[0],0],0,self.gantryXYVelocity[0],"")
-                self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position[0]))
+                step11 = self.Gantry(True,0,3,[self.print_bed_offset[0]+position,0],0,self.gantryXYVelocity[0],"")
+                self.makeStep(defaultStep,step11,"step 11 align to x : {}".format(position))
 
                 #step 12 turn ON printhead and get ready to print buffer i
                 step12 = self.ImtechPrintHead(True,8,5,0,0,i,0,0,self.DefaultPrintHeadAddr,1)
                 self.makeStep(defaultStep,step12,"step 12 print buffer: {}".format(i))
 
                 #step 13 execute printing motion in Y direction - move to right
-                step13 = self.Gantry(True,0,3,[0,70],2,self.DefaultPrintVelocity,"")
+                step13 = self.Gantry(True,0,3,[0,150],2,self.DefaultPrintVelocity,"")
                 self.makeStep(defaultStep,step13,"step 13 move to y: 70")
                 
         #step 14 move back to origin in Y -direction Y=0(former step 16)

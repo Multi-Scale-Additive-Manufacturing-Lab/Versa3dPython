@@ -3,7 +3,6 @@ import os
 from src.lib.versa3dConfig import config
 from src.lib.gcode import gcodeWriterVlaseaBM
 import src.lib.slicing as sl
-from lxml import etree
 import shutil
 import vtk
 
@@ -12,7 +11,7 @@ class gcodeTest(unittest.TestCase):
 
     def setUp(self):
         self.testConfigFolder = './configtest'
-        
+
         if(not os.path.isdir('./test/testOutput')):
             os.mkdir('./test/testOutput')
 
@@ -49,7 +48,7 @@ class gcodeTest(unittest.TestCase):
         self.stlActor.RotateZ(45)
 
     def test_generategcode(self):
-        output_folder_black = './test/testOutput/Gcode'
+        output_folder_black = os.path.join('.', 'test', 'testOutput', 'Gcode')
 
         if(not os.path.isdir(output_folder_black)):
             os.mkdir(output_folder_black)
@@ -61,13 +60,15 @@ class gcodeTest(unittest.TestCase):
         blackSlicer.addActor(self.stlActor)
         BuildVtkImage = blackSlicer.slice()
 
-        gcodewriter = gcodeWriterVlaseaBM(self.test_config, output_folder_black)
+        gcodewriter = gcodeWriterVlaseaBM(
+            self.test_config, output_folder_black)
         gcodewriter.SetInput(blackSlicer)
         gcodewriter.generateGCode()
 
     def test_generate_gcode_checkerboard(self):
 
-        output_folder_check = './test/testOutput/GcodeCheck'
+        output_folder_check = os.path.join(
+            '.', 'test', 'testOutput', 'GcodeCheck')
 
         if(not os.path.isdir(output_folder_check)):
             os.mkdir(output_folder_check)
@@ -79,7 +80,8 @@ class gcodeTest(unittest.TestCase):
         checker_board_slicer.addActor(self.stlActor)
         checker_board_slicer.slice()
 
-        gcodewriter = gcodeWriterVlaseaBM(self.test_config, output_folder_check)
+        gcodewriter = gcodeWriterVlaseaBM(
+            self.test_config, output_folder_check)
         gcodewriter.SetInput(checker_board_slicer)
         gcodewriter.generateGCode()
 
@@ -92,8 +94,9 @@ class gcodeTest(unittest.TestCase):
         else:
             shutil.rmtree(output_folder_check)
             os.mkdir(output_folder_check)
-        
-        gcodewriter = gcodeWriterVlaseaBM(self.test_config, output_folder_check)
+
+        gcodewriter = gcodeWriterVlaseaBM(
+            self.test_config, output_folder_check)
         gcodewriter.test_spread()
 
     def tearDown(self):

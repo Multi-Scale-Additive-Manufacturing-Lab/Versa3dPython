@@ -1,17 +1,14 @@
 import unittest
 import vtk
-import re
 import os
-import fnmatch
 import shutil
 import math
 from src.lib.slicing import slicerFactory, FullBlackImageSlicer, CheckerBoardImageSlicer, VoxelSlicer
 from src.lib.versa3dConfig import config
-from src.lib.bmpwrite import BmpWriter
+from Versa3dLib import bmpwriter
 
 
 def writer(folderPath, BuildVtkImage):
-    bmpWriter = BmpWriter()
 
     if(not os.path.isdir(folderPath)):
         os.mkdir(folderPath)
@@ -24,11 +21,9 @@ def writer(folderPath, BuildVtkImage):
         for s in image:
             vtkimg = s.getImage()
             img_full_path = os.path.join(folderPath, 'img_%d.bmp' % (count))
-            bmpWriter.set_file_name(img_full_path)
-            bmpWriter.SetInputDataObject(0, vtkimg)
-            vtkimg.ComputeBounds()
+            bmpWriter = bmpwriter(vtkimg)
             count += 1
-            bmpWriter.Update()
+            bmpWriter.write_to_file(img_full_path)
 
 
 class TestSlicer(unittest.TestCase):
