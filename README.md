@@ -26,6 +26,10 @@ conda install -c conda-forge vtk
 ```
 conda install -c conda-forge tbb-devel
 ```
+#### Boost installation
+```
+conda install -c conda-forge boost-cpp
+```
 
 
 ### Usage
