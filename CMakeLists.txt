@@ -21,6 +21,9 @@ SET(VTK_COMPONENT
     vtkWrappingPythonCore
 )
 
+find_package(Boost COMPONENTS graph)
+include_directories(${Boost_INCLUDE_DIRS}) 
+
 ## google test ##
 
 # Download and unpack googletest at configure time
