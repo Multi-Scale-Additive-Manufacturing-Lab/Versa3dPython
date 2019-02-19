@@ -21,8 +21,8 @@ SET(VTK_COMPONENT
     vtkWrappingPythonCore
 )
 
-find_package(Boost COMPONENTS graph)
-include_directories(${Boost_INCLUDE_DIRS}) 
+find_package(CGAL REQUIRED)
+find_package(CGAL REQUIRED COMPONENTS Core)
 
 ## google test ##
 
