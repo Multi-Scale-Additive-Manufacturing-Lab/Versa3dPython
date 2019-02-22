@@ -109,10 +109,10 @@ void bmpwriter::set_dither_map(int map)
 	this->dither_map = map;
 }
 
-void bmpwriter::propagate_error(int i, int j, float error)
+void bmpwriter::propagate_error(int i, int j, double error)
 {
-	float old_val = this->data->GetScalarComponentAsFloat(i, j, 0, 0);
-	float new_val = old_val + error;
+	double old_val = this->data->GetScalarComponentAsFloat(i, j, 0, 0);
+	double new_val = old_val + error;
 	this->data->SetScalarComponentFromFloat(i, j, 0, 0, new_val);
 }
 
@@ -145,10 +145,10 @@ float bmpwriter::dither(int i, int j)
 		this->data->SetScalarComponentFromFloat(i, j, 0, 0, new_val);
 		for (auto it = map.begin(); it < map.end(); it++)
 		{
-			vector<float> cell = *it;
+			vector<double> cell = *it;
 			int di = i + cell[0];
 			int dj = j + cell[1];
-			float derror = cell[2];
+			double derror = cell[2];
 			if ((extent[0] <= di && di <= extent[1]) && (extent[2] <= dj && dj <= extent[3]))
 			{
 				this->propagate_error(di, dj, derror * error);

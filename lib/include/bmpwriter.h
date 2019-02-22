@@ -11,12 +11,12 @@ using namespace std;
 class bmpwriter
 {
   private:
-    map<int, vector<vector<float>>> diffusion_map;
+    map<int, vector<vector<double>>> diffusion_map;
     vtkNew<vtkImageData> data;
     float dither(int i, int j);
     int dither_map;
     float find_closest_color(float val);
-    void propagate_error(int i, int j, float error);
+    void propagate_error(int i, int j, double error);
 
   public:
     bmpwriter(vtkImageData *img);
