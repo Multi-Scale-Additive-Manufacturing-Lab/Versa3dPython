@@ -1,7 +1,7 @@
 import unittest
 import test.debugHelper as db
 import vtk
-import src.lib.polyskel as sk
+from Versa3dLib import skeletonizer
 import os
 import shutil
 
@@ -63,23 +63,20 @@ class skeletonizeTest(unittest.TestCase):
 
         folderPath = './test/testOutput/skeleton'
 
-        skeleton = sk.VtkSkeletonize()
-        skeleton.DebugOn()
+        skeleton = skeletonizer(self.stripper.GetOutput())
 
-        skeleton.SetInputConnection(self.stripper.GetOutputPort())
-        skeleton.set_shell_thickness(0.1)
+        offset = skeleton.get_offset(0.1)
 
-        bounds = self.stripper.GetOutput().GetBounds()
+        bounds = offset.GetBounds()
         height = int(self.height)
         #for i in range(height):
         self.cut_plane.SetOrigin(0, 0, 3)
         self.cutter.Update()
         self.stripper.Update()
         #db.visualizer(self.stripper.GetOutput())
-        skeleton.Update()
 
         merge = vtk.vtkAppendPolyData()
-        merge.AddInputData(skeleton.GetOutputDataObject(0))
+        merge.AddInputData(offset)
         merge.AddInputData(self.stripper.GetOutput())
         merge.Update()
 
