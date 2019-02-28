@@ -10,7 +10,7 @@ find_package(CGAL REQUIRED COMPONENTS Core)
 ## google test ##
 
 # Download and unpack googletest at configure time
-configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+configure_file(google.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
 execute_process(COMMAND "${CMAKE_COMMAND}" --build .
@@ -27,11 +27,11 @@ add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
                  "${CMAKE_BINARY_DIR}/googletest-build")
 
  ## vtk ## 
- configure_file(CMakeLists.txt.in vtk-download/CMakeLists.txt)
+ configure_file(vtk.txt.in vtk-download/CMakeLists.txt)
  execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/vtk-download" )
     
-execute_process(COMMAND "${CMAKE_COMMAND}" --install .
+execute_process(COMMAND "${CMAKE_COMMAND}" --build .
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/vtk-download" )         
 
 ########################
