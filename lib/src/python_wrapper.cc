@@ -1,39 +1,49 @@
-#include "bmpwriter.h"
-#include "skeletonizer.h"
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include "PybindVTKTypeCaster.h"
-#include <vtkSmartPointer.h>
+#include <vtkPolyData.h>
+
+#include "vtk_pybind.h"
 
 namespace py = pybind11;
+using rvp = py::return_value_policy;
 
-PYBIND11_VTK_TYPECASTER(vtkImageData)
-PYBIND11_VTK_TYPECASTER(vtkPolyData)
-PYBIND11_DECLARE_HOLDER_TYPE(T, vtkSmartPointer<T>);
+struct CppOwned {
+  vtkNew<vtkPolyData> poly;
 
-namespace pybind11 { namespace detail {
-    template <typename T>
-    struct holder_helper<vtkSmartPointer<T>> { // <-- specialization
-        static const T *get(const vtkSmartPointer<T> &p) { return p.GetPointer(); }
-    };
-}}
+  vtkPolyData* get_poly_ptr() { return poly.GetPointer(); }
+  const vtkPolyData* get_poly_cptr() { return poly.GetPointer(); }
+  vtkPolyData& get_poly_ref() { return *poly; }
+  const vtkPolyData& get_poly_cref() { return *poly; }
+};
 
-PYBIND11_MODULE(Versa3dLib, m)
-{
-	py::class_<bmpwriter>(m, "bmpwriter")
-		.def(py::init<vtkImageData *>())
-		.def("write_to_file", &bmpwriter::write_to_file,
-			 "write vtkImgData to monochrome bmp",
-			 py::arg("file_path"))
-		.def("split_print", &bmpwriter::split_print,
-			 "write vtkImgData to monochrome BMP in imtech compatible size",
-			 py::arg("file_path"),
-			 py::arg("margin"),
-			 py::arg("size_limit"));
+PYBIND11_MODULE(vtk_pybind_example, m) {
+  // Use a class to control the lifetime of a VTK object.
+  py::class_<CppOwned>(m, "CppOwned")
+    .def(py::init())
+    .def_readonly("poly", &CppOwned::poly)  // test access to `vtkNew<T>`
+    .def("get_poly_ptr", &CppOwned::get_poly_ptr)
+    .def("get_poly_cptr", &CppOwned::get_poly_cptr)
+    .def("get_poly_ref", &CppOwned::get_poly_ref, rvp::reference)
+    .def("get_poly_cref", &CppOwned::get_poly_cref, rvp::reference);
 
-	py::class_<skeletonizer>(m, "skeletonizer")
-		.def(py::init<vtkPolyData *>())
-		.def("get_offset", &skeletonizer::get_offset,
-			 "return vtkPolyData offset",
-			 py::arg("offset distance"));
+  // Create in C++, pass to Python.
+  m.def("make_poly_smart_ptr", []() {
+    return vtkSmartPointer<vtkPolyData>::New();
+  });
+
+  // Take from Python.
+  m.def("take_poly_smart_ptr", [](vtkSmartPointer<vtkPolyData> poly) {
+    return poly->GetClassName();
+  });
+  m.def("take_poly_ptr", [](vtkPolyData* poly) {
+    return poly->GetClassName();
+  });
+  m.def("take_poly_cptr", [](const vtkPolyData* poly) {
+    return poly->GetClassName();
+  });
+  m.def("take_poly_ref", [](vtkPolyData& poly) {
+    return poly.GetClassName();
+  });
+  m.def("take_poly_cref", [](const vtkPolyData& poly) {
+    return poly.GetClassName();
+  });
 }

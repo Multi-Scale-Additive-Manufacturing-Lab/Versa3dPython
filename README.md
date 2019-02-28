@@ -30,6 +30,10 @@ conda install -c conda-forge tbb-devel
 ```
 conda install -c conda-forge boost-cpp
 ```
+#### pybind11 installation
+```
+conda install -c conda-forge pybind11
+```
 
 
 ### Usage
