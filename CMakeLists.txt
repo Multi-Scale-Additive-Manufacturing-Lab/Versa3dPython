@@ -4,23 +4,6 @@ project(Versa3d)
 set (CMAKE_CXX_STANDARD 14)
 SET(PYBIND11_PYTHON_VERSION 3.6)
 
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
-
-SET(VTK_COMPONENT
-    vtkCommonCore
-    vtkCommonDataModel
-    vtkFiltersCore
-    vtkFiltersModeling
-    vtkInteractionStyle
-    vtkIOImage
-    vtkImagingCore
-    vtkImagingGeneral
-    vtkImagingStatistics
-    vtkImagingStencil
-    vtkWrappingPythonCore
-)
-
 find_package(CGAL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
 
@@ -42,6 +25,14 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 # and gmock_main
 add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
                  "${CMAKE_BINARY_DIR}/googletest-build")
+
+ ## vtk ## 
+ configure_file(CMakeLists.txt.in vtk-download/CMakeLists.txt)
+ execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/vtk-download" )
+    
+execute_process(COMMAND "${CMAKE_COMMAND}" --install .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/vtk-download" )         
 
 ########################
 add_subdirectory(thirdparty/pybind11)

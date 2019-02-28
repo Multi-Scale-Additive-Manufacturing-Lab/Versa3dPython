@@ -18,10 +18,6 @@ in terminal and type the following command
 ```
 conda install -c anaconda pyqt
 ```
-#### vtk installation 
-```
-conda install -c conda-forge vtk
-```
 #### tbb installation 
 ```
 conda install -c conda-forge tbb-devel
