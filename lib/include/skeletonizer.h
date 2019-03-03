@@ -19,7 +19,7 @@ class skeletonizer
 {
     public:
         skeletonizer(vtkPolyData* data);
-        vtkPolyData* get_offset(double dist);
+        vtkSmartPointer<vtkPolyData> get_offset(double dist);
     private:
         vector<SsPtr> straight_skeletons;
 };

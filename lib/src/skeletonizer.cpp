@@ -86,7 +86,7 @@ skeletonizer::skeletonizer(vtkPolyData* data)
     }
 };
 
-vtkPolyData* skeletonizer::get_offset(double dist)
+vtkSmartPointer<vtkPolyData> skeletonizer::get_offset(double dist)
 {
     vtkSmartPointer<vtkPolyData> offsets = vtkSmartPointer<vtkPolyData>::New();
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
@@ -118,5 +118,5 @@ vtkPolyData* skeletonizer::get_offset(double dist)
     offsets->SetPoints(points);
     offsets->SetLines(line_array);
 
-    return offsets.GetPointer();
+    return offsets;
 };

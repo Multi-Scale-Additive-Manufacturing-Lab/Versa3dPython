@@ -18,13 +18,11 @@ SET(VTK_COMPONENT
     vtkImagingGeneral
     vtkImagingStatistics
     vtkImagingStencil
-    vtkWrappingPythonCore*
+    vtkWrappingPythonCore
 )
 
 find_package(CGAL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
-
-find_package(pybind11 CONFIG REQUIRED)
 
 ## google test ##
 
@@ -46,5 +44,6 @@ add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
                  "${CMAKE_BINARY_DIR}/googletest-build")
 
 ########################
+add_subdirectory(thirdparty/pybind11)
 add_subdirectory(lib)
 
