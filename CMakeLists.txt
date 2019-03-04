@@ -21,6 +21,8 @@ SET(VTK_COMPONENT
     vtkWrappingPythonCore
 )
 
+find_package(Boost REQUIRED COMPONENTS thread)
+
 find_package(CGAL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
 
