@@ -28,7 +28,11 @@ conda install -c conda-forge tbb-devel
 ```
 #### Boost installation
 ```
-conda install -c conda-forge boost-cpp
+conda install -c anaconda cmake
+```
+#### cgal installation
+```
+conda install -c conda-forge cgal
 ```
 
 
