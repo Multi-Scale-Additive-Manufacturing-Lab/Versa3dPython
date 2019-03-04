@@ -22,7 +22,5 @@ PYBIND11_MODULE(Versa3dLib, m)
 
 	py::class_<skeletonizer>(m, "skeletonizer")
 		.def(py::init<vtkPolyData *>())
-		.def("get_offset", &skeletonizer::get_offset,
-			 "return vtkPolyData offset",
-			 py::arg("offset distance"));
+		.def("get_offset", &skeletonizer::get_offset);
 }
