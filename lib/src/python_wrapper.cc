@@ -7,17 +7,6 @@
 
 namespace py = pybind11;
 
-PYBIND11_VTK_TYPECASTER(vtkImageData)
-PYBIND11_VTK_TYPECASTER(vtkPolyData)
-PYBIND11_DECLARE_HOLDER_TYPE(T, vtkSmartPointer<T>);
-
-namespace pybind11 { namespace detail {
-    template <typename T>
-    struct holder_helper<vtkSmartPointer<T>> { // <-- specialization
-        static const T *get(const vtkSmartPointer<T> &p) { return p.GetPointer(); }
-    };
-}}
-
 PYBIND11_MODULE(Versa3dLib, m)
 {
 	py::class_<bmpwriter>(m, "bmpwriter")
