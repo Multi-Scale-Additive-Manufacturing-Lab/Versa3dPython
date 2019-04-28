@@ -15,17 +15,16 @@ import src.lib.slicing as sl
 from collections import deque
 import numpy as np
 
-
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        super(MainWindow, self).__init__()
-
+        super(MainWindow,self).__init__()
+        
         self._config = config('./config')
         self.mapPage = {}
 
         self.ui = Ui_Versa3dMainWindow()
         self.ui.setupUi(self)
-
+        
         self.StlRenderer = vtk.vtkRenderer()
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.StlRenderer)
         self.StlInteractor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
@@ -45,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.undoStack = deque(maxlen=10)
         self.redoStack = deque(maxlen=10)
 
-        #connect slot
+        #connect slot        
         self.ui.actionImport_STL.triggered.connect(self.import_stl)
         self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
         self.ui.actionUndo.triggered.connect(self.undo)
@@ -54,7 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionSelection_Mode.triggered.connect(self.SetSelectionMode)
         self.ui.NumLayerSlider.valueChanged.connect(self.ChangeSliceDisplayed)
         self.ui.ExportGCodeButton.clicked.connect(self.slice_stl)
-
+        
         self.setUpScene()
         self._ImageMapper = vtk.vtkImageSliceMapper()
 
@@ -63,33 +62,34 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.InitSettingTab()
 
+    
     def import_stl(self):
-        importer = stlImportCommand(self.StlRenderer, self._config, self)
+        importer = stlImportCommand(self.StlRenderer,self._config,self)
         importer.execute()
         self.ui.vtkWidget.GetRenderWindow().Render()
         self.undoStack.append(importer)
-
+        
     def undo(self):
-        if(len(self.undoStack) > 0):
+        if(len(self.undoStack)>0):
             command = self.undoStack.pop()
             command.undo()
             self.redoStack.append(command)
 
     def redo(self):
-        if(len(self.undoStack) > 0):
+        if(len(self.undoStack)>0):
             command = self.redoStack.pop()
             command.redo()
             self.undoStack.append(command)
 
     def InitSettingTab(self):
+        
+        mapSettingTabName = {'PrintSettings':"Print Setting",
+                               'PrintHeadSettings':"PrintHead",
+                               'PrinterSettings':"Printer"}
 
-        mapSettingTabName = {'PrintSettings': "Print Setting",
-                             'PrintHeadSettings': "PrintHead",
-                             'PrinterSettings': "Printer"}
-
-        for settingName, tabName in mapSettingTabName.items():
+        for settingName,tabName in mapSettingTabName.items():
             page = QtWidgets.QWidget()
-            self.ui.MainViewTab.addTab(page, tabName)
+            self.ui.MainViewTab.addTab(page,tabName)
 
             layout = QtWidgets.QHBoxLayout()
             leftSide = QtWidgets.QVBoxLayout()
@@ -99,14 +99,14 @@ class MainWindow(QtWidgets.QMainWindow):
             rightSide.addWidget(stackedWidget)
 
             PageSize = page.size()
-            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32, 5)
+            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32,5)
             rightSide.addSpacerItem(RightSideSpacer)
 
             layout.addLayout(leftSide)
             layout.addLayout(rightSide)
 
             TopLeftSideLayout = QtWidgets.QHBoxLayout()
-
+            
             PresetSelector = QtWidgets.QComboBox()
             SaveButton = QtWidgets.QToolButton()
             DeleteButton = QtWidgets.QToolButton()
@@ -127,29 +127,29 @@ class MainWindow(QtWidgets.QMainWindow):
             CategoryList.itemClicked.connect(self.switchPage)
 
             leftSide.addWidget(CategoryList)
-
+            
             setting = self._config.getSettings(settingName)
 
             pageIndex = 0
             for key, item in setting.getSettingList().items():
                 category = item.category
 
-                if(len(CategoryList.findItems(category, QtCore.Qt.MatchFixedString)) == 0 and category != ""):
+                if(len(CategoryList.findItems(category,QtCore.Qt.MatchFixedString)) == 0 and category != "" ):
                     CategoryList.addItem(category)
                     subPage = QtWidgets.QWidget()
-                    self.mapPage[category] = (stackedWidget, pageIndex)
+                    self.mapPage[category] = (stackedWidget,pageIndex)
                     pageIndex = pageIndex + 1
 
                     stackedWidget.addWidget(subPage)
                     subPageLayout = QtWidgets.QVBoxLayout()
                     subPage.setLayout(subPageLayout)
-
+                
                 subPage = stackedWidget.widget(self.mapPage[category][1])
-                self.populatePage(item, subPage)
+                self.populatePage(item,subPage)
 
             page.setLayout(layout)
-
-    def populatePage(self, item, page):
+    
+    def populatePage(self,item,page):
 
         label = item.label
         ValType = item.type
@@ -166,45 +166,45 @@ class MainWindow(QtWidgets.QMainWindow):
             for key, val in enum.items():
                 ComboBox.addItem(key)
 
-            item.setQObject(ComboBox)
-            self.addItem(label, sidetext, [ComboBox], page, sublayout)
+            item.setQObject(ComboBox)            
+            self.addItem(label,sidetext,[ComboBox],page,sublayout)
 
-        elif(ValType in ["float", "double"]):
+        elif(ValType in ["float","double"]):
             DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label, sidetext, [DoubleSpinBox], page, sublayout)
+            self.addItem(label,sidetext,[DoubleSpinBox],page,sublayout)
             DoubleSpinBox.setValue(default_value)
             item.setQObject(DoubleSpinBox)
 
         elif(ValType == "int"):
             IntSpinBox = QtWidgets.QSpinBox(page)
-            self.addItem(label, sidetext, [IntSpinBox], page, sublayout)
+            self.addItem(label, sidetext,[IntSpinBox],page,sublayout)
             IntSpinBox.setValue(default_value)
             item.setQObject(IntSpinBox)
 
         elif(ValType == "2dPoint"):
             listOfQtWidget = []
-            for i in range(0, 2):
+            for i in range(0,2):
                 DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
                 listOfQtWidget.append(DoubleSpinBox)
                 DoubleSpinBox.setValue(default_value[i])
                 item.addQObject(DoubleSpinBox)
-
-            self.addItem(label, sidetext, listOfQtWidget, page, sublayout)
-
+                
+            self.addItem(label,sidetext,listOfQtWidget,page,sublayout)         
+        
         layout.addLayout(sublayout)
-
-    def addItem(self, label, sidetext, ListQtWidget, page, layout):
+    
+    def addItem(self,label,sidetext,ListQtWidget,page,layout):
         if(label != ""):
-            layout.addWidget(QtWidgets.QLabel(label, page))
-
+            layout.addWidget(QtWidgets.QLabel(label,page))
+        
         for QtWidget in ListQtWidget:
             layout.addWidget(QtWidget)
 
         if(sidetext != ""):
-            layout.addWidget(QtWidgets.QLabel(sidetext, page))
-
+            layout.addWidget(QtWidgets.QLabel(sidetext,page))
+    
     @pyqtSlot(QtWidgets.QListWidgetItem)
-    def switchPage(self, item):
+    def switchPage(self,item):
         category = item.text()
         stackedWidget, index = self.mapPage[category]
         stackedWidget.setCurrentIndex(index)
@@ -215,22 +215,21 @@ class MainWindow(QtWidgets.QMainWindow):
         axesActor = vtk.vtkAxesActor()
         axesActor.SetShaftTypeToLine()
         axesActor.SetTipTypeToCone()
-
+        
         printBedSize = self._config.getMachineSetting('printbedsize')
         buildBedHeight = self._config.getMachineSetting('buildheight')
-        axesActor.SetTotalLength(
-            printBedSize[0], printBedSize[1], buildBedHeight)
+        axesActor.SetTotalLength(printBedSize[0],printBedSize[1],buildBedHeight)
 
-        if(printBedSize[0] < 50 or printBedSize[1] < 50):
+        if(printBedSize[0] <50 or  printBedSize[1] <50):
             Increment = 1.0
         else:
             Increment = 10.0
-
+        
         #create grid
         for i in np.arange(0, printBedSize[0], Increment):
             line = vtk.vtkLineSource()
-            line.SetPoint1(i, 0, 0)
-            line.SetPoint2(i, printBedSize[1], 0)
+            line.SetPoint1(i,0,0)
+            line.SetPoint2(i,printBedSize[1],0)
             line.Update()
 
             lineMapper = vtk.vtkPolyDataMapper()
@@ -242,11 +241,11 @@ class MainWindow(QtWidgets.QMainWindow):
             lineActor.SetDragable(False)
 
             self.StlRenderer.AddActor(lineActor)
-
+        
         for j in np.arange(0, printBedSize[0], Increment):
             line = vtk.vtkLineSource()
-            line.SetPoint1(0, j, 0)
-            line.SetPoint2(printBedSize[0], j, 0)
+            line.SetPoint1(0,j,0)
+            line.SetPoint2(printBedSize[0],j,0)
             line.Update()
 
             lineMapper = vtk.vtkPolyDataMapper()
@@ -262,49 +261,49 @@ class MainWindow(QtWidgets.QMainWindow):
         self.StlRenderer.AddActor(axesActor)
 
         self.StlRenderer.ResetCamera()
-
+    
     def SetCameraMode(self):
         style = self.StlInteractor.GetInteractorStyle()
         style.SetCurrentStyleToTrackballCamera()
-
+    
     def SetSelectionMode(self):
         style = self.StlInteractor.GetInteractorStyle()
         style.SetCurrentStyleToTrackballActor()
 
     @pyqtSlot(int)
-    def ChangeSliceDisplayed(self, value):
+    def ChangeSliceDisplayed(self,value):
         self.ui.NumLayerSpinBox.setValue(value)
         self._ImageMapper.SetInputData(self._sliceStack[value].getImage())
         self.ui.Image_SliceViewer.GetRenderWindow().Render()
-
+            
     def slice_stl(self):
-
+        
         self._config.updateAll()
 
         slicer = sl.slicerFactory(self._config)
 
         actors = self.StlRenderer.GetActors()
-        key = self._config.getKey("Type", "Actor")
+        key = self._config.getKey("Type","Actor")
 
-        for i in range(0, actors.GetNumberOfItems()):
+        for i in range(0,actors.GetNumberOfItems()):
             actor = actors.GetItemAsObject(i)
             actorInfo = actor.GetProperty().GetInformation()
             if(actorInfo.Has(key)):
                 slicer.addActor(actor)
-
+        
         self._sliceStack = slicer.slice()
-        (xDim, yDim) = slicer.getXYDim()
+        (xDim,yDim) = slicer.getXYDim()
 
         zDim = len(self._sliceStack)
 
         self.ui.NumLayerSlider.setMinimum(0)
         self.ui.NumLayerSlider.setMaximum(zDim-1)
-
+        
         self._ImageMapper.SetInputData(self._sliceStack[0].getImage())
         self._ImageMapper.BackgroundOn()
         self._ImageMapper.SetOrientationToZ()
         self._ImageMapper.SetSliceNumber(0)
-
+        
         imageActor = vtk.vtkImageSlice()
         imageActor.SetMapper(self._ImageMapper)
 
