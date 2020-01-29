@@ -1,20 +1,14 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*
 
-
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-import PyQt5.QtCore as QtCore
-import vtk
-
-from src.GUI.ui_Versa3dMainWindow import Ui_Versa3dMainWindow
-import src.GUI.res_rc
-
-from src.lib.command import stlImportCommand
-from src.lib.versa3dConfig import config
-import src.lib.slicing as sl
-from collections import deque
-import numpy as np
+from PyQt5 import QtWidgets, uic
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(MainWindow,self).__init__()
+    """
+    main window
+    Arguments:
+        QtWidgets {QMainWindow} -- main window
+    """
+    def __init__(self, ui_file_path):
+        super().__init__()
+        uic.loadUi(ui_file_path, self)
+        
