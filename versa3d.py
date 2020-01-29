@@ -12,8 +12,8 @@ from src.mainWindow import MainWindow
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    
-    window = MainWindow(path.join('GUI','Versa3dMainWindow.ui'))
+
+    window = MainWindow(path.join('GUI', 'Versa3dMainWindow.ui'))
     window.show()
-    
+
     sys.exit(app.exec_())
