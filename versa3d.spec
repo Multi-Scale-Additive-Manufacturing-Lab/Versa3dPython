@@ -2,12 +2,15 @@
 
 block_cipher = None
 
+hidden_imports = ['vtk',
+                  'vtk.qt',
+                  'vtk.qt.QVTKRenderWindowInteractor']
 
-a = Analysis(['main.py'],
+a = Analysis(['versa3d.py'],
              pathex=['.'],
              binaries=[],
              datas=[('./designer_files/Versa3dMainWindow.ui','GUI')],
-             hiddenimports=[],
+             hiddenimports=hidden_imports,
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -34,4 +37,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='main')
+               name='versa3d')
