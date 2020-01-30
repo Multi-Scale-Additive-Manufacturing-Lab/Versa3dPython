@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, uic
 import numpy as np
 import vtk
 from vtk.util import numpy_support
+from src.versa3d_settings import load_settings, save_settings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -16,6 +17,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, ui_file_path):
         super().__init__()
         self.ui = uic.loadUi(ui_file_path, self)
+
+        self.settings = load_settings(self)
 
         self.stl_renderer = vtk.vtkRenderer()
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
@@ -35,7 +38,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.img_interactor.SetInteractorStyle(img_interactor_style)
 
-        self.setup_scene((50, 50, 100))
+        x_sc = self.settings.value('basic_printer/bed_x', 50, type = float)
+        y_sc = self.settings.value('basic_printer/bed_y', 50, type = float)
+        z_sc = self.settings.value('basic_printer/bed_z', 100, type = float)
+
+        self.setup_scene((x_sc, y_sc, z_sc))
 
         self.stl_interactor.Initialize()
         self.img_interactor.Initialize()
