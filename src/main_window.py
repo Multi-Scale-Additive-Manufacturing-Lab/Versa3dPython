@@ -7,6 +7,7 @@ from vtk.util import numpy_support
 from src.versa3d_settings import load_settings, save_settings
 from src.mouse_interaction import actor_highlight
 
+
 class MainWindow(QtWidgets.QMainWindow):
     """
     main window
@@ -25,7 +26,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
 
-        self.stl_interactor.AddObserver('LeftButtonPressEvent', actor_highlight)
+        self.stl_interactor.AddObserver(
+            'LeftButtonPressEvent', actor_highlight(self))
 
         style = vtk.vtkInteractorStyleSwitch()
         style.SetCurrentRenderer(self.stl_renderer)
@@ -40,14 +42,46 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.img_interactor.SetInteractorStyle(img_interactor_style)
 
-        x_sc = self.settings.value('basic_printer/bed_x', 50, type = float)
-        y_sc = self.settings.value('basic_printer/bed_y', 50, type = float)
-        z_sc = self.settings.value('basic_printer/bed_z', 100, type = float)
+        x_sc = self.settings.value('basic_printer/bed_x', 50, type=float)
+        y_sc = self.settings.value('basic_printer/bed_y', 50, type=float)
+        z_sc = self.settings.value('basic_printer/bed_z', 100, type=float)
 
         self.setup_scene((x_sc, y_sc, z_sc))
+        self.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
         self.img_interactor.Initialize()
+
+    def set_up_dummy_sphere(self):
+        for i in range(5):
+            source = vtk.vtkSphereSource()
+
+            # random position and radius
+            x = vtk.vtkMath.Random(0, 50)
+            y = vtk.vtkMath.Random(0, 50)
+            z = vtk.vtkMath.Random(0, 100)
+            radius = vtk.vtkMath.Random(.5, 1.0)
+
+            source.SetRadius(radius)
+            source.SetCenter(x, y, z)
+            source.SetPhiResolution(11)
+            source.SetThetaResolution(21)
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(source.GetOutputPort())
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+
+            r = vtk.vtkMath.Random(.4, 1.0)
+            g = vtk.vtkMath.Random(.4, 1.0)
+            b = vtk.vtkMath.Random(.4, 1.0)
+            actor.GetProperty().SetDiffuseColor(r, g, b)
+            actor.GetProperty().SetDiffuse(.8)
+            actor.GetProperty().SetSpecular(.5)
+            actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
+            actor.GetProperty().SetSpecularPower(30.0)
+
+            self.stl_renderer.AddActor(actor)
 
     def setup_scene(self, size):
         """set grid scene
