@@ -42,7 +42,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setup_scene(self, size):
         """set grid scene
-        
+
         Arguments:
             size {array(3,)} -- size of scene
         """
@@ -50,7 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_renderer.SetBackground(colors.GetColor3d("Gray"))
 
-        #add coordinate axis
+        # add coordinate axis
         axes_actor = vtk.vtkAxesActor()
         axes_actor.SetShaftTypeToLine()
         axes_actor.SetTipTypeToCone()
@@ -63,7 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Y = numpy_support.numpy_to_vtk(np.linspace(0, size[1], number_grid))
         Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
 
-        #set up grid
+        # set up grid
         grid = vtk.vtkRectilinearGrid()
         grid.SetDimensions(number_grid, number_grid, number_grid)
         grid.SetXCoordinates(X)
