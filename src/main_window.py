@@ -91,6 +91,8 @@ class MainWindow(QtWidgets.QMainWindow):
         grid_actor.GetProperty().SetRepresentationToWireframe()
         grid_actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
         grid_actor.GetProperty().EdgeVisibilityOn()
+        grid_actor.SetPickable(False)
+        grid_actor.SetDragable(False)
 
         self.stl_renderer.AddActor(axes_actor)
         self.stl_renderer.AddActor(grid_actor)
