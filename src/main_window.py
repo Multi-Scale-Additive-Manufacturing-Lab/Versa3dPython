@@ -5,7 +5,7 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support
 from src.versa3d_settings import load_settings, save_settings
-
+from src.mouse_interaction import actor_highlight
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -24,6 +24,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
+
+        self.stl_interactor.AddObserver('LeftButtonPressEvent', actor_highlight)
 
         style = vtk.vtkInteractorStyleSwitch()
         style.SetCurrentRenderer(self.stl_renderer)
