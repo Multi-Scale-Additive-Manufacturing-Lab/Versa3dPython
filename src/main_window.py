@@ -5,7 +5,7 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support
 from src.versa3d_settings import load_settings, save_settings
-from src.mouse_interaction import actor_highlight
+from src.mouse_interaction import actor_highlight, actor_movement
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -28,6 +28,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_interactor.AddObserver(
             'LeftButtonPressEvent', actor_highlight(self))
+        self.stl_interactor.AddObserver(
+            'InteractionEvent', actor_movement(self))
 
         style = vtk.vtkInteractorStyleSwitch()
         style.SetCurrentRenderer(self.stl_renderer)
@@ -51,6 +53,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_interactor.Initialize()
         self.img_interactor.Initialize()
+
+        self.undo_stack = QtWidgets.QUndoStack(self)
+        self.undo_stack.setUndoLimit(10)
 
     def set_up_dummy_sphere(self):
         for i in range(5):

@@ -46,3 +46,11 @@ class actor_highlight:
             style.SetCurrentStyleToTrackballActor()
         else:
             style.SetCurrentStyleToTrackballCamera()
+
+class actor_movement():
+    def __init__(self,parent):
+        super().__init__()
+        self.parent = parent
+
+    def __call__(self, interactor, ev):
+        print('moved actor')
