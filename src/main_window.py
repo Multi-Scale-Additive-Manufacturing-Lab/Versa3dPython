@@ -5,7 +5,7 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support
 from src.versa3d_settings import load_settings, save_settings
-from src.mouse_interaction import actor_highlight, actor_movement
+from src.mouse_interaction import actor_highlight
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -25,15 +25,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
+        self.picking_manager = self.stl_interactor.GetPickingManager()
+        self.picking_manager.EnabledOn()
 
-        self.stl_interactor.AddObserver(
-            'LeftButtonPressEvent', actor_highlight(self))
-        self.stl_interactor.AddObserver(
-            'InteractionEvent', actor_movement(self))
+        area_picker = vtk.vtkAreaPicker()
+        single_pick = vtk.vtkPicker()
 
-        style = vtk.vtkInteractorStyleSwitch()
-        style.SetCurrentRenderer(self.stl_renderer)
-        style.SetCurrentStyleToTrackballCamera()
+        self.picking_manager.AddPicker(area_picker)
+        self.picking_manager.AddPicker(single_pick)
+
+        style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
         self.img_renderer = vtk.vtkRenderer()
