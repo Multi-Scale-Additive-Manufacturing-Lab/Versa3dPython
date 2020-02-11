@@ -7,50 +7,55 @@ class actor_highlight:
 
         self.parent = parent
 
-        self.last_picked_actor = None
-        self.last_picked_prop = vtk.vtkProperty()
+        self.picked_actors = []
+        self.backup_props = []
 
-    def __call__(self, interactor, ev):
+    def __call__(self, caller, ev):
         """[summary]
-        
+
         Arguments:
             interactor {vtkRenderWindowInteractor} -- object being observed
             ev {string} -- event type description
         """
-        colors = vtk.vtkNamedColors()
-        style = interactor.GetInteractorStyle()
 
-        renderer = style.GetCurrentRenderer()
+        if isinstance(caller, vtk.vtkInteractorStyleRubberBand3D):
+            colors = vtk.vtkNamedColors()
 
-        click_pos = interactor.GetEventPosition()
-        picker = vtk.vtkPropPicker()
-        picker.Pick(click_pos[0], click_pos[1], 0, renderer)
+            start_pos = caller.GetStartPosition()
+            end_pos = caller.GetEndPosition()
 
-        # If we picked something before, reset its property
-        if self.last_picked_actor:
-            self.last_picked_actor.GetProperty().DeepCopy(self.last_picked_prop)
+            renderer = self.parent.stl_renderer
 
-        new_picked_actor = picker.GetActor()
+            picker = vtk.vtkRenderedAreaPicker()
 
-        if new_picked_actor:
-            # Save the property of the picked actor so that we can
-            # restore it next time
-            self.last_picked_prop.DeepCopy(new_picked_actor.GetProperty())
-            # Highlight the picked actor by changing its properties
-            new_picked_actor.GetProperty().SetColor(colors.GetColor3d('Red'))
-            new_picked_actor.GetProperty().SetDiffuse(1.0)
-            new_picked_actor.GetProperty().SetSpecular(0.0)
+            picker.AreaPick(start_pos[0], start_pos[1],
+                            end_pos[0], end_pos[1], renderer)
 
-            # save the last picked actor
-            self.last_picked_actor = new_picked_actor
-            style.SetCurrentStyleToTrackballActor()
-        else:
-            style.SetCurrentStyleToTrackballCamera()
+            list_actors = picker.GetProp3Ds()
+            num_picked_actor = list_actors.GetNumberOfItems()
 
-class actor_movement():
-    def __init__(self,parent):
-        super().__init__()
-        self.parent = parent
+            if(num_picked_actor > 0):
+                self.reset_picked_actors()
 
-    def __call__(self, interactor, ev):
-        print('moved actor')
+            for i in range(num_picked_actor):
+                actor = list_actors.GetItemAsObject(i)
+                actor_property = actor.GetProperty()
+
+                backup_pop = vtk.vtkProperty()
+                backup_pop.DeepCopy(actor_property)
+
+                self.backup_props.append(backup_pop)
+
+                actor_property.SetColor(colors.GetColor3d('Red'))
+                actor_property.SetDiffuse(1.0)
+                actor_property.SetSpecular(0.0)
+
+                self.picked_actors.append(actor)
+
+    def reset_picked_actors(self):
+
+        for actor, a_prop in zip(self.picked_actors, self.backup_props):
+            actor.GetProperty().DeepCopy(a_prop)
+
+        self.picked_actors = []
+        self.backup_props = []

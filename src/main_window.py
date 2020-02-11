@@ -25,17 +25,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
-        self.picking_manager = self.stl_interactor.GetPickingManager()
-        self.picking_manager.EnabledOn()
-
-        area_picker = vtk.vtkAreaPicker()
-        single_pick = vtk.vtkPicker()
-
-        self.picking_manager.AddPicker(area_picker)
-        self.picking_manager.AddPicker(single_pick)
-
+        
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
+
+        actor_highlight_obs = actor_highlight(self)
+
+        style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
         self.img_renderer = vtk.vtkRenderer()
         self.ui.Image_SliceViewer.GetRenderWindow().AddRenderer(self.img_renderer)
