@@ -26,7 +26,67 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="movement_bar">
+      <item>
+       <widget class="QPushButton" name="push_button_move_left">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icon/versa3d_icon.qrc">
+          <normaloff>:/arrow/arrow-left.svg</normaloff>:/arrow/arrow-left.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_3"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="push_button_move_up">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icon/versa3d_icon.qrc">
+          <normaloff>:/arrow/arrow-up.svg</normaloff>:/arrow/arrow-up.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_2"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="push_button_move_right">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icon/versa3d_icon.qrc">
+          <normaloff>:/arrow/arrow-right.svg</normaloff>:/arrow/arrow-right.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="push_button_rotate">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="icon/versa3d_icon.qrc">
+          <normaloff>:/arrow/corner-right-up.svg</normaloff>:/arrow/corner-right-up.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_4"/>
+      </item>
+     </layout>
+    </item>
     <item>
      <widget class="QTabWidget" name="MainViewTab">
       <property name="currentIndex">
@@ -172,15 +232,6 @@
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
   </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionImport_STL">
    <property name="text">
     <string>Import stl</string>
@@ -230,6 +281,8 @@
    <header>vtk.qt.QVTKRenderWindowInteractor</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="icon/versa3d_icon.qrc"/>
+ </resources>
  <connections/>
 </ui>
