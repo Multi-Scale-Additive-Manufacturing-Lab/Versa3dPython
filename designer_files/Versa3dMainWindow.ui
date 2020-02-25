@@ -220,7 +220,7 @@
      <x>0</x>
      <y>0</y>
      <width>1004</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -256,8 +256,6 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionSelection_Mode"/>
-   <addaction name="actionCamera_Mode"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionImport_STL">
@@ -309,8 +307,6 @@
    <header>vtk.qt.QVTKRenderWindowInteractor</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../Icons/res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
