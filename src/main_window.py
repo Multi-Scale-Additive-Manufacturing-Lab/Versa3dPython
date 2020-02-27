@@ -77,6 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
             actor.GetProperty().SetSpecularPower(30.0)
 
             print_obj = ppl.print_object(actor)
+            actor.AddObserver('PickEvent', print_obj.pick)
             self.platter.add_parts(print_obj)
 
     def setup_scene(self, size):

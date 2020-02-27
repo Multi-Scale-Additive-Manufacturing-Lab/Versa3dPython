@@ -7,9 +7,6 @@ class actor_highlight:
 
         self.parent = parent
 
-        self.picked_actors = []
-        self.backup_props = []
-
     def __call__(self, caller, ev):
         """[summary]
 
@@ -34,27 +31,11 @@ class actor_highlight:
             list_actors = picker.GetProp3Ds()
             num_picked_actor = list_actors.GetNumberOfItems()
             
-            self.reset_picked_actors()
+            #self.reset_picked_actors()
 
             for i in range(num_picked_actor):
                 actor = list_actors.GetItemAsObject(i)
-                actor_property = actor.GetProperty()
-
-                backup_pop = vtk.vtkProperty()
-                backup_pop.DeepCopy(actor_property)
-
-                self.backup_props.append(backup_pop)
-
-                actor_property.SetColor(colors.GetColor3d('Red'))
-                actor_property.SetDiffuse(1.0)
-                actor_property.SetSpecular(0.0)
-
-                self.picked_actors.append(actor)
+                actor.Pick()
 
     def reset_picked_actors(self):
-
-        for actor, a_prop in zip(self.picked_actors, self.backup_props):
-            actor.GetProperty().DeepCopy(a_prop)
-
-        self.picked_actors = []
-        self.backup_props = []
+        self.parent.platter.reset_picked()

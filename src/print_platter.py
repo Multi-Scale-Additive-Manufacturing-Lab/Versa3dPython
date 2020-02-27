@@ -1,3 +1,4 @@
+import vtk
 
 class print_object():
     def __init__(self, vtk_obj):
@@ -14,8 +15,9 @@ class print_object():
     def picked(self):
         return self._picked_state
 
-    def pick(self):
+    def pick(self, caller, ev):
         if(not self._picked_state):
+            colors = vtk.vtkNamedColors()
             actor_property = self._vtkactor.GetProperty()
             self._backup_prop = vtk.vtkProperty()
             self._backup_prop.DeepCopy(actor_property)
@@ -47,3 +49,8 @@ class print_platter():
     def add_parts(self, part):
         self._parts.append(part)
         self._renderer.AddActor(part.actor)
+    
+    def reset_picked(self):
+        for part in self._parts:
+            if(part.picked):
+                part.unpick()
