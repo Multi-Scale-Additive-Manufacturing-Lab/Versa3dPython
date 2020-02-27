@@ -6,6 +6,7 @@ import vtk
 from vtk.util import numpy_support
 from src.versa3d_settings import load_settings, save_settings
 from src.mouse_interaction import actor_highlight
+import src.print_platter as ppl
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -25,6 +26,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
+        self.platter = ppl.print_platter(self.stl_renderer)
         
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
@@ -32,14 +34,6 @@ class MainWindow(QtWidgets.QMainWindow):
         actor_highlight_obs = actor_highlight(self)
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
-
-        self.img_renderer = vtk.vtkRenderer()
-        self.ui.Image_SliceViewer.GetRenderWindow().AddRenderer(self.img_renderer)
-
-        self.img_interactor = self.ui.Image_SliceViewer.GetRenderWindow().GetInteractor()
-        img_interactor_style = vtk.vtkInteractorStyleImage()
-
-        self.img_interactor.SetInteractorStyle(img_interactor_style)
 
         x_sc = self.settings.value('basic_printer/bed_x', 50, type=float)
         y_sc = self.settings.value('basic_printer/bed_y', 50, type=float)
@@ -49,7 +43,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
-        self.img_interactor.Initialize()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
@@ -83,7 +76,8 @@ class MainWindow(QtWidgets.QMainWindow):
             actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
             actor.GetProperty().SetSpecularPower(30.0)
 
-            self.stl_renderer.AddActor(actor)
+            print_obj = ppl.print_object(actor)
+            self.platter.add_parts(print_obj)
 
     def setup_scene(self, size):
         """set grid scene
