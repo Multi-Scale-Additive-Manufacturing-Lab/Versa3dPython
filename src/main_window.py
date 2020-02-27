@@ -40,45 +40,12 @@ class MainWindow(QtWidgets.QMainWindow):
         z_sc = self.settings.value('basic_printer/bed_z', 100, type=float)
 
         self.setup_scene((x_sc, y_sc, z_sc))
-        self.set_up_dummy_sphere()
+        self.platter.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
-
-    def set_up_dummy_sphere(self):
-        for i in range(5):
-            source = vtk.vtkSphereSource()
-
-            # random position and radius
-            x = vtk.vtkMath.Random(0, 50)
-            y = vtk.vtkMath.Random(0, 50)
-            z = vtk.vtkMath.Random(0, 100)
-            radius = vtk.vtkMath.Random(.5, 1.0)
-
-            source.SetRadius(radius)
-            source.SetCenter(x, y, z)
-            source.SetPhiResolution(11)
-            source.SetThetaResolution(21)
-
-            mapper = vtk.vtkPolyDataMapper()
-            mapper.SetInputConnection(source.GetOutputPort())
-            actor = vtk.vtkActor()
-            actor.SetMapper(mapper)
-
-            r = vtk.vtkMath.Random(.4, 1.0)
-            g = vtk.vtkMath.Random(.4, 1.0)
-            b = vtk.vtkMath.Random(.4, 1.0)
-            actor.GetProperty().SetDiffuseColor(r, g, b)
-            actor.GetProperty().SetDiffuse(.8)
-            actor.GetProperty().SetSpecular(.5)
-            actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
-            actor.GetProperty().SetSpecularPower(30.0)
-
-            print_obj = ppl.print_object(actor)
-            actor.AddObserver('PickEvent', print_obj.pick)
-            self.platter.add_parts(print_obj)
 
     def setup_scene(self, size):
         """set grid scene
