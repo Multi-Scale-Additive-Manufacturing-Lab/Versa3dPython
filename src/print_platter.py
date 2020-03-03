@@ -1,18 +1,24 @@
 import vtk
 from vtk.util import numpy_support
 import numpy as np
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 
 class print_object():
-    def __init__(self, vtk_obj):
+    def __init__(self, name, vtk_obj):
         super().__init__()
         self._vtkactor = vtk_obj
         self._picked_state = False
         self._backup_prop = None
+        self._name = name
 
     @property
     def actor(self):
         return self._vtkactor
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def picked(self):
@@ -28,23 +34,25 @@ class print_object():
             actor_property.SetColor(colors.GetColor3d('Red'))
             actor_property.SetDiffuse(1.0)
             actor_property.SetSpecular(0.0)
+            self._vtkactor.ApplyProperties()
 
             self._picked_state = True
 
     def unpick(self):
         if(self._picked_state and (self._backup_prop is not None)):
             self._vtkactor.GetProperty().DeepCopy(self._backup_prop)
+            self._vtkactor.ApplyProperties()
 
         self._picked_state = False
 
 
-class print_platter():
+class print_platter(QObject):
 
-    def __init__(self, renderer):
-        super().__init__()
+    signal_add_part = pyqtSignal(vtk.vtkActor)
 
+    def __init__(self):
+        QObject.__init__(self)
         self._parts = []
-        self._renderer = renderer
 
     @property
     def platter(self):
@@ -52,7 +60,7 @@ class print_platter():
 
     def add_parts(self, part):
         self._parts.append(part)
-        self._renderer.AddActor(part.actor)
+        self.signal_add_part.emit(part.actor)
 
     def reset_picked(self):
         for part in self._parts:
@@ -88,57 +96,6 @@ class print_platter():
             actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
             actor.GetProperty().SetSpecularPower(30.0)
 
-            print_obj = print_object(actor)
+            print_obj = print_object('Dummy_Sphere_{}'.format(i), actor)
             actor.AddObserver('PickEvent', print_obj.pick)
             self.add_parts(print_obj)
-
-    def setup_scene(self, size):
-        """set grid scene
-
-        Arguments:
-            size {array(3,)} -- size of scene
-        """
-        colors = vtk.vtkNamedColors()
-
-        self._renderer.SetBackground(colors.GetColor3d("Gray"))
-
-        # add coordinate axis
-        axes_actor = vtk.vtkAxesActor()
-        axes_actor.SetShaftTypeToLine()
-        axes_actor.SetTipTypeToCone()
-
-        axes_actor.SetTotalLength(*size)
-
-        number_grid = 50
-
-        X = numpy_support.numpy_to_vtk(np.linspace(0, size[0], number_grid))
-        Y = numpy_support.numpy_to_vtk(np.linspace(0, size[1], number_grid))
-        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
-
-        # set up grid
-        grid = vtk.vtkRectilinearGrid()
-        grid.SetDimensions(number_grid, number_grid, number_grid)
-        grid.SetXCoordinates(X)
-        grid.SetYCoordinates(Y)
-        grid.SetZCoordinates(Z)
-
-        geometry_filter = vtk.vtkRectilinearGridGeometryFilter()
-        geometry_filter.SetInputData(grid)
-        geometry_filter.SetExtent(
-            0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
-        geometry_filter.Update()
-
-        grid_mapper = vtk.vtkPolyDataMapper()
-        grid_mapper.SetInputConnection(geometry_filter.GetOutputPort())
-
-        grid_actor = vtk.vtkActor()
-        grid_actor.SetMapper(grid_mapper)
-        grid_actor.GetProperty().SetRepresentationToWireframe()
-        grid_actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
-        grid_actor.GetProperty().EdgeVisibilityOn()
-        grid_actor.SetPickable(False)
-        grid_actor.SetDragable(False)
-
-        self._renderer.AddActor(axes_actor)
-        self._renderer.AddActor(grid_actor)
-        self._renderer.ResetCamera()
