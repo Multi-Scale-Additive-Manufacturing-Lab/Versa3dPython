@@ -5,6 +5,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 import vtk
 from vtk.util import numpy_support
 import numpy as np
+from designer_files.icon import versa3d_icon
 from src.versa3d_settings import load_settings, save_settings
 from src.mouse_interaction import actor_highlight
 import src.print_platter as ppl
