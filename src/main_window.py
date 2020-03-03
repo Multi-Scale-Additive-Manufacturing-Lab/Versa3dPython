@@ -29,7 +29,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
 
         self.platter = ppl.print_platter()
-        self.platter.signal_add_part.connect(self.add_parts)
+        self.platter.signal_add_part.connect(self.render_parts)
+        self.platter.signal_add_part.connect(self.add_obj_to_list)
 
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
@@ -50,9 +51,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
 
-    @pyqtSlot(vtk.vtkActor)
-    def add_parts(self, vtk_actor):
-        self.stl_renderer.AddActor(vtk_actor)
+    @pyqtSlot(ppl.print_object)
+    def add_obj_to_list(self, obj):
+        table = self.ui.table_stl
+        name = obj.name
+        table.insertRow(table.rowCount())
+
+        name_entry = QtWidgets.QTableWidgetItem(name)
+        scale_value = QtWidgets.QTableWidgetItem(str(1.0))
+        copies_value = QtWidgets.QTableWidgetItem(str(1.0))
+
+        current_row = table.rowCount() - 1
+        table.setItem(current_row, 0, name_entry)
+        table.setItem(current_row, 1, copies_value)
+        table.setItem(current_row, 2, scale_value)
+
+    @pyqtSlot(ppl.print_object)
+    def render_parts(self, obj):
+        self.stl_renderer.AddActor(obj.actor)
 
     def setup_scene(self, size):
         """set grid scene

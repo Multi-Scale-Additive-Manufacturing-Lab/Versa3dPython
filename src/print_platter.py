@@ -48,7 +48,7 @@ class print_object():
 
 class print_platter(QObject):
 
-    signal_add_part = pyqtSignal(vtk.vtkActor)
+    signal_add_part = pyqtSignal(print_object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -60,7 +60,7 @@ class print_platter(QObject):
 
     def add_parts(self, part):
         self._parts.append(part)
-        self.signal_add_part.emit(part.actor)
+        self.signal_add_part.emit(part)
 
     def reset_picked(self):
         for part in self._parts:

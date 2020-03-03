@@ -168,7 +168,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QTableWidget" name="TableSTL">
+           <widget class="QTableWidget" name="table_stl">
             <property name="columnCount">
              <number>3</number>
             </property>
