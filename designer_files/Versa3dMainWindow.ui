@@ -41,7 +41,14 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_3"/>
+       <widget class="QDoubleSpinBox" name="move_side">
+        <property name="minimum">
+         <double>-99.989999999999995</double>
+        </property>
+        <property name="value">
+         <double>10.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="push_button_move_up">
@@ -55,21 +62,17 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_2"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="push_button_move_right">
-        <property name="text">
-         <string/>
+       <widget class="QDoubleSpinBox" name="move_vertical">
+        <property name="minimum">
+         <double>-100.000000000000000</double>
         </property>
-        <property name="icon">
-         <iconset resource="icon/versa3d_icon.qrc">
-          <normaloff>:/arrow/arrow-right.svg</normaloff>:/arrow/arrow-right.svg</iconset>
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>10.000000000000000</double>
         </property>
        </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit"/>
       </item>
       <item>
        <widget class="QPushButton" name="push_button_rotate">
@@ -83,7 +86,17 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_4"/>
+       <widget class="QDoubleSpinBox" name="move_rotate">
+        <property name="minimum">
+         <double>-360.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>360.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>90.000000000000000</double>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
