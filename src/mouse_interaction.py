@@ -30,7 +30,7 @@ class actor_highlight:
 
             list_actors = picker.GetProp3Ds()
             num_picked_actor = list_actors.GetNumberOfItems()
-            
+
             self.reset_picked_actors()
 
             for i in range(num_picked_actor):
