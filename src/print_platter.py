@@ -55,7 +55,7 @@ class print_platter(QObject):
         self._parts = []
 
     @property
-    def platter(self):
+    def parts(self):
         return self._parts
 
     def add_parts(self, part):

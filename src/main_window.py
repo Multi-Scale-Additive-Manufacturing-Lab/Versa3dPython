@@ -52,6 +52,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
 
+        self.ui.push_button_x.clicked.connect(self.move_object_x)
+        self.ui.push_button_y.clicked.connect(self.move_object_y)
+
+    def translate(self, delta_pos):
+        parts = self.platter.parts
+        for part in parts:
+            if part.picked:
+                part.actor.AddPosition(delta_pos)
+
+    def move_object_y(self):
+        y = self.ui.y_delta.value()
+        self.translate([0, y, 0])
+
+    def move_object_x(self):
+        x = self.ui.x_delta.value()
+        self.translate([x, 0, 0])
+
     @pyqtSlot(ppl.print_object)
     def add_obj_to_list(self, obj):
         table = self.ui.table_stl
