@@ -235,7 +235,7 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionImport_STL"/>
+    <addaction name="action_import_stl"/>
    </widget>
    <widget class="QMenu" name="menu_edit">
     <property name="title">
@@ -257,7 +257,7 @@
    <addaction name="menu_edit"/>
    <addaction name="menuView"/>
   </widget>
-  <action name="actionImport_STL">
+  <action name="action_import_stl">
    <property name="text">
     <string>Import stl</string>
    </property>
