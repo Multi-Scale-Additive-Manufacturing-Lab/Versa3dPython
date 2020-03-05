@@ -25,6 +25,12 @@ class print_object():
         return self._picked_state
 
     def pick(self, caller, ev):
+        """pick call back
+        
+        Arguments:
+            caller {vtkRenderWindowInteractor} -- object being observed
+            ev {string} -- event type description
+        """
         if(not self._picked_state):
             colors = vtk.vtkNamedColors()
             actor_property = self._vtkactor.GetProperty()

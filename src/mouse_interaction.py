@@ -11,7 +11,7 @@ class actor_highlight:
         """[summary]
 
         Arguments:
-            interactor {vtkRenderWindowInteractor} -- object being observed
+            caller {vtkRenderWindowInteractor} -- object being observed
             ev {string} -- event type description
         """
 
