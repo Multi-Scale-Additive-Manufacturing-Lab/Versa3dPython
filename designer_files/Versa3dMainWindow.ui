@@ -237,12 +237,12 @@
     </property>
     <addaction name="actionImport_STL"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
+   <widget class="QMenu" name="menu_edit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
+    <addaction name="action_undo"/>
+    <addaction name="action_redo"/>
     <addaction name="separator"/>
     <addaction name="actioncopy"/>
     <addaction name="actionpaste"/>
@@ -254,7 +254,7 @@
     </property>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
+   <addaction name="menu_edit"/>
    <addaction name="menuView"/>
   </widget>
   <action name="actionImport_STL">
@@ -262,14 +262,20 @@
     <string>Import stl</string>
    </property>
   </action>
-  <action name="actionUndo">
+  <action name="action_undo">
    <property name="text">
     <string>Undo</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
   </action>
-  <action name="actionRedo">
+  <action name="action_redo">
    <property name="text">
     <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
    </property>
   </action>
   <action name="actioncopy">
