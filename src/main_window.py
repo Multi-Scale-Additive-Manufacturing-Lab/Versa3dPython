@@ -33,6 +33,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.platter.signal_add_part.connect(self.render_parts)
         self.platter.signal_add_part.connect(self.add_obj_to_list)
 
+        self.platter.signal_remove_part.connect(self.remove_parts)
+
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
@@ -58,13 +60,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_undo.triggered.connect(self.undo_stack.undo)
         self.action_redo.triggered.connect(self.undo_stack.redo)
 
+        self.action_import_stl.triggered.connect(self.import_stl)
+
+    def import_stl(self):
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open stl' ,"", "stl (*.stl)")
+        if(filename[0] != ''):
+            pass
 
     #TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
     def translate(self, delta_pos):
         parts = self.platter.parts
         for part in parts:
             if part.picked:
-                com = vscom.translation_command(delta_pos, part.actor)
+                com = vscom.translation_command(delta_pos, part.actor, self)
                 self.undo_stack.push(com)
 
     def move_object_y(self):
@@ -93,6 +101,10 @@ class MainWindow(QtWidgets.QMainWindow):
     @pyqtSlot(ppl.print_object)
     def render_parts(self, obj):
         self.stl_renderer.AddActor(obj.actor)
+
+    @pyqtSlot(ppl.print_object)
+    def remove_parts(self, obj):
+        self.stl_renderer.RemoveActor(obj.actor)
 
     def setup_scene(self, size):
         """set grid scene
