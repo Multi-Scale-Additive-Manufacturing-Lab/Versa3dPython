@@ -2,12 +2,14 @@ from PyQt5.QtWidgets import QUndoCommand
 import vtk
 
 
-class platter_state(QUndoCommand):
-    def __init__(self):
-        pass
+class translation_command(QUndoCommand):
+    def __init__(self, delta_pos, actor):
+        super().__init__()
+        self._delta_pos = delta_pos
+        self._actor = actor
 
     def redo(self):
-        pass
+        self._actor.AddPosition(self._delta_pos)
 
     def undo(self):
-        pass
+        self._actor.AddPosition(-self._delta_pos)

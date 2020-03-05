@@ -9,7 +9,7 @@ from designer_files.icon import versa3d_icon
 from src.versa3d_settings import load_settings, save_settings
 from src.mouse_interaction import actor_highlight
 import src.print_platter as ppl
-
+import src.versa3d_command as vscom 
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -56,20 +56,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.push_button_y.clicked.connect(self.move_object_y)
 
         self.action_undo.triggered.connect(self.undo_stack.undo)
+        self.action_redo.triggered.connect(self.undo_stack.redo)
 
     def translate(self, delta_pos):
         parts = self.platter.parts
         for part in parts:
             if part.picked:
-                part.actor.AddPosition(delta_pos)
+                com = vscom.translation_command(delta_pos, part.actor)
+                self.undo_stack.push(com)
 
     def move_object_y(self):
         y = self.y_delta.value()
-        self.translate([0, y, 0])
+        self.translate(np.array([0, y, 0]))
 
     def move_object_x(self):
         x = self.x_delta.value()
-        self.translate([x, 0, 0])
+        self.translate(np.array([x, 0, 0]))
 
     @pyqtSlot(ppl.print_object)
     def add_obj_to_list(self, obj):
