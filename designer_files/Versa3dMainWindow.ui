@@ -30,7 +30,7 @@
     <item>
      <layout class="QHBoxLayout" name="movement_bar">
       <item>
-       <widget class="QPushButton" name="push_button_move_left">
+       <widget class="QPushButton" name="push_button_y">
         <property name="text">
          <string/>
         </property>
@@ -41,7 +41,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="move_side">
+       <widget class="QDoubleSpinBox" name="y_delta">
         <property name="minimum">
          <double>-99.989999999999995</double>
         </property>
@@ -51,7 +51,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="push_button_move_up">
+       <widget class="QPushButton" name="push_button_x">
         <property name="text">
          <string/>
         </property>
@@ -62,7 +62,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="move_vertical">
+       <widget class="QDoubleSpinBox" name="x_delta">
         <property name="minimum">
          <double>-100.000000000000000</double>
         </property>
@@ -86,7 +86,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="move_rotate">
+       <widget class="QDoubleSpinBox" name="delta_rotate">
         <property name="minimum">
          <double>-360.000000000000000</double>
         </property>
