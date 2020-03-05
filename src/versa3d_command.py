@@ -4,6 +4,13 @@ import vtk
 
 class translation_command(QUndoCommand):
     def __init__(self, delta_pos, actor):
+        """
+        Translation command                
+        Arguments:
+            QUndoCommand {QUndoCommand} -- Qt Undo Command class
+            delta_pos {ndarray} -- numpy array of delta 
+            actor {vtkactor} -- vtk actor class
+        """
         super().__init__()
         self._delta_pos = delta_pos
         self._actor = actor
