@@ -20,14 +20,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, ui_file_path):
         super().__init__()
-        self.ui = uic.loadUi(ui_file_path, self)
+        uic.loadUi(ui_file_path, self)
 
         self.settings = load_settings(self)
 
         self.stl_renderer = vtk.vtkRenderer()
-        self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
+        self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
-        self.stl_interactor = self.ui.vtkWidget.GetRenderWindow().GetInteractor()
+        self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
         self.platter = ppl.print_platter()
         self.platter.signal_add_part.connect(self.render_parts)
@@ -52,8 +52,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
 
-        self.ui.push_button_x.clicked.connect(self.move_object_x)
-        self.ui.push_button_y.clicked.connect(self.move_object_y)
+        self.push_button_x.clicked.connect(self.move_object_x)
+        self.push_button_y.clicked.connect(self.move_object_y)
+
+        self.action_undo.triggered.connect(self.undo_stack.undo)
 
     def translate(self, delta_pos):
         parts = self.platter.parts
@@ -62,16 +64,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 part.actor.AddPosition(delta_pos)
 
     def move_object_y(self):
-        y = self.ui.y_delta.value()
+        y = self.y_delta.value()
         self.translate([0, y, 0])
 
     def move_object_x(self):
-        x = self.ui.x_delta.value()
+        x = self.x_delta.value()
         self.translate([x, 0, 0])
 
     @pyqtSlot(ppl.print_object)
     def add_obj_to_list(self, obj):
-        table = self.ui.table_stl
+        table = self.table_stl
         name = obj.name
         table.insertRow(table.rowCount())
 
