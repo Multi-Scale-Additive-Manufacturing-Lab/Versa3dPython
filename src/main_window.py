@@ -58,6 +58,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_undo.triggered.connect(self.undo_stack.undo)
         self.action_redo.triggered.connect(self.undo_stack.redo)
 
+
+    #TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
     def translate(self, delta_pos):
         parts = self.platter.parts
         for part in parts:
