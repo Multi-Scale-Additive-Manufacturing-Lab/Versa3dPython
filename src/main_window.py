@@ -65,7 +65,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def import_stl(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open stl' ,"", "stl (*.stl)")
         if(filename[0] != ''):
-            pass
+            com = vscom.import_command(filename[0], self.platter)
+            self.undo_stack.push(com)
 
     #TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
     def translate(self, delta_pos):

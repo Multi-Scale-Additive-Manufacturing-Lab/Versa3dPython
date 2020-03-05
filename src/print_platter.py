@@ -11,6 +11,7 @@ class print_object():
         self._picked_state = False
         self._backup_prop = None
         self._name = name
+        self._vtkactor.AddObserver('PickEvent', self.pick)
 
     @property
     def actor(self):
@@ -108,5 +109,4 @@ class print_platter(QObject):
             actor.GetProperty().SetSpecularPower(30.0)
 
             print_obj = print_object('Dummy_Sphere_{}'.format(i), actor)
-            actor.AddObserver('PickEvent', print_obj.pick)
             self.add_parts(print_obj)
