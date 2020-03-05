@@ -55,6 +55,7 @@ class print_object():
 class print_platter(QObject):
 
     signal_add_part = pyqtSignal(print_object)
+    signal_remove_part = pyqtSignal(print_object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -67,6 +68,10 @@ class print_platter(QObject):
     def add_parts(self, part):
         self._parts.append(part)
         self.signal_add_part.emit(part)
+    
+    def remove_part(self, part):
+        self._parts.remove(part)
+        self.signal_remove_part.emit(part)
 
     def reset_picked(self):
         for part in self._parts:
