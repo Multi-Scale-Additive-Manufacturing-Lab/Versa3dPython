@@ -22,7 +22,7 @@ class import_command(QUndoCommand):
         self._platter.add_parts(self._obj)
     
     def undo(self):
-        pass
+        self._platter.remove_part(self._obj)
 
 class translation_command(QUndoCommand):
     def __init__(self, delta_pos, actor, parent = None):
