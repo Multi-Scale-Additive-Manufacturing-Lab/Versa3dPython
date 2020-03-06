@@ -73,7 +73,7 @@ class MainWindow(QtWidgets.QMainWindow):
         parts = self.platter.parts
         for part in parts:
             if part.picked:
-                com = vscom.translation_command(delta_pos, part.actor, self)
+                com = vscom.translation_command(delta_pos, part.actor)
                 self.undo_stack.push(com)
 
     def move_object_y(self):
