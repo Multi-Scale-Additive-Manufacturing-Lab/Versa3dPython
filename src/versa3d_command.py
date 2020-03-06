@@ -33,7 +33,7 @@ class translation_command(QUndoCommand):
             delta_pos {ndarray} -- numpy array of delta 
             actor {vtkactor} -- vtk actor class
         """
-        super().__init__(parent)
+        super().__init__()
         self._delta_pos = delta_pos
         self._actor = actor
 
