@@ -54,7 +54,7 @@ class print_object():
 
 
 class print_platter(QObject):
-
+    #Qt signal
     signal_add_part = pyqtSignal(print_object)
     signal_remove_part = pyqtSignal(print_object)
 
