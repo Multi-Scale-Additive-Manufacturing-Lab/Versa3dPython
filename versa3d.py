@@ -22,6 +22,10 @@ if __name__ == "__main__":
         ui_path = os.path.join(
             base_path, 'designer_files', 'Versa3dMainWindow.ui')
 
+    app.setOrganizationName("msam")
+    app.setOrganizationDomain("uw.msam")
+    app.setApplicationName("Versa3d")
+
     window = MainWindow(ui_path)
     window.show()
 
