@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
 import vtk
 from vtk.util import numpy_support
 import numpy as np
 from designer_files.icon import versa3d_icon
-from src.versa3d_settings import load_settings, save_settings
 from src.mouse_interaction import actor_highlight
 import src.print_platter as ppl
 import src.versa3d_command as vscom 
@@ -22,7 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
-        self.settings = load_settings(self)
+        self.settings = QSettings()
 
         self.stl_renderer = vtk.vtkRenderer()
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
@@ -42,11 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
-        x_sc = self.settings.value('basic_printer/bed_x', 50, type=float)
-        y_sc = self.settings.value('basic_printer/bed_y', 50, type=float)
-        z_sc = self.settings.value('basic_printer/bed_z', 100, type=float)
-
-        self.setup_scene((x_sc, y_sc, z_sc))
+        self.setup_scene(self.platter.size)
         self.platter.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()

@@ -1,14 +1,14 @@
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
 
 
 class print_object():
     def __init__(self, name, vtk_obj):
         """
         object to be printed
-        
+
         Arguments:
             name {string} -- object name
             vtk_obj {vtkactor} -- vtkactor being rendered
@@ -34,7 +34,7 @@ class print_object():
 
     def pick(self, caller, ev):
         """pick call back
-        
+
         Arguments:
             caller {vtkRenderWindowInteractor} -- object being observed
             ev {string} -- event type description
@@ -61,15 +61,29 @@ class print_object():
 
 
 class print_platter(QObject):
-    #Qt signal
+    # Qt signal
     signal_add_part = pyqtSignal(print_object)
     signal_remove_part = pyqtSignal(print_object)
 
-    def __init__(self):
+    def __init__(self, printer_name='basic_printer'):
         """print platter class, represents printer plate
         """
         QObject.__init__(self)
         self._parts = []
+        self._printer = printer_name
+
+        self._settings = QSettings()
+
+    @property
+    def size(self):
+        x_sc = self._settings.value(
+            '{}/bed_x'.format(self._printer), 50, type=float)
+        y_sc = self._settings.value(
+            '{}/bed_y'.format(self._printer), 50, type=float)
+        z_sc = self._settings.value(
+            '{}/bed_z'.format(self._printer), 100, type=float)
+
+        return (x_sc, y_sc, z_sc)
 
     @property
     def parts(self):
@@ -78,17 +92,17 @@ class print_platter(QObject):
     def add_parts(self, part):
         """
         Add object to build plate
-        
+
         Arguments:
             part {print_object} -- object to be printed
         """
         self._parts.append(part)
         self.signal_add_part.emit(part)
-    
+
     def remove_part(self, part):
         """
         Remove object from build plate
-        
+
         Arguments:
             part {print_object} -- object to be printed
         """
