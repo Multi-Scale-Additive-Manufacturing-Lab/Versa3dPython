@@ -59,6 +59,8 @@ class print_platter(QObject):
     signal_remove_part = pyqtSignal(print_object)
 
     def __init__(self):
+        """print platter class, represents printer plate
+        """
         QObject.__init__(self)
         self._parts = []
 
@@ -67,10 +69,22 @@ class print_platter(QObject):
         return self._parts
 
     def add_parts(self, part):
+        """
+        Add object to build plate
+        
+        Arguments:
+            part {print_object} -- object to be printed
+        """
         self._parts.append(part)
         self.signal_add_part.emit(part)
     
     def remove_part(self, part):
+        """
+        Remove object from build plate
+        
+        Arguments:
+            part {print_object} -- object to be printed
+        """
         self._parts.remove(part)
         self.signal_remove_part.emit(part)
 
@@ -80,6 +94,8 @@ class print_platter(QObject):
                 part.unpick()
 
     def set_up_dummy_sphere(self):
+        """set up dummy sphere for debug
+        """
         for i in range(5):
             source = vtk.vtkSphereSource()
 
