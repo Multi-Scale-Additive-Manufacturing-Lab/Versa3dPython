@@ -84,6 +84,7 @@ class MainWindow(QtWidgets.QMainWindow):
         x = self.x_delta.value()
         self.translate(np.array([x, 0, 0]))
 
+    #TODO implement undo for list
     @pyqtSlot(ppl.print_object)
     def add_obj_to_list(self, obj):
         table = self.table_stl
