@@ -3,6 +3,13 @@ import vtk
 
 class actor_highlight:
     def __init__(self, parent):
+        """
+        highlight interactor observer. Called when SelectionChangedEvent
+        is emitted by vtkInteractorStyleRubberBand3D
+
+        Arguments:
+            parent {QMainWindow} -- parent class
+        """
         super().__init__()
 
         self.parent = parent
