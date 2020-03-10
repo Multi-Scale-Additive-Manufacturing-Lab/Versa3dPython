@@ -6,6 +6,13 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
 class print_object():
     def __init__(self, name, vtk_obj):
+        """
+        object to be printed
+        
+        Arguments:
+            name {string} -- object name
+            vtk_obj {vtkactor} -- vtkactor being rendered
+        """
         super().__init__()
         self._vtkactor = vtk_obj
         self._picked_state = False
