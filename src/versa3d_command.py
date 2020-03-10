@@ -4,6 +4,16 @@ from src.print_platter import print_object
 
 class import_command(QUndoCommand):
     def __init__(self, path, platter, parent = None):
+        """[summary]
+        
+        Arguments:
+            QUndoCommand {QUndoCommand} -- Qt Undo command class
+            path {string} -- file path
+            platter {print_platter} -- print platter object
+        
+        Keyword Arguments:
+            parent {QObject} -- Not used (default: {None})
+        """
         super().__init__(parent)
         reader = vtk.vtkSTLReader()
         reader.SetFileName(path)
