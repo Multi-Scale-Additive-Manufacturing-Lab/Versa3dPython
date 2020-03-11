@@ -16,6 +16,10 @@ class versa3d_single_option():
         self._default_value = default_value
 
     @property
+    def value_type(self):
+        return type(self._value)
+
+    @property
     def value(self):
         return self._value
 
