@@ -46,15 +46,20 @@ class generic_settings():
 
         self._lso = {}
         self._prefix = None
+        self._category = None
 
     @property
     def name(self):
         return self._name
+    
+    @property
+    def category(self):
+        return self._category
 
-    @pyqtSlot
+    #@pyqtSlot
     def save_settings(self):
         self._settings.beginGroup(self._name)
-        for name, option in self._list_option.items():
+        for name, option in self._lso.items():
             if(option is ordered_array_option):
                 self._settings.beginWriteArray(name, len(option))
                 for i, val in enumerate(option.value):
@@ -65,33 +70,19 @@ class generic_settings():
                 self._settings.setValue(name, option.value)
         self._settings.endGroup()
 
-    def _type_check(self, variant, value_type):
-        if(value_type is int):
-            variant = variant.toInt()
-        elif(value_type is float):
-            variant = variant.toFloat()
-        elif(value_type is bool):
-            variant = variant.toBool()
-        elif(value_type is str):
-            variant = variant.toString()
-        else:
-            raise('unknown type')
-        return variant
-
     def load_settings(self):
         self._settings.beginGroup(self._name)
-        for name, option in self._list_option.items():
-            if(option is ordered_array_option):
-                self._settings.beginReadArray(name, len(option))
+        for name, option in self._lso.items():
+            if(type(option) is ordered_array_option):
+                self._settings.beginReadArray(name)
                 for i, val in enumerate(option.value):
                     self._settings.setArrayIndex(i)
                     variant = self._settings.value(name, val)
-                    value = self._type_check(variant, option.value_type)
-                    option.set_value_at_index(i, value)
+                    option.set_value_at_index(i, variant)
                 self._settings.endArray()
             else:
                 variant = self._settings.value(name, option.default_value)
-                option.value = self._type_check(variant, option.value_type)
+                option.value = variant
 
         self._settings.endGroup()
 
@@ -99,16 +90,17 @@ class generic_settings():
 class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
         super().__init__(name)
+        self._category = ['plate']
 
         self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
         self._lso['build_bed_size'].label = 'build bed size'
-        self._ls['build_bed_size'].sidetext = 'mm'
+        self._lso['build_bed_size'].sidetext = 'mm'
         self._lso['build_bed_size'].category = 'plate'
 
         self._lso['coord_offset'] = ordered_array_option([0.0, 0.0, 0.0])
         self._lso['coord_offset'].label = 'coordinate offset'
         self._lso['coord_offset'].sidetext = 'mm'
-        self._lso['coord_offset'].category - 'plate'
+        self._lso['coord_offset'].category = 'plate'
 
         self.load_settings()
 
@@ -121,6 +113,7 @@ class printer_settings(generic_settings):
 class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
+        self._category = ['dpi']
 
         self._lso['dpi'] = ordered_array_option([150, 150])
         self.load_settings()
@@ -134,6 +127,8 @@ class printhead_settings(generic_settings):
 class print_settings(generic_settings):
     def __init__(self, name='default_settings'):
         super().__init__(name)
+
+        self._category = ['layer', 'infill']
 
         self._lso['layer_thickness'] = single_option(100.0)
         self._lso['layer_thickness'].label = 'layer thickness'

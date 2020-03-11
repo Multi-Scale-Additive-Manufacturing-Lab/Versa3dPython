@@ -63,7 +63,7 @@ class enum_option(generic_option):
 
 class ordered_array_option(generic_option):
     def __init__(self, default_value_array):
-        super.__init__()
+        super().__init__()
         self._value = default_value_array
         self._default_value = default_value_array
     
