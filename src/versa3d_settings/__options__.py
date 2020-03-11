@@ -17,7 +17,7 @@ class generic_option():
 
     @property
     def value_type(self):
-        return type(self._value)
+        return type(self._default_value)
 
     @property
     def value(self):
@@ -27,6 +27,10 @@ class generic_option():
     def value(self, val):
         self._value = val
 
+    @property
+    def default_value(self):
+        return self._default_value
+
 
 class single_option(generic_option):
     def __init__(self, default_value):
@@ -35,6 +39,7 @@ class single_option(generic_option):
         self._default_value = default_value
 
     @pyqtSlot(int)
+    @pyqtSlot(bool)
     @pyqtSlot(float)
     @pyqtSlot(str)
     def update_value(self, value):
@@ -61,7 +66,15 @@ class ordered_array_option(generic_option):
         super.__init__()
         self._value = default_value_array
         self._default_value = default_value_array
+    
+    @property
+    def value_type(self):
+        return type(self._default_value[0])
 
+    def set_value_at_index(self, i, value):
+        self._value[i] = value
+    
+    @pyqtSlot(bool, int)
     @pyqtSlot(int, int)
     @pyqtSlot(float, int)
     @pyqtSlot(str, int)

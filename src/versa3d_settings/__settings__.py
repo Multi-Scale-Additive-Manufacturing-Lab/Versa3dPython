@@ -10,6 +10,7 @@ class generic_settings():
         self._settings = QSettings()
 
         self._lso = {}
+        self._prefix = None
 
     @property
     def name(self):
@@ -29,6 +30,19 @@ class generic_settings():
                 self._settings.setValue(name, option.value)
         self._settings.endGroup()
 
+    def _type_check(self, variant, value_type):
+        if(value_type is int):
+            variant = variant.toInt()
+        elif(value_type is float):
+            variant = variant.toFloat()
+        elif(value_type is bool):
+            variant = variant.toBool()
+        elif(value_type is str):
+            variant = variant.toString()
+        else:
+            raise('unknown type')
+        return variant
+
     def load_settings(self):
         self._settings.beginGroup(self._name)
         for name, option in self._list_option.items():
@@ -36,11 +50,16 @@ class generic_settings():
                 self._settings.beginReadArray(name, len(option))
                 for i, val in enumerate(option.value):
                     self._settings.setArrayIndex(i)
-                    self._settings.value(name, val)
+                    variant = self._settings.value(name, val)
+                    value = self._type_check(variant, option.value_type)
+                    option.set_value_at_index(i, value)
                 self._settings.endArray()
             else:
-                self._settings.value(name, option.value)
+                variant = self._settings.value(name, option.default_value)
+                option.value = self._type_check(variant, option.value_type)
+
         self._settings.endGroup()
+
 
 class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
@@ -58,6 +77,11 @@ class printer_settings(generic_settings):
 
         self.load_settings()
 
+    def load_settings(self):
+        self._settings.beginGroup('printer_settings')
+        super().load_settings()
+        self._settings.endGroup()
+
 
 class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
@@ -65,6 +89,11 @@ class printhead_settings(generic_settings):
 
         self._lso['dpi'] = ordered_array_option([150, 150])
         self.load_settings()
+
+    def load_settings(self):
+        self._settings.beginGroup('printhead_settings')
+        super().load_settings()
+        self._settings.endGroup()
 
 
 class print_settings(generic_settings):
@@ -117,3 +146,8 @@ class print_settings(generic_settings):
         self._lso['n_pass'].category = 'infill'
 
         self.load_settings()
+
+    def load_settings(self):
+        self._settings.beginGroup('print_settings')
+        super().load_settings()
+        self._settings.endGroup()
