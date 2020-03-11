@@ -3,6 +3,41 @@ from PyQt5.QtCore import pyqtSlot
 from .__options__ import enum_option, ordered_array_option, single_option
 
 
+def load_stored_settings(name, settings):
+    settings.beginGroup(name)
+    list_stored = settings.childGroups()
+    settings.endGroup()
+
+    list_settings = []
+    for setting_name in list_stored:
+        setting_obj = print_settings(printer_name)
+        setting_obj.load_settings()
+        list_settings.append(setting_obj)
+
+    return list_settings
+
+
+def load_settings():
+    settings = QSettings()
+
+    list_printer = load_stored_settings('printer_settings', settings)
+    list_printhead = load_stored_settings('printhead_settings', settings)
+    list_print_setting = load_stored_settings('print_settings', settings)
+
+    if(len(list_printer) == 0):
+        list_printer.append(printer_settings())
+
+    if(len(list_printhead) == 0):
+        list_printhead.append(printhead_settings())
+
+    if(len(list_print_setting) == 0):
+        list_print_setting.append(print_settings())
+
+    return {'printer_settings': list_printer,
+            'printhead_settings': list_printhead,
+            'print_settings': list_print_setting}
+
+
 class generic_settings():
     def __init__(self, name):
         super().__init__()
