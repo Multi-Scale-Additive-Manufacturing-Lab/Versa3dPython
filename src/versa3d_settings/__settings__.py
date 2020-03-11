@@ -24,8 +24,10 @@ class generic_settings():
                 for i, val in enumerate(option.value):
                     self._settings.setArrayIndex(i)
                     self._settings.setValue(name, val)
+                self._settings.endArray()
             else:
                 self._settings.setValue(name, option.value)
+        self._settings.endGroup()
 
     def load_settings(self):
         self._settings.beginGroup(self._name)
@@ -54,12 +56,15 @@ class printer_settings(generic_settings):
         self._lso['coord_offset'].sidetext = 'mm'
         self._lso['coord_offset'].category - 'plate'
 
+        self.load_settings()
+
 
 class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
 
         self._lso['dpi'] = ordered_array_option([150, 150])
+        self.load_settings()
 
 
 class print_settings(generic_settings):
@@ -110,3 +115,5 @@ class print_settings(generic_settings):
         self._lso['n_pass'] = single_option(1)
         self._lso['n_pass'].label = 'number of pass'
         self._lso['n_pass'].category = 'infill'
+
+        self.load_settings()
