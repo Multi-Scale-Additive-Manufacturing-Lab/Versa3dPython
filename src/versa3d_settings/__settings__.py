@@ -1,5 +1,7 @@
 from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import pyqtSlot
 from .__options__ import enum_option, ordered_array_option, single_option
+
 
 class generic_settings():
     def __init__(self, name):
@@ -7,94 +9,92 @@ class generic_settings():
         self._name = name
         self._settings = QSettings()
 
+        self._lso = {}
+
     @property
     def name(self):
         return self._name
 
-    def single_property(self,property_name):
-        prop_name = '{}/{}'.format()
-        self._settings.value('/')
+    @pyqtSlot
+    def save_settings(self):
+        self._settings.beginGroup(self._name)
+        for name, option in self._list_option.items():
+            if(option is ordered_array_option):
+                self._settings.beginWriteArray(name, len(option))
+                for i, val in enumerate(option.value):
+                    self._settings.setArrayIndex(i)
+                    self._settings.setValue(name, val)
+            else:
+                self._settings.setValue(name, option.value)
+
 
 class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
         super().__init__(name)
 
-        self._bds = self.build_bed_size
+        self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
+        self._lso['build_bed_size'].label = 'build bed size'
+        self._ls['build_bed_size'].sidetext = 'mm'
+        self._lso['build_bed_size'].category = 'plate'
 
-    @property
-    def build_bed_size(self):
-        x_sc = self._settings.value(
-            '{}/bed_x'.format(self._name), 50.0, type=float)
-        y_sc = self._settings.value(
-            '{}/bed_y'.format(self._name), 50.0, type=float)
-        z_sc = self._settings.value(
-            '{}/bed_z'.format(self._name), 100.0, type=float)
-
-        return (x_sc, y_sc, z_sc)
+        self._lso['coord_offset'] = ordered_array_option([0.0, 0.0, 0.0])
+        self._lso['coord_offset'].label = 'coordinate offset'
+        self._lso['coord_offset'].sidetext = 'mm'
+        self._lso['coord_offset'].category - 'plate'
 
 
 class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
 
-        self._dpi = self.dpi
-        self._variable_vol = self.variable_volume
-
-    @property
-    def dpi(self):
-        x_dpi = self._settings.value(
-            '{}/dpi_x'.format(self._name), 300.0, type=float)
-        y_dpi = self._settings.value(
-            '{}/dpi_y'.format(self._name), 300.0, type=float)
-        return (x_dpi, y_dpi)
-
-    @property
-    def variable_volume(self):
-        vv = self._settings.value(
-            '{}/variable_volume'.format(self._name), False, type=bool)
-        return vv
+        self._lso['dpi'] = ordered_array_option([150, 150])
 
 
 class print_settings(generic_settings):
     def __init__(self, name='default_settings'):
         super().__init__(name)
 
-        self._lt = self.layer_thickness
-        self._roller_rpm = self.roller_rpm
-        self._roller_lin = self.roller_lin
+        self._lso['layer_thickness'] = single_option(100.0)
+        self._lso['layer_thickness'].label = 'layer thickness'
+        # do greek letter later
+        self._lso['layer_thickness'].sidetext = 'microns'
+        self._lso['layer_thickness'].category = 'layer'
 
-        self._powder_loss_offset 
-        self._print_height_offset
-        self._roller_work_distance
+        self._lso['roller_rpm'] = single_option(100.0)
+        self._lso['roller_rpm'].label = 'roller rotation speed'
+        self._lso['roller_rpm'].sidetext = 'rpm'
+        self._lso['roller_rpm'].category = 'layer'
 
-        self._feed_bed_selection
+        self._lso['roller_lin'] = single_option(10.0)
+        self._lso['roller_lin'].label = 'roller linear speed'
+        self._lso['roller_lin'].sidetext = 'mm'
+        self._lso['roller_lin'].category = 'layer'
 
-        self._coord_offset
+        self._lso['powder_loss_offset'] = single_option(10.0)
+        self._lso['powder_loss_offset'].label = 'powder loss offset'
+        self._lso['powder_loss_offset'].sidetext = '%'
+        self._lso['powder_loss_offset'].category = 'layer'
 
-        self._saturation
-        self._n_pass
+        self._lso['print_height_offset'] = single_option(10.0)
+        self._lso['print_height_offset'].label = 'printheight offset'
+        self._lso['print_height_offset'].sidetext = 'microns'
+        self._lso['print_height_offset'].category = 'layer'
 
-    @property
-    def layer_thickness(self):
-        return self._settings(
-            '{}/layer_thickness'.format(self._name), 100.0, type=float)
+        self._lso['roller_work_distance'] = single_option(10.0)
+        self._lso['roller_work_distance'].label = 'roller work distance'
+        self._lso['roller_work_distance'].sidetext = 'microns'
+        self._lso['roller_work_distance'].category = 'layer'
 
-    @property
-    def roller_rpm(self):
-        return self._settings(
-            '{}/roller_rpm'.format(self._name), 100.0, type=float)
+        self._lso['bed_selection'] = enum_option(
+            0, ['bed 1', 'bed 2', 'bed 3'])
+        self._lso['bed_selection'].label = 'bed selection'
+        self._lso['bed_selection'].category = 'layer'
 
-    @property
-    def roller_lin(self):
-        return self._settings(
-            '{}/roller_lin'.format(self._name), 100.0, type=float)
-    
-    @property
-    def powder_loss_offset(self):
-        return self._settings(
-            '{}/powder_loss_offset'.format(self._name), 20.0, type=float)
-    
-    @property
-    def print_height_offset(self):
-        return self._settings(
-            '{}/print_height_offset'.format(self._name), 20.0, type=float)  
+        self._lso['saturation'] = single_option(100.0)
+        self._lso['saturation'].label = 'saturation'
+        self._lso['saturation'].sidetext = '%'
+        self._lso['saturation'].category = 'infill'
+
+        self._lso['n_pass'] = single_option(1)
+        self._lso['n_pass'].label = 'number of pass'
+        self._lso['n_pass'].category = 'infill'

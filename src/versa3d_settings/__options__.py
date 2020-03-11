@@ -67,3 +67,6 @@ class ordered_array_option(generic_option):
     @pyqtSlot(str, int)
     def update_value(self, value, index):
         self._value[index] = value
+    
+    def __len__(self):
+        return len(self._value)
