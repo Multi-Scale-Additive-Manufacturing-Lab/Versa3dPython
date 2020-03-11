@@ -5,4 +5,8 @@
     <file>arrow-up.svg</file>
     <file>corner-right-up.svg</file>
   </qresource>
+  <qresource prefix="generic">
+    <file>save.svg</file>
+    <file>trash.svg</file>
+  </qresource>
 </RCC>
