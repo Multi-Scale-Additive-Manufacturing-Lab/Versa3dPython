@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QSettings
+from .__options__ import enum_option, ordered_array_option, single_option
 
 class generic_settings():
     def __init__(self, name):

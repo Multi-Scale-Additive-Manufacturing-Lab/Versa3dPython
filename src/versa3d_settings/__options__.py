@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot
-
+from PyQt5.QtCore import QSettings
 
 class generic_option():
     def __init__(self):
@@ -13,6 +13,7 @@ class generic_option():
         self.subcategory = ""
 
         self._default_value = None
+        self._settings = QSettings()
 
     @property
     def value_type(self):
@@ -27,7 +28,7 @@ class generic_option():
         self._value = val
 
 
-class versa3d_single_option(generic_option):
+class single_option(generic_option):
     def __init__(self, default_value):
         super().__init__()
         self._value = default_value
@@ -40,7 +41,7 @@ class versa3d_single_option(generic_option):
         self._value = value
 
 
-class versa3d_enum_option(generic_option):
+class enum_option(generic_option):
     def __init__(self, default_value, choices):
         super().__init__()
         self._value = default_value
@@ -55,7 +56,7 @@ class versa3d_enum_option(generic_option):
         self._value = value
 
 
-class versa3d_ordered_array_option(generic_option):
+class ordered_array_option(generic_option):
     def __init__(self, default_value_array):
         super.__init__()
         self._value = default_value_array
