@@ -27,6 +27,18 @@ class generic_settings():
             else:
                 self._settings.setValue(name, option.value)
 
+    def load_settings(self):
+        self._settings.beginGroup(self._name)
+        for name, option in self._list_option.items():
+            if(option is ordered_array_option):
+                self._settings.beginReadArray(name, len(option))
+                for i, val in enumerate(option.value):
+                    self._settings.setArrayIndex(i)
+                    self._settings.value(name, val)
+                self._settings.endArray()
+            else:
+                self._settings.value(name, option.value)
+        self._settings.endGroup()
 
 class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
