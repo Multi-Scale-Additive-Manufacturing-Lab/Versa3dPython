@@ -1,42 +1,4 @@
 from PyQt5.QtCore import QSettings
-from PyQt5 import QtWidgets
-
-class versa3d_option():
-    def __init__(self):
-        super().__init__()
-        self._value = None
-
-        self.label = ""
-        self.tooltip = ""
-        self.sidetext = ""
-        self.category = ""
-        self.subcategory = ""
-
-        self._QObject = None
-
-        self.default_value = None
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, val):
-        self._value = val
-
-    @property
-    def q_object(self):
-        return self._QObject
-
-    @q_object.setter
-    def q_object(self, obj):
-        self._QObject = obj
-    
-class versa3d_numeric_option(versa3d_option):
-    def __init__(self):
-        super().__init__()
-
-
 
 class generic_settings():
     def __init__(self, name):
@@ -52,7 +14,7 @@ class generic_settings():
         prop_name = '{}/{}'.format()
         self._settings.value('/')
 
-class printer(generic_settings):
+class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
         super().__init__(name)
 
@@ -70,7 +32,7 @@ class printer(generic_settings):
         return (x_sc, y_sc, z_sc)
 
 
-class printhead(generic_settings):
+class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
 
