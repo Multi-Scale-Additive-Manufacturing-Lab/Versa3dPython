@@ -10,7 +10,7 @@ from designer_files.icon import versa3d_icon
 from src.mouse_interaction import actor_highlight
 import src.print_platter as ppl
 import src.versa3d_command as vscom
-from src.versa3d_settings import load_settings
+from src.versa3d_settings import load_settings, print_settings, printer_settings, printhead_settings
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -116,6 +116,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
             leftSide.addWidget(CategoryList)
 
+            settings_list = self.settings_dict[setting_name]
+
+            for stored_setting in settings_list:
+                preset_selector.addItem(stored_setting.name)
 
             """
             #CategoryList.itemClicked.connect(self.switchPage)

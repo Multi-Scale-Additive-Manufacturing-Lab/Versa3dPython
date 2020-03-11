@@ -88,9 +88,9 @@ class generic_settings():
 
 
 class printer_settings(generic_settings):
+    category = ['plate']
     def __init__(self, name="basic_printer"):
         super().__init__(name)
-        self._category = ['plate']
 
         self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
         self._lso['build_bed_size'].label = 'build bed size'
@@ -111,11 +111,15 @@ class printer_settings(generic_settings):
 
 
 class printhead_settings(generic_settings):
+    category = ['resolution']
+
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
-        self._category = ['dpi']
 
         self._lso['dpi'] = ordered_array_option([150, 150])
+        self._lso['dpi'].label = 'dpi'
+        self._lso['dpi'].category = 'resolution'
+
         self.load_settings()
 
     def load_settings(self):
@@ -125,10 +129,10 @@ class printhead_settings(generic_settings):
 
 
 class print_settings(generic_settings):
+    category = ['layer', 'infill']
+
     def __init__(self, name='default_settings'):
         super().__init__(name)
-
-        self._category = ['layer', 'infill']
 
         self._lso['layer_thickness'] = single_option(100.0)
         self._lso['layer_thickness'].label = 'layer thickness'
