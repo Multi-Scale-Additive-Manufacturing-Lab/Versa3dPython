@@ -77,6 +77,7 @@ class generic_settings():
         self._settings = QSettings()
 
         self._prefix = None
+        self._lso = {}
 
     def get_value(self, setting):
         path = f'{self._prefix}/{self._name}/{key}'
@@ -105,10 +106,11 @@ class generic_settings():
 
 
 class printer_settings(generic_settings):
-    category = ['plate']
 
     def __init__(self, name="basic_printer"):
         super().__init__(name)
+
+        self._prefix = settings.PRINTER
 
         self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
         self._lso['build_bed_size'].label = 'build bed size'
@@ -120,19 +122,13 @@ class printer_settings(generic_settings):
         self._lso['coord_offset'].sidetext = 'mm'
         self._lso['coord_offset'].category = 'plate'
 
-        self.load_settings()
-
-    def load_settings(self):
-        self._settings.beginGroup('printer_settings')
-        super().load_settings()
-        self._settings.endGroup()
-
 
 class printhead_settings(generic_settings):
-    category = ['resolution']
 
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
+
+        self._prefix = settings.PRINTHEAD
 
         self._lso['dpi'] = ordered_array_option([150, 150])
         self._lso['dpi'].label = 'dpi'
@@ -140,17 +136,13 @@ class printhead_settings(generic_settings):
 
         self.load_settings()
 
-    def load_settings(self):
-        self._settings.beginGroup('printhead_settings')
-        super().load_settings()
-        self._settings.endGroup()
-
 
 class print_settings(generic_settings):
-    category = ['layer', 'infill']
 
     def __init__(self, name='default_settings'):
         super().__init__(name)
+
+        self._prefix = settings.PRINT_PRESET
 
         self._lso['layer_thickness'] = single_option(100.0)
         self._lso['layer_thickness'].label = 'layer thickness'
@@ -196,10 +188,3 @@ class print_settings(generic_settings):
         self._lso['n_pass'] = single_option(1)
         self._lso['n_pass'].label = 'number of pass'
         self._lso['n_pass'].category = 'infill'
-
-        self.load_settings()
-
-    def load_settings(self):
-        self._settings.beginGroup('print_settings')
-        super().load_settings()
-        self._settings.endGroup()
