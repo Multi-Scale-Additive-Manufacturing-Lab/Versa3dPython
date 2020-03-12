@@ -65,9 +65,9 @@ def load_settings(settings=None):
     if(len(list_print_setting) == 0):
         list_print_setting.append(print_settings())
 
-    return {'printer_settings': list_printer,
-            'printhead_settings': list_printhead,
-            'print_settings': list_print_setting}
+    return {settings_enum.PRINTER: list_printer,
+            settings_enum.PRINTHEAD: list_printhead,
+            settings_enum.PRINT_PRESET: list_print_setting}
 
 
 class generic_settings():
@@ -97,15 +97,15 @@ class printer_settings(generic_settings):
 
         self._prefix = settings_enum.PRINTER
 
-        self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
-        self._lso['build_bed_size'].label = 'build bed size'
-        self._lso['build_bed_size'].sidetext = 'mm'
-        self._lso['build_bed_size'].category = 'plate'
+        self._lso[printer_enum.BUILD_BED_SIZE] = ordered_array_option([50, 50, 100])
+        self._lso[printer_enum.BUILD_BED_SIZE].label = 'build bed size'
+        self._lso[printer_enum.BUILD_BED_SIZE].sidetext = 'mm'
+        self._lso[printer_enum.BUILD_BED_SIZE].category = 'plate'
 
-        self._lso['coord_offset'] = ordered_array_option([0.0, 0.0, 0.0])
-        self._lso['coord_offset'].label = 'coordinate offset'
-        self._lso['coord_offset'].sidetext = 'mm'
-        self._lso['coord_offset'].category = 'plate'
+        self._lso[printer_enum.COORD_OFFSET] = ordered_array_option([0.0, 0.0, 0.0])
+        self._lso[printer_enum.COORD_OFFSET].label = 'coordinate offset'
+        self._lso[printer_enum.COORD_OFFSET].sidetext = 'mm'
+        self._lso[printer_enum.COORD_OFFSET].category = 'plate'
 
 
 class printhead_settings(generic_settings):
@@ -115,11 +115,9 @@ class printhead_settings(generic_settings):
 
         self._prefix = settings_enum.PRINTHEAD
 
-        self._lso['dpi'] = ordered_array_option([150, 150])
-        self._lso['dpi'].label = 'dpi'
-        self._lso['dpi'].category = 'resolution'
-
-        self.load_settings()
+        self._lso[settings_enum.DPI] = ordered_array_option([150, 150])
+        self._lso[settings_enum.DPI].label = 'dpi'
+        self._lso[settings_enum.DPI].category = 'resolution'
 
 
 class print_settings(generic_settings):
@@ -129,47 +127,47 @@ class print_settings(generic_settings):
 
         self._prefix = settings_enum.PRINT_PRESET
 
-        self._lso['layer_thickness'] = single_option(100.0)
-        self._lso['layer_thickness'].label = 'layer thickness'
+        self._lso[print_enum.LAYER_THICKNESS] = single_option(100.0)
+        self._lso[print_enum.LAYER_THICKNESS].label = 'layer thickness'
         # do greek letter later
-        self._lso['layer_thickness'].sidetext = 'microns'
-        self._lso['layer_thickness'].category = 'layer'
+        self._lso[print_enum.LAYER_THICKNESS].sidetext = 'microns'
+        self._lso[print_enum.LAYER_THICKNESS].category = 'layer'
 
-        self._lso['roller_rpm'] = single_option(100.0)
-        self._lso['roller_rpm'].label = 'roller rotation speed'
-        self._lso['roller_rpm'].sidetext = 'rpm'
-        self._lso['roller_rpm'].category = 'layer'
+        self._lso[print_enum.ROLLER_ROT] = single_option(100.0)
+        self._lso[print_enum.ROLLER_ROT].label = 'roller rotation speed'
+        self._lso[print_enum.ROLLER_ROT].sidetext = 'rpm'
+        self._lso[print_enum.ROLLER_ROT].category = 'layer'
 
-        self._lso['roller_lin'] = single_option(10.0)
-        self._lso['roller_lin'].label = 'roller linear speed'
-        self._lso['roller_lin'].sidetext = 'mm'
-        self._lso['roller_lin'].category = 'layer'
+        self._lso[print_enum.ROLLER_LIN] = single_option(10.0)
+        self._lso[print_enum.ROLLER_LIN].label = 'roller linear speed'
+        self._lso[print_enum.ROLLER_LIN].sidetext = 'mm'
+        self._lso[print_enum.ROLLER_LIN].category = 'layer'
 
-        self._lso['powder_loss_offset'] = single_option(10.0)
-        self._lso['powder_loss_offset'].label = 'powder loss offset'
-        self._lso['powder_loss_offset'].sidetext = '%'
-        self._lso['powder_loss_offset'].category = 'layer'
+        self._lso[print_enum.POWDER_LOSS_OFFSET] = single_option(10.0)
+        self._lso[print_enum.POWDER_LOSS_OFFSET].label = 'powder loss offset'
+        self._lso[print_enum.POWDER_LOSS_OFFSET].sidetext = '%'
+        self._lso[print_enum.POWDER_LOSS_OFFSET].category = 'layer'
 
-        self._lso['print_height_offset'] = single_option(10.0)
-        self._lso['print_height_offset'].label = 'printheight offset'
-        self._lso['print_height_offset'].sidetext = 'microns'
-        self._lso['print_height_offset'].category = 'layer'
+        self._lso[print_enum.POWDER_HEIGHT_OFFSET] = single_option(10.0)
+        self._lso[print_enum.POWDER_HEIGHT_OFFSET].label = 'printheight offset'
+        self._lso[print_enum.POWDER_HEIGHT_OFFSET].sidetext = 'microns'
+        self._lso[print_enum.POWDER_HEIGHT_OFFSET].category = 'layer'
 
-        self._lso['roller_work_distance'] = single_option(10.0)
-        self._lso['roller_work_distance'].label = 'roller work distance'
-        self._lso['roller_work_distance'].sidetext = 'microns'
-        self._lso['roller_work_distance'].category = 'layer'
+        self._lso[print_enum.PRINT_HEIGHT_OFFSET] = single_option(10.0)
+        self._lso[print_enum.PRINT_HEIGHT_OFFSET].label = 'roller work distance'
+        self._lso[print_enum.PRINT_HEIGHT_OFFSET].sidetext = 'microns'
+        self._lso[print_enum.PRINT_HEIGHT_OFFSET].category = 'layer'
 
-        self._lso['bed_selection'] = enum_option(
+        self._lso[print_enum.BED_SELECT] = enum_option(
             0, ['bed 1', 'bed 2', 'bed 3'])
-        self._lso['bed_selection'].label = 'bed selection'
-        self._lso['bed_selection'].category = 'layer'
+        self._lso[print_enum.BED_SELECT].label = 'bed selection'
+        self._lso[print_enum.BED_SELECT].category = 'layer'
 
-        self._lso['saturation'] = single_option(100.0)
-        self._lso['saturation'].label = 'saturation'
-        self._lso['saturation'].sidetext = '%'
-        self._lso['saturation'].category = 'infill'
+        self._lso[print_enum.SATURATION] = single_option(100.0)
+        self._lso[print_enum.SATURATION].label = 'saturation'
+        self._lso[print_enum.SATURATION].sidetext = '%'
+        self._lso[print_enum.SATURATION].category = 'infill'
 
-        self._lso['n_pass'] = single_option(1)
-        self._lso['n_pass'].label = 'number of pass'
-        self._lso['n_pass'].category = 'infill'
+        self._lso[print_enum.N_PASS] = single_option(1)
+        self._lso[print_enum.N_PASS].label = 'number of pass'
+        self._lso[print_enum.N_PASS].category = 'infill'
