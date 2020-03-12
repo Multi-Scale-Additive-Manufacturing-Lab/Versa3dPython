@@ -1,9 +1,6 @@
 import vtk
 import numpy as np
-from src.lib.versa3dConfig import config
 import math
-
-from test.debugHelper import visualizer
 
 
 def create_2d_vtk_image(val, x, y, spacing):
@@ -16,7 +13,7 @@ def create_2d_vtk_image(val, x, y, spacing):
 
 
 def slicer_factory(slicer_type):
-    
+
     if('fblack' == slicer_type):
         return FullBlackImageSlicer(config)
     elif('checker_board' == slicer_type):
@@ -67,17 +64,17 @@ class slice():
 
         self._image = None
 
-    def getThickness(self):
-        return self._thickness
-
-    def getHeight(self):
+    @property
+    def height(self):
         return self._height
 
-    def getImage(self):
-        return self._image
+    @property
+    def thickess(self):
+        return self._thickness
 
-    def setImage(self, image):
-        self._image = image
+    @property
+    def vtk_image(self):
+        return self._image
 
 
 class VoxelSlicer():
