@@ -5,23 +5,23 @@ from .__options__ import enum_option, ordered_array_option, single_option
 from enum import Enum
 
 
-class settings(Enum):
+class settings_enum(Enum):
     PRINTER = 'printer_settings'
     PRINTHEAD = 'printhead_settings'
     PRINT_PRESET = 'print_settings'
 
 
-class printhead(Enum):
+class printhead_enum(Enum):
     DPI = 'dpi'
 
 
-class printer(Enum):
+class printer_enum(Enum):
     BUILD_BED_SIZE = 'bds'
     COORD_OFFSET = 'coord_o'
     MODEL = 'model'
 
 
-class print(Enum):
+class print_enum(Enum):
     LAYER_THICKESS = 'lt'
     ROLLER_ROT = 'rol_rpm'
     ROLLER_LIN = 'rol_lin'
@@ -52,9 +52,9 @@ def load_settings(settings=None):
     if(settings is None):
         settings = QSettings()
 
-    list_printer = load_stored_settings('printer_settings', settings)
-    list_printhead = load_stored_settings('printhead_settings', settings)
-    list_print_setting = load_stored_settings('print_settings', settings)
+    list_printer = load_stored_settings(settings_enum.PRINTER, settings)
+    list_printhead = load_stored_settings(settings_enum.PRINTHEAD, settings)
+    list_print_setting = load_stored_settings(settings_enum.PRINT_PRESET, settings)
 
     if(len(list_printer) == 0):
         list_printer.append(printer_settings())
@@ -79,7 +79,7 @@ class generic_settings():
         self._prefix = None
         self._lso = {}
 
-    def get_value(self, setting):
+    def get_value(self, key):
         path = f'{self._prefix}/{self._name}/{key}'
         self._settings.beginGroup(path)
         value = self._settings.value('value')
@@ -90,27 +90,12 @@ class generic_settings():
     def name(self):
         return self._name
 
-    @property
-    def category(self):
-        path = f'{self._prefix}/{self._name}/category'
-        return self._settings.value(path, [])
-
-    @pyqtSlot(str, int)
-    @pyqtSlot(str, float)
-    @pyqtSlot(str, bool)
-    def save_value(self, key, value):
-        path = f'{self._prefix}/{self._name}/{key}'
-        self._settings.beginGroup(path)
-        self._settings.setValue('value', value)
-        self._settings.endGroup()
-
-
 class printer_settings(generic_settings):
 
     def __init__(self, name="basic_printer"):
         super().__init__(name)
 
-        self._prefix = settings.PRINTER
+        self._prefix = settings_enum.PRINTER
 
         self._lso['build_bed_size'] = ordered_array_option([50, 50, 100])
         self._lso['build_bed_size'].label = 'build bed size'
@@ -128,7 +113,7 @@ class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
 
-        self._prefix = settings.PRINTHEAD
+        self._prefix = settings_enum.PRINTHEAD
 
         self._lso['dpi'] = ordered_array_option([150, 150])
         self._lso['dpi'].label = 'dpi'
@@ -142,7 +127,7 @@ class print_settings(generic_settings):
     def __init__(self, name='default_settings'):
         super().__init__(name)
 
-        self._prefix = settings.PRINT_PRESET
+        self._prefix = settings_enum.PRINT_PRESET
 
         self._lso['layer_thickness'] = single_option(100.0)
         self._lso['layer_thickness'].label = 'layer thickness'
