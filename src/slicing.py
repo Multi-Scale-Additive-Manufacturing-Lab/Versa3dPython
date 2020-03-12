@@ -15,20 +15,17 @@ def create_2d_vtk_image(val, x, y, spacing):
     return img
 
 
-def slicerFactory(config):
-
-    if(config != None):
-        type = config.getPrintSetting('fill')
-
-        if('fblack' == type):
-            return FullBlackImageSlicer(config)
-        elif('checker_board' == type):
-            return CheckerBoardImageSlicer(config)
-        else:
-            return None
+def slicer_factory(slicer_type):
+    
+    if('fblack' == slicer_type):
+        return FullBlackImageSlicer(config)
+    elif('checker_board' == slicer_type):
+        return CheckerBoardImageSlicer(config)
+    else:
+        return None
 
 
-def slicePoly(limit, increment, polydata):
+def slice_poly(limit, increment, polydata):
     """slice polydata in z direction into contour
 
     Arguments:
@@ -192,7 +189,7 @@ class FullBlackImageSlicer(VoxelSlicer):
                 self._sliceStack.append(individual_slice)
 
         return self._sliceStack
-    
+
     def full_black_slice(self, contour, bound, black_img):
         origin = [0]*3
         ContourBounds = contour.GetBounds()
@@ -211,7 +208,7 @@ class FullBlackImageSlicer(VoxelSlicer):
 
             self._poly2Sten.SetOutputOrigin(origin)
             self._poly2Sten.Update()
-            
+
             self._imgstenc.SetInputData(black_img)
             self._imgstenc.Update()
 
@@ -219,8 +216,9 @@ class FullBlackImageSlicer(VoxelSlicer):
             image.DeepCopy(self._imgstenc.GetOutput())
             IndividualSlice.setImage(image)
             return [IndividualSlice]
-        
+
         return None
+
 
 class CheckerBoardImageSlicer(FullBlackImageSlicer):
 
@@ -251,12 +249,14 @@ class CheckerBoardImageSlicer(FullBlackImageSlicer):
 
         for i in range(len(listOfContour)):
             contour = listOfContour[i]
-            
+
             if(i <= self.bottom_thickness):
-                individual_slice = self.full_black_slice(contour, bound, black_img)
+                individual_slice = self.full_black_slice(
+                    contour, bound, black_img)
             else:
-                individual_slice = self.checkerboard_slice(contour, bound, black_img, grey_image)
-            
+                individual_slice = self.checkerboard_slice(
+                    contour, bound, black_img, grey_image)
+
             if(individual_slice != None):
                 self._sliceStack.append(individual_slice)
 
@@ -287,7 +287,7 @@ class CheckerBoardImageSlicer(FullBlackImageSlicer):
 
             self._extruder.SetInputData(skeletonizer.GetOutputDataObject(0))
             self._extruder.Update()
-            
+
             self._poly2Sten.SetOutputOrigin(origin)
             self._poly2Sten.Update()
 
@@ -298,7 +298,8 @@ class CheckerBoardImageSlicer(FullBlackImageSlicer):
             core_img.DeepCopy(self._imgstenc.GetOutput())
             core_slice.setImage(core_img)
 
-            skin_slice = self.full_black_slice(merge.GetOutput(), bound, black_img)
+            skin_slice = self.full_black_slice(
+                merge.GetOutput(), bound, black_img)
 
             return [core_slice, skin_slice[0]]
         return None
