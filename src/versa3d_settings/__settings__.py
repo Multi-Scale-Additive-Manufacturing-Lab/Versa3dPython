@@ -54,7 +54,8 @@ def load_settings(settings=None):
 
     list_printer = load_stored_settings(settings_enum.PRINTER, settings)
     list_printhead = load_stored_settings(settings_enum.PRINTHEAD, settings)
-    list_print_setting = load_stored_settings(settings_enum.PRINT_PRESET, settings)
+    list_print_setting = load_stored_settings(
+        settings_enum.PRINT_PRESET, settings)
 
     if(len(list_printer) == 0):
         list_printer.append(printer_settings())
@@ -90,6 +91,7 @@ class generic_settings():
     def name(self):
         return self._name
 
+
 class printer_settings(generic_settings):
 
     def __init__(self, name="basic_printer"):
@@ -97,12 +99,14 @@ class printer_settings(generic_settings):
 
         self._prefix = settings_enum.PRINTER
 
-        self._lso[printer_enum.BUILD_BED_SIZE] = ordered_array_option([50, 50, 100])
+        self._lso[printer_enum.BUILD_BED_SIZE] = ordered_array_option([
+                                                                      50, 50, 100])
         self._lso[printer_enum.BUILD_BED_SIZE].label = 'build bed size'
         self._lso[printer_enum.BUILD_BED_SIZE].sidetext = 'mm'
         self._lso[printer_enum.BUILD_BED_SIZE].category = 'plate'
 
-        self._lso[printer_enum.COORD_OFFSET] = ordered_array_option([0.0, 0.0, 0.0])
+        self._lso[printer_enum.COORD_OFFSET] = ordered_array_option([
+                                                                    0.0, 0.0, 0.0])
         self._lso[printer_enum.COORD_OFFSET].label = 'coordinate offset'
         self._lso[printer_enum.COORD_OFFSET].sidetext = 'mm'
         self._lso[printer_enum.COORD_OFFSET].category = 'plate'
@@ -125,25 +129,29 @@ class print_settings(generic_settings):
     def __init__(self, name='default_settings'):
         super().__init__(name)
 
-        self._prefix = settings_enum.PRINT_PRESET
+        self._prefix = f'{settings_enum.PRINT_PRESET}/{name}'
 
-        self._lso[print_enum.LAYER_THICKNESS] = single_option(100.0)
+        self._lso[print_enum.LAYER_THICKNESS] = single_option(
+            self._prefix, print_enum.LAYER_THICKESS, 100.0)
         self._lso[print_enum.LAYER_THICKNESS].label = 'layer thickness'
         # do greek letter later
         self._lso[print_enum.LAYER_THICKNESS].sidetext = 'microns'
         self._lso[print_enum.LAYER_THICKNESS].category = 'layer'
 
-        self._lso[print_enum.ROLLER_ROT] = single_option(100.0)
+        self._lso[print_enum.ROLLER_ROT] = single_option(
+            self._prefix, print_enum.ROLLER_ROT, 100.0)
         self._lso[print_enum.ROLLER_ROT].label = 'roller rotation speed'
         self._lso[print_enum.ROLLER_ROT].sidetext = 'rpm'
         self._lso[print_enum.ROLLER_ROT].category = 'layer'
 
-        self._lso[print_enum.ROLLER_LIN] = single_option(10.0)
+        self._lso[print_enum.ROLLER_LIN] = single_option(
+            self._prefix, print_enum.ROLLER_LIN, 10.0)
         self._lso[print_enum.ROLLER_LIN].label = 'roller linear speed'
         self._lso[print_enum.ROLLER_LIN].sidetext = 'mm'
         self._lso[print_enum.ROLLER_LIN].category = 'layer'
 
-        self._lso[print_enum.POWDER_LOSS_OFFSET] = single_option(10.0)
+        self._lso[print_enum.POWDER_LOSS_OFFSET] = single_option(
+            self._prefix, print_enum.POWDER_LOSS_OFFSET, 10.0)
         self._lso[print_enum.POWDER_LOSS_OFFSET].label = 'powder loss offset'
         self._lso[print_enum.POWDER_LOSS_OFFSET].sidetext = '%'
         self._lso[print_enum.POWDER_LOSS_OFFSET].category = 'layer'

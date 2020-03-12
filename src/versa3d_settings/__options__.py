@@ -3,8 +3,8 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QSettings
 
 class generic_option():
-    def __init__(self, key):
-        self._key = key
+    def __init__(self, prefix, name):
+        self._key = f'{prefix}/{name}'
         self._value = None
 
         self.label = ""
@@ -15,6 +15,10 @@ class generic_option():
 
         self._default_value = None
         self._settings = QSettings()
+    
+    @property
+    def key(self):
+        return self._key
 
     @property
     def value_type(self):
@@ -48,7 +52,7 @@ class single_option(generic_option):
 
 
 class enum_option(generic_option):
-    def __init__(self, key, default_value, choices):
+    def __init__(self, prefix, name, default_value, choices):
         super().__init__(key)
         self._value = default_value
         self._choices = choices
@@ -63,7 +67,7 @@ class enum_option(generic_option):
 
 
 class ordered_array_option(generic_option):
-    def __init__(self, key, default_value_array):
+    def __init__(self, prefix, name, default_value_array):
         super().__init__(key)
         self._value = default_value_array
         self._default_value = default_value_array
