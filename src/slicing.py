@@ -12,12 +12,24 @@ def create_2d_vtk_image(val, x, y, spacing):
     return img
 
 
+class slicer_factory():
+    def __init__(self, ppl, printer, printhead):
+        """[summary]
+        
+        Arguments:
+            ppl {print_platter} -- print platter
+            printer {printer_settings} -- printer settings
+            printhead {printhead_settings} -- printhead settings
+        """
+        self._ppl = ppl
+        self._printer_settings = printer_settings
+        self._printhead_settings= printhead_settings
+
+
 def slicer_factory(slicer_type):
 
     if('fblack' == slicer_type):
         return FullBlackImageSlicer(config)
-    elif('checker_board' == slicer_type):
-        return CheckerBoardImageSlicer(config)
     else:
         return None
 
@@ -214,89 +226,4 @@ class FullBlackImageSlicer(VoxelSlicer):
             IndividualSlice.setImage(image)
             return [IndividualSlice]
 
-        return None
-
-
-class CheckerBoardImageSlicer(FullBlackImageSlicer):
-
-    def __init__(self, config):
-        super().__init__(config)
-
-        self.shell_thickness = 0.1
-        self.fill_density = 0.50
-        self.bottom_thickness = 3
-
-    def slice(self):
-
-        mergedPoly = self._mergePoly()
-
-        mergedPoly.ComputeBounds()
-        bound = mergedPoly.GetBounds()
-
-        imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
-                                self._spacing[i]))+1 for i in range(2)]
-
-        black_img = create_2d_vtk_image(
-            0, imgDim[0], imgDim[1], self._spacing)
-
-        grey_image = create_2d_vtk_image(
-            255*self.fill_density, imgDim[0], imgDim[1], self._spacing)
-
-        list_contour = slicePoly(bound[4:6], self._thickness, mergedPoly)
-
-        for i in range(len(list_contour)):
-            contour = list_contour[i]
-
-            if(i <= self.bottom_thickness):
-                individual_slice = self.full_black_slice(
-                    contour, bound, black_img)
-            else:
-                individual_slice = self.checkerboard_slice(
-                    contour, bound, black_img, grey_image)
-
-            if(individual_slice != None):
-                self._sliceStack.append(individual_slice)
-
-        return self._sliceStack
-
-    def checkerboard_slice(self, contour, bound, black_img, grey_image):
-        origin = [0]*3
-        ContourBounds = contour.GetBounds()
-        origin[0] = bound[0]
-        origin[1] = bound[2]
-        origin[2] = ContourBounds[4]
-
-        core_slice = slice(origin[2], self._thickness)
-
-        # white image origin and stencil origin must line up
-        grey_image.SetOrigin(origin)
-
-        if(contour.GetNumberOfLines() > 0):
-            skeletonizer = sk.VtkSkeletonize()
-            skeletonizer.set_shell_thickness(self.shell_thickness)
-            skeletonizer.AddInputDataObject(0, contour)
-            skeletonizer.Update()
-
-            merge = vtk.vtkAppendPolyData()
-            merge.AddInputData(contour)
-            merge.AddInputData(skeletonizer.GetOutputDataObject(0))
-            merge.Update()
-
-            self._extruder.SetInputData(skeletonizer.GetOutputDataObject(0))
-            self._extruder.Update()
-
-            self._poly2Sten.SetOutputOrigin(origin)
-            self._poly2Sten.Update()
-
-            self._imgstenc.SetInputData(grey_image)
-            self._imgstenc.Update()
-
-            core_img = vtk.vtkImageData()
-            core_img.DeepCopy(self._imgstenc.GetOutput())
-            core_slice.setImage(core_img)
-
-            skin_slice = self.full_black_slice(
-                merge.GetOutput(), bound, black_img)
-
-            return [core_slice, skin_slice[0]]
         return None
