@@ -34,16 +34,16 @@ def slice_poly(limit, increment, polydata):
         list -- list of vtkpolydata contour
     """
 
-    listOfContour = []
+    list_contour = []
 
     for height in np.arange(limit[0], limit[1]+increment, increment):
-        cutPlane = vtk.vtkPlane()
-        cutPlane.SetOrigin(0, 0, 0)
-        cutPlane.SetNormal(0, 0, 1)
-        cutPlane.SetOrigin(0, 0, height)
+        cut_plane = vtk.vtkPlane()
+        cut_plane.SetOrigin(0, 0, 0)
+        cut_plane.SetNormal(0, 0, 1)
+        cut_plane.SetOrigin(0, 0, height)
 
         cutter = vtk.vtkCutter()
-        cutter.SetCutFunction(cutPlane)
+        cutter.SetCutFunction(cut_plane)
         cutter.SetInputData(polydata)
 
         stripper = vtk.vtkStripper()
@@ -52,9 +52,9 @@ def slice_poly(limit, increment, polydata):
 
         stripper.Update()
         contour = stripper.GetOutput()
-        listOfContour.append(contour)
+        list_contour.append(contour)
 
-    return listOfContour
+    return list_contour
 
 
 class slice():
@@ -178,9 +178,9 @@ class FullBlackImageSlicer(VoxelSlicer):
         black_img = create_2d_vtk_image(
             0, imgDim[0], imgDim[1], self._spacing)
 
-        listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
+        list_contour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
-        for contour in listOfContour:
+        for contour in list_contour:
             individual_slice = self.full_black_slice(contour, bound, black_img)
             if(individual_slice != None):
                 self._sliceStack.append(individual_slice)
@@ -242,10 +242,10 @@ class CheckerBoardImageSlicer(FullBlackImageSlicer):
         grey_image = create_2d_vtk_image(
             255*self.fill_density, imgDim[0], imgDim[1], self._spacing)
 
-        listOfContour = slicePoly(bound[4:6], self._thickness, mergedPoly)
+        list_contour = slicePoly(bound[4:6], self._thickness, mergedPoly)
 
-        for i in range(len(listOfContour)):
-            contour = listOfContour[i]
+        for i in range(len(list_contour)):
+            contour = list_contour[i]
 
             if(i <= self.bottom_thickness):
                 individual_slice = self.full_black_slice(
