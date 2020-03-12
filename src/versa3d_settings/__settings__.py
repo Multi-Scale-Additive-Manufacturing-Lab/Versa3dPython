@@ -17,8 +17,10 @@ def load_stored_settings(name, settings):
     return list_settings
 
 
-def load_settings():
-    settings = QSettings()
+def load_settings(settings = None):
+
+    if(settings is None):
+        settings = QSettings()
 
     list_printer = load_stored_settings('printer_settings', settings)
     list_printhead = load_stored_settings('printhead_settings', settings)
