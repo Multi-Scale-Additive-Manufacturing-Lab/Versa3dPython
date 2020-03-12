@@ -1,5 +1,6 @@
 import unittest
 import os
+from unittest.mock import Mock
 
 import vtk
 
@@ -12,9 +13,15 @@ class gcode_test(unittest.TestCase):
         reader.SetFileName('./test/test_file/3DBenchySmall.stl')
         reader.Update()
 
-        self.polydata = reader.GetOutput()
+        printbedsize = [50, 50, 100]
 
-        printbedsize = [50,50,100]
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(reader.GetOutputPort())
+
+        self.actor = vtk.vtkActor()
+        self.actor.SetMapper(mapper)
+
+        print_platter = Mock()
 
     def test_generate_gcode(self):
         assert(False)

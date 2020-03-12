@@ -15,7 +15,7 @@ def create_2d_vtk_image(val, x, y, spacing):
 class slicer_factory():
     def __init__(self, ppl, printer, printhead):
         """[summary]
-        
+
         Arguments:
             ppl {print_platter} -- print platter
             printer {printer_settings} -- printer settings
@@ -23,15 +23,14 @@ class slicer_factory():
         """
         self._ppl = ppl
         self._printer_settings = printer_settings
-        self._printhead_settings= printhead_settings
+        self._printhead_settings = printhead_settings
 
+    def create_slicer(self, slicer_type):
 
-def slicer_factory(slicer_type):
-
-    if('fblack' == slicer_type):
-        return FullBlackImageSlicer(config)
-    else:
-        return None
+        if('fblack' == slicer_type):
+            return fb_slicer(config)
+        else:
+            return None
 
 
 def slice_poly(limit, increment, polydata):
@@ -89,26 +88,26 @@ class slice():
         return self._image
 
 
-class VoxelSlicer():
+class voxel_slicer():
     def __init__(self, config):
         self._listOfActors = []
 
-        self._buildBedSizeXY = config.getMachineSetting('printbedsize')
+        self._plate_size = (50.0, 50.0)
 
-        self._buildHeight = config.getMachineSetting('buildheight')
-        self._thickness = config.getPrintSetting('layer_thickness')
-        dpi = config.getPrintHeadSetting('dpi')
-        self._sliceStack = []
+        self._build_height = 100.0
+        self._thickness = 0.100
+        dpi = (150, 1500)
+        self._slice_stack = []
 
-        self._buildBedVolPixel = [0]*2
-        XYVoxelSize = [0]*2
+        self._buid_voxel = [0]*2
+        voxel_size = [0]*2
 
         for i in range(0, 2):
-            self._buildBedVolPixel[i] = int(
+            self._buid_voxel[i] = int(
                 math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
-            XYVoxelSize[i] = self._buildBedSizeXY[i]/self._buildBedVolPixel[i]
+            voxel_size[i] = self._buildBedSizeXY[i]/self._buid_voxel[i]
 
-        self._spacing = XYVoxelSize+[self._thickness]
+        self._spacing = voxel_size+[self._thickness]
 
         self._extruder = vtk.vtkLinearExtrusionFilter()
         self._extruder.SetScaleFactor(1.)
@@ -125,7 +124,7 @@ class VoxelSlicer():
         self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
         self._imgstenc.SetBackgroundValue(255)
 
-    def _mergePoly(self):
+    def _merge_poly(self):
         """internal function that merge all the actors into a single polydata. 
         polydata is in world coord
 
@@ -159,38 +158,29 @@ class VoxelSlicer():
 
         return clean.GetOutput()
 
-    def addActor(self, actor):
+    def add_actor(self, actor):
         self._listOfActors.append(actor)
 
-    def getBuildVolume(self):
-        return self._sliceStack
 
-    def getXYDim(self):
-        return self._buildBedVolPixel
-
-    def getSlice(self, index):
-        return self._sliceStack[index]
-
-
-class FullBlackImageSlicer(VoxelSlicer):
+class fb_slicer(voxel_slicer):
 
     def __init__(self, config):
         super().__init__(config)
 
     def slice(self):
 
-        mergedPoly = self._mergePoly()
+        merged_poly = self._merge_poly()
 
-        mergedPoly.ComputeBounds()
-        bound = mergedPoly.GetBounds()
+        merged_poly.ComputeBounds()
+        bound = merged_poly.GetBounds()
 
-        imgDim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
+        img_dim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
                                 self._spacing[i]))+1 for i in range(2)]
 
         black_img = create_2d_vtk_image(
-            0, imgDim[0], imgDim[1], self._spacing)
+            0, img_dim[0], img_dim[1], self._spacing)
 
-        list_contour = slicePoly(bound[4:6], self._thickness, mergedPoly)
+        list_contour = slice_poly(bound[4:6], self._thickness, merged_poly)
 
         for contour in list_contour:
             individual_slice = self.full_black_slice(contour, bound, black_img)
@@ -201,10 +191,10 @@ class FullBlackImageSlicer(VoxelSlicer):
 
     def full_black_slice(self, contour, bound, black_img):
         origin = [0]*3
-        ContourBounds = contour.GetBounds()
+        contour_bounds = contour.GetBounds()
         origin[0] = bound[0]
         origin[1] = bound[2]
-        origin[2] = ContourBounds[4]
+        origin[2] = contour_bounds[4]
 
         IndividualSlice = slice(origin[2], self._thickness)
 
