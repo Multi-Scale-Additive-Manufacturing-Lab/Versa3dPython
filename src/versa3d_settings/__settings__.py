@@ -2,6 +2,36 @@ from PyQt5.QtCore import QSettings
 from PyQt5.QtCore import pyqtSlot
 from .__options__ import enum_option, ordered_array_option, single_option
 
+from enum import Enum
+
+
+class settings(Enum):
+    PRINTER = 'printer_settings'
+    PRINTHEAD = 'printhead_settings'
+    PRINT_PRESET = 'print_settings'
+
+
+class printhead(Enum):
+    DPI = 'dpi'
+
+
+class printer(Enum):
+    BUILD_BED_SIZE = 'bds'
+    COORD_OFFSET = 'coord_o'
+    MODEL = 'model'
+
+
+class print(Enum):
+    LAYER_THICKESS = 'lt'
+    ROLLER_ROT = 'rol_rpm'
+    ROLLER_LIN = 'rol_lin'
+    POWDER_LOSS_OFFSET = 'pl'
+    PRINT_HEIGHT_OFFSET = 'pho'
+    ROLLER_WORK_DIST = 'rwd'
+    BED_SELECT = 'bs'
+    SATURATION = 'sat'
+    N_PASS = 'n_p'
+
 
 def load_stored_settings(name, settings):
     settings.beginGroup(name)
@@ -17,7 +47,7 @@ def load_stored_settings(name, settings):
     return list_settings
 
 
-def load_settings(settings = None):
+def load_settings(settings=None):
 
     if(settings is None):
         settings = QSettings()
@@ -46,51 +76,37 @@ class generic_settings():
         self._name = name
         self._settings = QSettings()
 
-        self._lso = {}
         self._prefix = None
-        self._category = None
+
+    def get_value(self, setting):
+        path = f'{self._prefix}/{self._name}/{key}'
+        self._settings.beginGroup(path)
+        value = self._settings.value('value')
+        self._settings.endGroup()
+        return value
 
     @property
     def name(self):
         return self._name
-    
+
     @property
     def category(self):
-        return self._category
+        path = f'{self._prefix}/{self._name}/category'
+        return self._settings.value(path, [])
 
-    #@pyqtSlot
-    def save_settings(self):
-        self._settings.beginGroup(self._name)
-        for name, option in self._lso.items():
-            if(option is ordered_array_option):
-                self._settings.beginWriteArray(name, len(option))
-                for i, val in enumerate(option.value):
-                    self._settings.setArrayIndex(i)
-                    self._settings.setValue(name, val)
-                self._settings.endArray()
-            else:
-                self._settings.setValue(name, option.value)
-        self._settings.endGroup()
-
-    def load_settings(self):
-        self._settings.beginGroup(self._name)
-        for name, option in self._lso.items():
-            if(type(option) is ordered_array_option):
-                self._settings.beginReadArray(name)
-                for i, val in enumerate(option.value):
-                    self._settings.setArrayIndex(i)
-                    variant = self._settings.value(name, val)
-                    option.set_value_at_index(i, variant)
-                self._settings.endArray()
-            else:
-                variant = self._settings.value(name, option.default_value)
-                option.value = variant
-
+    @pyqtSlot(str, int)
+    @pyqtSlot(str, float)
+    @pyqtSlot(str, bool)
+    def save_value(self, key, value):
+        path = f'{self._prefix}/{self._name}/{key}'
+        self._settings.beginGroup(path)
+        self._settings.setValue('value', value)
         self._settings.endGroup()
 
 
 class printer_settings(generic_settings):
     category = ['plate']
+
     def __init__(self, name="basic_printer"):
         super().__init__(name)
 
