@@ -12,6 +12,7 @@ import src.print_platter as ppl
 import src.versa3d_command as vscom
 from src.versa3d_settings import load_settings, print_settings, printer_settings, printhead_settings
 
+
 class MainWindow(QtWidgets.QMainWindow):
     """
     main window
@@ -23,14 +24,16 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
-        self.settings = QSettings()
+        self.settings_dict = load_settings()
 
         self.stl_renderer = vtk.vtkRenderer()
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
-        self.platter = ppl.print_platter()
+        #Figure out a way to share settings
+        self.platter = ppl.print_platter((50,50,100))
+
         self.platter.signal_add_part.connect(self.render_parts)
         self.platter.signal_add_part.connect(self.add_obj_to_list)
 
@@ -59,26 +62,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.action_import_stl.triggered.connect(self.import_stl)
 
-        self.settings_dict = load_settings()
-
         self.initialize_tab()
 
     def import_stl(self):
-        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open stl' ,"", "stl (*.stl)")
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Open stl', "", "stl (*.stl)")
         if(filename[0] != ''):
             com = vscom.import_command(filename[0], self.platter)
             self.undo_stack.push(com)
 
     def initialize_tab(self):
-        
-        tab_names = {'print_settings':"Print Setting",
-                               'printhead_settings':"PrintHead",
-                               'printer_settings':"Printer"}
+
+        tab_names = {'print_settings': "Print Setting",
+                     'printhead_settings': "PrintHead",
+                     'printer_settings': "Printer"}
 
         for setting_name, tab_name in tab_names.items():
 
             page = QtWidgets.QWidget()
-            self.MainViewTab.addTab(page,tab_name)
+            self.MainViewTab.addTab(page, tab_name)
 
             layout = QtWidgets.QHBoxLayout()
             leftSide = QtWidgets.QVBoxLayout()
@@ -88,14 +90,14 @@ class MainWindow(QtWidgets.QMainWindow):
             rightSide.addWidget(stackedWidget)
 
             PageSize = page.size()
-            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32,5)
+            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32, 5)
             rightSide.addSpacerItem(RightSideSpacer)
 
             layout.addLayout(leftSide)
             layout.addLayout(rightSide)
 
             TopLeftSideLayout = QtWidgets.QHBoxLayout()
-            
+
             preset_selector = QtWidgets.QComboBox()
             save_button = QtWidgets.QToolButton()
             delete_button = QtWidgets.QToolButton()
@@ -142,8 +144,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.populatePage(item,subPage)
             """
             page.setLayout(layout)
-    
-    def populatePage(self,item,page):
+
+    def populatePage(self, item, page):
 
         label = item.label
         ValType = item.type
@@ -160,50 +162,50 @@ class MainWindow(QtWidgets.QMainWindow):
             for key, val in enum.items():
                 ComboBox.addItem(key)
 
-            item.setQObject(ComboBox)            
-            self.addItem(label,sidetext,[ComboBox],page,sublayout)
+            item.setQObject(ComboBox)
+            self.addItem(label, sidetext, [ComboBox], page, sublayout)
 
-        elif(ValType in ["float","double"]):
+        elif(ValType in ["float", "double"]):
             DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label,sidetext,[DoubleSpinBox],page,sublayout)
+            self.addItem(label, sidetext, [DoubleSpinBox], page, sublayout)
             DoubleSpinBox.setValue(default_value)
             item.setQObject(DoubleSpinBox)
 
         elif(ValType == "int"):
             IntSpinBox = QtWidgets.QSpinBox(page)
-            self.addItem(label, sidetext,[IntSpinBox],page,sublayout)
+            self.addItem(label, sidetext, [IntSpinBox], page, sublayout)
             IntSpinBox.setValue(default_value)
             item.setQObject(IntSpinBox)
 
         elif(ValType == "2dPoint"):
             listOfQtWidget = []
-            for i in range(0,2):
+            for i in range(0, 2):
                 DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
                 listOfQtWidget.append(DoubleSpinBox)
                 DoubleSpinBox.setValue(default_value[i])
                 item.addQObject(DoubleSpinBox)
-                
-            self.addItem(label,sidetext,listOfQtWidget,page,sublayout)         
-        
+
+            self.addItem(label, sidetext, listOfQtWidget, page, sublayout)
+
         layout.addLayout(sublayout)
-    
-    def addItem(self,label,sidetext,ListQtWidget,page,layout):
+
+    def addItem(self, label, sidetext, ListQtWidget, page, layout):
         if(label != ""):
-            layout.addWidget(QtWidgets.QLabel(label,page))
-        
+            layout.addWidget(QtWidgets.QLabel(label, page))
+
         for QtWidget in ListQtWidget:
             layout.addWidget(QtWidget)
 
         if(sidetext != ""):
-            layout.addWidget(QtWidgets.QLabel(sidetext,page))
-    
+            layout.addWidget(QtWidgets.QLabel(sidetext, page))
+
     @pyqtSlot(QtWidgets.QListWidgetItem)
-    def switchPage(self,item):
+    def switchPage(self, item):
         category = item.text()
         stackedWidget, index = self.mapPage[category]
         stackedWidget.setCurrentIndex(index)
 
-    #TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
+    # TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
     def translate(self, delta_pos):
         parts = self.platter.parts
         for part in parts:
@@ -219,7 +221,7 @@ class MainWindow(QtWidgets.QMainWindow):
         x = self.x_delta.value()
         self.translate(np.array([x, 0, 0]))
 
-    #TODO implement undo for list
+    # TODO implement undo for list
     @pyqtSlot(ppl.print_object)
     def add_obj_to_list(self, obj):
         table = self.table_stl

@@ -65,25 +65,16 @@ class print_platter(QObject):
     signal_add_part = pyqtSignal(print_object)
     signal_remove_part = pyqtSignal(print_object)
 
-    def __init__(self, printer_name='basic_printer'):
+    def __init__(self, size):
         """print platter class, represents printer plate
         """
         QObject.__init__(self)
         self._parts = []
-        self._printer = printer_name
-
-        self._settings = QSettings()
+        self._size = size
 
     @property
     def size(self):
-        x_sc = self._settings.value(
-            '{}/bed_x'.format(self._printer), 50, type=float)
-        y_sc = self._settings.value(
-            '{}/bed_y'.format(self._printer), 50, type=float)
-        z_sc = self._settings.value(
-            '{}/bed_z'.format(self._printer), 100, type=float)
-
-        return (x_sc, y_sc, z_sc)
+        return self._size
 
     @property
     def parts(self):
