@@ -1,8 +1,7 @@
 import unittest
-import os
-from unittest.mock import Mock
-
 import vtk
+
+from src.slicing import FullBlackSlicer
 
 
 class gcode_test(unittest.TestCase):
@@ -13,16 +12,20 @@ class gcode_test(unittest.TestCase):
         reader.SetFileName('./test/test_file/3DBenchySmall.stl')
         reader.Update()
 
-        printbedsize = [50, 50, 100]
-
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(reader.GetOutputPort())
 
         self.actor = vtk.vtkActor()
         self.actor.SetMapper(mapper)
 
-        print_platter = Mock()
-
     def test_generate_gcode(self):
-        assert(False)
-        print('done')
+        printer_bounds = [50, 50, 100]
+        layer_thickness = 0.1
+        dpi = [150, 150]
+
+        slicer = FullBlackSlicer(printer_bounds, layer_thickness, dpi)
+        slicer.add_actor(self.actor)
+
+        slice_stack = slicer.slice()
+
+        assert(len(slice_stack) != 0)

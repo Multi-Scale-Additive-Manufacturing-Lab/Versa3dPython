@@ -69,11 +69,11 @@ def slice_poly(limit, increment, polydata):
 
 
 class Slice():
-    def __init__(self, height, thickess):
+    def __init__(self, height, thickess, img):
         self._height = height
         self._thickness = thickess
 
-        self._image = None
+        self._image = img
 
     @property
     def height(self):
@@ -89,23 +89,21 @@ class Slice():
 
 
 class VoxelSlicer():
-    def __init__(self):
-        self._listOfActors = []
+    def __init__(self, printer_bounds, layer_thickness, dpi):
+        self._list_actors = []
 
-        self._plate_size = (50.0, 50.0)
+        self._printer_dim = printer_bounds
 
-        self._build_height = 100.0
-        self._thickness = 0.100
-        dpi = (150, 1500)
+        self._thickness = layer_thickness
         self._slice_stack = []
 
-        self._buid_voxel = [0]*2
+        self._build_voxel = [0]*2
         voxel_size = [0]*2
 
         for i in range(0, 2):
-            self._buid_voxel[i] = int(
-                math.ceil(self._buildBedSizeXY[i]*dpi[i]/(0.0254*1000)))
-            voxel_size[i] = self._buildBedSizeXY[i]/self._buid_voxel[i]
+            self._build_voxel[i] = int(
+                math.ceil(printer_bounds[i]*dpi[i]/(0.0254*1000)))
+            voxel_size[i] = printer_bounds[i]/self._build_voxel[i]
 
         self._spacing = voxel_size+[self._thickness]
 
@@ -114,14 +112,14 @@ class VoxelSlicer():
         self._extruder.SetExtrusionTypeToNormalExtrusion()
         self._extruder.SetVector(0, 0, 1)
 
-        self._poly2Sten = vtk.vtkPolyDataToImageStencil()
+        self._poly2sten = vtk.vtkPolyDataToImageStencil()
         # important for when SetVector is 0,0,1
-        self._poly2Sten.SetTolerance(0)
-        self._poly2Sten.SetOutputSpacing(self._spacing)
-        self._poly2Sten.SetInputConnection(self._extruder.GetOutputPort())
+        self._poly2sten.SetTolerance(0)
+        self._poly2sten.SetOutputSpacing(self._spacing)
+        self._poly2sten.SetInputConnection(self._extruder.GetOutputPort())
 
         self._imgstenc = vtk.vtkImageStencil()
-        self._imgstenc.SetStencilConnection(self._poly2Sten.GetOutputPort())
+        self._imgstenc.SetStencilConnection(self._poly2sten.GetOutputPort())
         self._imgstenc.SetBackgroundValue(255)
 
     def _merge_poly(self):
@@ -135,7 +133,7 @@ class VoxelSlicer():
         merge = vtk.vtkAppendPolyData()
         clean = vtk.vtkCleanPolyData()
 
-        for actor in self._listOfActors:
+        for actor in self._list_actors:
 
             transform = vtk.vtkTransform()
             transform.SetMatrix(actor.GetMatrix())
@@ -159,7 +157,7 @@ class VoxelSlicer():
         return clean.GetOutput()
 
     def add_actor(self, actor):
-        self._listOfActors.append(actor)
+        self._list_actors.append(actor)
 
 
 class FullBlackSlicer(VoxelSlicer):
@@ -172,7 +170,7 @@ class FullBlackSlicer(VoxelSlicer):
         bound = merged_poly.GetBounds()
 
         img_dim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
-                                self._spacing[i]))+1 for i in range(2)]
+                                 self._spacing[i]))+1 for i in range(2)]
 
         black_img = create_2d_vtk_image(
             0, img_dim[0], img_dim[1], self._spacing)
@@ -181,10 +179,10 @@ class FullBlackSlicer(VoxelSlicer):
 
         for contour in list_contour:
             individual_slice = self.full_black_slice(contour, bound, black_img)
-            if(individual_slice != None):
-                self._sliceStack.append(individual_slice)
+            if(individual_slice is not None):
+                self._slice_stack.append(individual_slice)
 
-        return self._sliceStack
+        return self._slice_stack
 
     def full_black_slice(self, contour, bound, black_img):
         origin = [0]*3
@@ -193,8 +191,6 @@ class FullBlackSlicer(VoxelSlicer):
         origin[1] = bound[2]
         origin[2] = contour_bounds[4]
 
-        IndividualSlice = slice(origin[2], self._thickness)
-
         # white image origin and stencil origin must line up
         black_img.SetOrigin(origin)
 
@@ -202,15 +198,14 @@ class FullBlackSlicer(VoxelSlicer):
             self._extruder.SetInputData(contour)
             self._extruder.Update()
 
-            self._poly2Sten.SetOutputOrigin(origin)
-            self._poly2Sten.Update()
+            self._poly2sten.SetOutputOrigin(origin)
+            self._poly2sten.Update()
 
             self._imgstenc.SetInputData(black_img)
             self._imgstenc.Update()
 
             image = vtk.vtkImageData()
             image.DeepCopy(self._imgstenc.GetOutput())
-            IndividualSlice.setImage(image)
-            return [IndividualSlice]
+            return [slice(origin[2], self._thickness, image)]
 
         return None
