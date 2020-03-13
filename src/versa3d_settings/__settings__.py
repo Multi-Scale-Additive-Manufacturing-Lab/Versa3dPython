@@ -39,7 +39,7 @@ def load_stored_settings(name, settings):
 
     list_settings = []
     for setting_name in list_stored:
-        setting_obj = print_settings(setting_name)
+        setting_obj = PrintSettings(setting_name)
         setting_obj.load_settings()
         list_settings.append(setting_obj)
 
@@ -57,20 +57,20 @@ def load_settings(settings=None):
         Setting.PRINT_PRESET, settings)
 
     if(len(list_printer) == 0):
-        list_printer.append(printer_settings())
+        list_printer.append(PrinterSettings())
 
     if(len(list_printhead) == 0):
-        list_printhead.append(printhead_settings())
+        list_printhead.append(PrintheadSettings())
 
     if(len(list_print_setting) == 0):
-        list_print_setting.append(print_settings())
+        list_print_setting.append(PrintSettings())
 
     return {Setting.PRINTER: list_printer,
             Setting.PRINTHEAD: list_printhead,
             Setting.PRINT_PRESET: list_print_setting}
 
 
-class generic_settings():
+class GenericSettings():
     def __init__(self, name):
         super().__init__()
         self._name = name
@@ -91,7 +91,7 @@ class generic_settings():
         return self._name
 
 
-class printer_settings(generic_settings):
+class PrinterSettings(GenericSettings):
 
     def __init__(self, name="basic_printer"):
         super().__init__(name)
@@ -111,7 +111,7 @@ class printer_settings(generic_settings):
         self._lso[Printer.COORD_OFFSET].category = 'plate'
 
 
-class printhead_settings(generic_settings):
+class PrintheadSettings(GenericSettings):
 
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
@@ -124,7 +124,7 @@ class printhead_settings(generic_settings):
         self._lso[Printhead.DPI].category = 'resolution'
 
 
-class print_settings(generic_settings):
+class PrintSettings(GenericSettings):
 
     def __init__(self, name='default_settings'):
         super().__init__(name)
