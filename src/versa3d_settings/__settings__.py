@@ -1,7 +1,7 @@
 from enum import Enum
 
 from PyQt5.QtCore import QSettings
-from .__options__ import EnumOption, OrderedArrayOption, SingleOption
+from .__options__ import EnumOption, PointOption, SingleOption
 
 
 class Setting(Enum):
@@ -14,7 +14,7 @@ class Printhead(Enum):
     DPI = 'dpi'
 
 
-class printer_enum(Enum):
+class Printer(Enum):
     BUILD_BED_SIZE = 'bds'
     COORD_OFFSET = 'coord_o'
     MODEL = 'model'
@@ -98,17 +98,17 @@ class printer_settings(generic_settings):
 
         self._prefix = Setting.PRINTER
 
-        self._lso[printer_enum.BUILD_BED_SIZE] = OrderedArrayOption([
-                                                                      50, 50, 100])
-        self._lso[printer_enum.BUILD_BED_SIZE].label = 'build bed size'
-        self._lso[printer_enum.BUILD_BED_SIZE].sidetext = 'mm'
-        self._lso[printer_enum.BUILD_BED_SIZE].category = 'plate'
+        self._lso[Printer.BUILD_BED_SIZE] = PointOption(
+            self._prefix, Printer.BUILD_BED_SIZE, [50, 50, 100])
+        self._lso[Printer.BUILD_BED_SIZE].label = 'build bed size'
+        self._lso[Printer.BUILD_BED_SIZE].sidetext = 'mm'
+        self._lso[Printer.BUILD_BED_SIZE].category = 'plate'
 
-        self._lso[printer_enum.COORD_OFFSET] = OrderedArrayOption([
-                                                                    0.0, 0.0, 0.0])
-        self._lso[printer_enum.COORD_OFFSET].label = 'coordinate offset'
-        self._lso[printer_enum.COORD_OFFSET].sidetext = 'mm'
-        self._lso[printer_enum.COORD_OFFSET].category = 'plate'
+        self._lso[Printer.COORD_OFFSET] = PointOption(
+            self._prefix, Printer.COORD_OFFSET, [0.0, 0.0, 0.0])
+        self._lso[Printer.COORD_OFFSET].label = 'coordinate offset'
+        self._lso[Printer.COORD_OFFSET].sidetext = 'mm'
+        self._lso[Printer.COORD_OFFSET].category = 'plate'
 
 
 class printhead_settings(generic_settings):
@@ -118,7 +118,8 @@ class printhead_settings(generic_settings):
 
         self._prefix = Setting.PRINTHEAD
 
-        self._lso[Printhead.DPI] = OrderedArrayOption([150, 150])
+        self._lso[Printhead.DPI] = PointOption(
+            self._prefix, Printhead.DPI, [150, 150])
         self._lso[Printhead.DPI].label = 'dpi'
         self._lso[Printhead.DPI].category = 'resolution'
 
@@ -155,26 +156,30 @@ class print_settings(generic_settings):
         self._lso[PrintParam.POWDER_LOSS_OFFSET].sidetext = '%'
         self._lso[PrintParam.POWDER_LOSS_OFFSET].category = 'layer'
 
-        self._lso[PrintParam.POWDER_HEIGHT_OFFSET] = SingleOption(10.0)
+        self._lso[PrintParam.POWDER_HEIGHT_OFFSET] = SingleOption(
+            self._prefix, PrintParam.POWDER_HEIGHT_OFFSET, 10.0)
         self._lso[PrintParam.POWDER_HEIGHT_OFFSET].label = 'printheight offset'
         self._lso[PrintParam.POWDER_HEIGHT_OFFSET].sidetext = 'microns'
         self._lso[PrintParam.POWDER_HEIGHT_OFFSET].category = 'layer'
 
-        self._lso[PrintParam.ROLLER_WORK_DIST] = SingleOption(10.0)
+        self._lso[PrintParam.ROLLER_WORK_DIST] = SingleOption(
+            self._prefix, PrintParam.ROLLER_WORK_DIST, 10.0)
         self._lso[PrintParam.ROLLER_WORK_DIST].label = 'roller work distance'
         self._lso[PrintParam.ROLLER_WORK_DIST].sidetext = 'microns'
         self._lso[PrintParam.ROLLER_WORK_DIST].category = 'layer'
 
         self._lso[PrintParam.BED_SELECT] = EnumOption(
-            0, ['bed 1', 'bed 2', 'bed 3'])
+            self._prefix, PrintParam.BED_SELECT, 0, ['bed 1', 'bed 2', 'bed 3'])
         self._lso[PrintParam.BED_SELECT].label = 'bed selection'
         self._lso[PrintParam.BED_SELECT].category = 'layer'
 
-        self._lso[PrintParam.SATURATION] = SingleOption(100.0)
+        self._lso[PrintParam.SATURATION] = SingleOption(
+            self._prefix, PrintParam.SATURATION, 100.0)
         self._lso[PrintParam.SATURATION].label = 'saturation'
         self._lso[PrintParam.SATURATION].sidetext = '%'
         self._lso[PrintParam.SATURATION].category = 'infill'
 
-        self._lso[PrintParam.N_PASS] = SingleOption(1)
+        self._lso[PrintParam.N_PASS] = SingleOption(
+            self._prefix, PrintParam.N_PASS, 1)
         self._lso[PrintParam.N_PASS].label = 'number of pass'
         self._lso[PrintParam.N_PASS].category = 'infill'
