@@ -4,13 +4,13 @@ from PyQt5.QtCore import QSettings
 from .__options__ import EnumOption, OrderedArrayOption, SingleOption
 
 
-class settings_enum(Enum):
+class Setting(Enum):
     PRINTER = 'printer_settings'
     PRINTHEAD = 'printhead_settings'
     PRINT_PRESET = 'print_settings'
 
 
-class printhead_enum(Enum):
+class Printhead(Enum):
     DPI = 'dpi'
 
 
@@ -20,7 +20,7 @@ class printer_enum(Enum):
     MODEL = 'model'
 
 
-class print_enum(Enum):
+class PrintParam(Enum):
     LAYER_THICKESS = 'lt'
     ROLLER_ROT = 'rol_rpm'
     ROLLER_LIN = 'rol_lin'
@@ -51,10 +51,10 @@ def load_settings(settings=None):
     if(settings is None):
         settings = QSettings()
 
-    list_printer = load_stored_settings(settings_enum.PRINTER, settings)
-    list_printhead = load_stored_settings(settings_enum.PRINTHEAD, settings)
+    list_printer = load_stored_settings(Setting.PRINTER, settings)
+    list_printhead = load_stored_settings(Setting.PRINTHEAD, settings)
     list_print_setting = load_stored_settings(
-        settings_enum.PRINT_PRESET, settings)
+        Setting.PRINT_PRESET, settings)
 
     if(len(list_printer) == 0):
         list_printer.append(printer_settings())
@@ -65,9 +65,9 @@ def load_settings(settings=None):
     if(len(list_print_setting) == 0):
         list_print_setting.append(print_settings())
 
-    return {settings_enum.PRINTER: list_printer,
-            settings_enum.PRINTHEAD: list_printhead,
-            settings_enum.PRINT_PRESET: list_print_setting}
+    return {Setting.PRINTER: list_printer,
+            Setting.PRINTHEAD: list_printhead,
+            Setting.PRINT_PRESET: list_print_setting}
 
 
 class generic_settings():
@@ -96,7 +96,7 @@ class printer_settings(generic_settings):
     def __init__(self, name="basic_printer"):
         super().__init__(name)
 
-        self._prefix = settings_enum.PRINTER
+        self._prefix = Setting.PRINTER
 
         self._lso[printer_enum.BUILD_BED_SIZE] = OrderedArrayOption([
                                                                       50, 50, 100])
@@ -116,11 +116,11 @@ class printhead_settings(generic_settings):
     def __init__(self, name='basic_printhead'):
         super().__init__(name)
 
-        self._prefix = settings_enum.PRINTHEAD
+        self._prefix = Setting.PRINTHEAD
 
-        self._lso[settings_enum.DPI] = OrderedArrayOption([150, 150])
-        self._lso[settings_enum.DPI].label = 'dpi'
-        self._lso[settings_enum.DPI].category = 'resolution'
+        self._lso[Printhead.DPI] = OrderedArrayOption([150, 150])
+        self._lso[Printhead.DPI].label = 'dpi'
+        self._lso[Printhead.DPI].category = 'resolution'
 
 
 class print_settings(generic_settings):
@@ -128,53 +128,53 @@ class print_settings(generic_settings):
     def __init__(self, name='default_settings'):
         super().__init__(name)
 
-        self._prefix = f'{settings_enum.PRINT_PRESET}/{name}'
+        self._prefix = f'{Setting.PRINT_PRESET}/{name}'
 
-        self._lso[print_enum.LAYER_THICKNESS] = SingleOption(
-            self._prefix, print_enum.LAYER_THICKESS, 100.0)
-        self._lso[print_enum.LAYER_THICKNESS].label = 'layer thickness'
+        self._lso[PrintParam.LAYER_THICKNESS] = SingleOption(
+            self._prefix, PrintParam.LAYER_THICKESS, 100.0)
+        self._lso[PrintParam.LAYER_THICKNESS].label = 'layer thickness'
         # do greek letter later
-        self._lso[print_enum.LAYER_THICKNESS].sidetext = 'microns'
-        self._lso[print_enum.LAYER_THICKNESS].category = 'layer'
+        self._lso[PrintParam.LAYER_THICKNESS].sidetext = 'microns'
+        self._lso[PrintParam.LAYER_THICKNESS].category = 'layer'
 
-        self._lso[print_enum.ROLLER_ROT] = SingleOption(
-            self._prefix, print_enum.ROLLER_ROT, 100.0)
-        self._lso[print_enum.ROLLER_ROT].label = 'roller rotation speed'
-        self._lso[print_enum.ROLLER_ROT].sidetext = 'rpm'
-        self._lso[print_enum.ROLLER_ROT].category = 'layer'
+        self._lso[PrintParam.ROLLER_ROT] = SingleOption(
+            self._prefix, PrintParam.ROLLER_ROT, 100.0)
+        self._lso[PrintParam.ROLLER_ROT].label = 'roller rotation speed'
+        self._lso[PrintParam.ROLLER_ROT].sidetext = 'rpm'
+        self._lso[PrintParam.ROLLER_ROT].category = 'layer'
 
-        self._lso[print_enum.ROLLER_LIN] = SingleOption(
-            self._prefix, print_enum.ROLLER_LIN, 10.0)
-        self._lso[print_enum.ROLLER_LIN].label = 'roller linear speed'
-        self._lso[print_enum.ROLLER_LIN].sidetext = 'mm'
-        self._lso[print_enum.ROLLER_LIN].category = 'layer'
+        self._lso[PrintParam.ROLLER_LIN] = SingleOption(
+            self._prefix, PrintParam.ROLLER_LIN, 10.0)
+        self._lso[PrintParam.ROLLER_LIN].label = 'roller linear speed'
+        self._lso[PrintParam.ROLLER_LIN].sidetext = 'mm'
+        self._lso[PrintParam.ROLLER_LIN].category = 'layer'
 
-        self._lso[print_enum.POWDER_LOSS_OFFSET] = SingleOption(
-            self._prefix, print_enum.POWDER_LOSS_OFFSET, 10.0)
-        self._lso[print_enum.POWDER_LOSS_OFFSET].label = 'powder loss offset'
-        self._lso[print_enum.POWDER_LOSS_OFFSET].sidetext = '%'
-        self._lso[print_enum.POWDER_LOSS_OFFSET].category = 'layer'
+        self._lso[PrintParam.POWDER_LOSS_OFFSET] = SingleOption(
+            self._prefix, PrintParam.POWDER_LOSS_OFFSET, 10.0)
+        self._lso[PrintParam.POWDER_LOSS_OFFSET].label = 'powder loss offset'
+        self._lso[PrintParam.POWDER_LOSS_OFFSET].sidetext = '%'
+        self._lso[PrintParam.POWDER_LOSS_OFFSET].category = 'layer'
 
-        self._lso[print_enum.POWDER_HEIGHT_OFFSET] = SingleOption(10.0)
-        self._lso[print_enum.POWDER_HEIGHT_OFFSET].label = 'printheight offset'
-        self._lso[print_enum.POWDER_HEIGHT_OFFSET].sidetext = 'microns'
-        self._lso[print_enum.POWDER_HEIGHT_OFFSET].category = 'layer'
+        self._lso[PrintParam.POWDER_HEIGHT_OFFSET] = SingleOption(10.0)
+        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].label = 'printheight offset'
+        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].sidetext = 'microns'
+        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].category = 'layer'
 
-        self._lso[print_enum.ROLLER_WORK_DIST] = SingleOption(10.0)
-        self._lso[print_enum.ROLLER_WORK_DIST].label = 'roller work distance'
-        self._lso[print_enum.ROLLER_WORK_DIST].sidetext = 'microns'
-        self._lso[print_enum.ROLLER_WORK_DIST].category = 'layer'
+        self._lso[PrintParam.ROLLER_WORK_DIST] = SingleOption(10.0)
+        self._lso[PrintParam.ROLLER_WORK_DIST].label = 'roller work distance'
+        self._lso[PrintParam.ROLLER_WORK_DIST].sidetext = 'microns'
+        self._lso[PrintParam.ROLLER_WORK_DIST].category = 'layer'
 
-        self._lso[print_enum.BED_SELECT] = EnumOption(
+        self._lso[PrintParam.BED_SELECT] = EnumOption(
             0, ['bed 1', 'bed 2', 'bed 3'])
-        self._lso[print_enum.BED_SELECT].label = 'bed selection'
-        self._lso[print_enum.BED_SELECT].category = 'layer'
+        self._lso[PrintParam.BED_SELECT].label = 'bed selection'
+        self._lso[PrintParam.BED_SELECT].category = 'layer'
 
-        self._lso[print_enum.SATURATION] = SingleOption(100.0)
-        self._lso[print_enum.SATURATION].label = 'saturation'
-        self._lso[print_enum.SATURATION].sidetext = '%'
-        self._lso[print_enum.SATURATION].category = 'infill'
+        self._lso[PrintParam.SATURATION] = SingleOption(100.0)
+        self._lso[PrintParam.SATURATION].label = 'saturation'
+        self._lso[PrintParam.SATURATION].sidetext = '%'
+        self._lso[PrintParam.SATURATION].category = 'infill'
 
-        self._lso[print_enum.N_PASS] = SingleOption(1)
-        self._lso[print_enum.N_PASS].label = 'number of pass'
-        self._lso[print_enum.N_PASS].category = 'infill'
+        self._lso[PrintParam.N_PASS] = SingleOption(1)
+        self._lso[PrintParam.N_PASS].label = 'number of pass'
+        self._lso[PrintParam.N_PASS].category = 'infill'
