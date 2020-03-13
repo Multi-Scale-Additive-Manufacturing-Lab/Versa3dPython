@@ -7,7 +7,7 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from designer_files.icon import versa3d_icon
-from src.mouse_interaction import actor_highlight
+from src.mouse_interaction import ActorHighlight
 import src.print_platter as ppl
 import src.versa3d_command as vscom
 from src.versa3d_settings import load_settings, print_settings, printer_settings, printhead_settings
@@ -42,7 +42,7 @@ class MainWindow(QtWidgets.QMainWindow):
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
-        actor_highlight_obs = actor_highlight(self)
+        actor_highlight_obs = ActorHighlight(self)
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
