@@ -1,8 +1,8 @@
-from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QSettings
 
-class generic_option():
+
+class GenericOption():
     def __init__(self, prefix, name):
         self._key = f'{prefix}/{name}'
         self._value = None
@@ -15,7 +15,7 @@ class generic_option():
 
         self._default_value = None
         self._settings = QSettings()
-    
+
     @property
     def key(self):
         return self._key
@@ -37,9 +37,9 @@ class generic_option():
         return self._default_value
 
 
-class single_option(generic_option):
-    def __init__(self, key, default_value):
-        super().__init__(key)
+class SingleOption(GenericOption):
+    def __init__(self, prefix, key, default_value):
+        super().__init__(prefix, key)
         self._value = default_value
         self._default_value = default_value
 
@@ -51,9 +51,9 @@ class single_option(generic_option):
         self._value = value
 
 
-class enum_option(generic_option):
-    def __init__(self, prefix, name, default_value, choices):
-        super().__init__(key)
+class EnumOption(GenericOption):
+    def __init__(self, prefix, key, default_value, choices):
+        super().__init__(prefix, key)
         self._value = default_value
         self._choices = choices
 
@@ -66,25 +66,25 @@ class enum_option(generic_option):
         self._value = value
 
 
-class ordered_array_option(generic_option):
-    def __init__(self, prefix, name, default_value_array):
-        super().__init__(key)
+class OrderedArrayOption(GenericOption):
+    def __init__(self, prefix, key, default_value_array):
+        super().__init__(prefix, key)
         self._value = default_value_array
         self._default_value = default_value_array
-    
+
     @property
     def value_type(self):
         return type(self._default_value[0])
 
     def set_value_at_index(self, i, value):
         self._value[i] = value
-    
+
     @pyqtSlot(bool, int)
     @pyqtSlot(int, int)
     @pyqtSlot(float, int)
     @pyqtSlot(str, int)
     def update_value(self, value, index):
         self._value[index] = value
-    
+
     def __len__(self):
         return len(self._value)

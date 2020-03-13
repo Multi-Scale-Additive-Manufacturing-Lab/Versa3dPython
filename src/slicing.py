@@ -12,7 +12,7 @@ def create_2d_vtk_image(val, x, y, spacing):
     return img
 
 
-class slicer_factory():
+class SlicerFactory():
     def __init__(self, ppl, printer, printhead):
         """[summary]
 
@@ -28,7 +28,7 @@ class slicer_factory():
     def create_slicer(self, slicer_type):
 
         if('fblack' == slicer_type):
-            return fb_slicer(config)
+            return FullBlackSlicer(config)
         else:
             return None
 
@@ -68,7 +68,7 @@ def slice_poly(limit, increment, polydata):
     return list_contour
 
 
-class slice():
+class Slice():
     def __init__(self, height, thickess):
         self._height = height
         self._thickness = thickess
@@ -88,7 +88,7 @@ class slice():
         return self._image
 
 
-class voxel_slicer():
+class VoxelSlicer():
     def __init__(self, config):
         self._listOfActors = []
 
@@ -162,7 +162,7 @@ class voxel_slicer():
         self._listOfActors.append(actor)
 
 
-class fb_slicer(voxel_slicer):
+class FullBlackSlicer(VoxelSlicer):
 
     def __init__(self, config):
         super().__init__(config)
