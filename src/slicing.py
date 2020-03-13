@@ -22,13 +22,13 @@ class SlicerFactory():
             printhead {printhead_settings} -- printhead settings
         """
         self._ppl = ppl
-        self._printer_settings = printer_settings
-        self._printhead_settings = printhead_settings
+        self._printer_settings = printer
+        self._printhead_settings = printhead
 
     def create_slicer(self, slicer_type):
 
         if('fblack' == slicer_type):
-            return FullBlackSlicer(config)
+            return FullBlackSlicer()
         else:
             return None
 
@@ -89,7 +89,7 @@ class Slice():
 
 
 class VoxelSlicer():
-    def __init__(self, config):
+    def __init__(self):
         self._listOfActors = []
 
         self._plate_size = (50.0, 50.0)
@@ -163,9 +163,6 @@ class VoxelSlicer():
 
 
 class FullBlackSlicer(VoxelSlicer):
-
-    def __init__(self, config):
-        super().__init__(config)
 
     def slice(self):
 
