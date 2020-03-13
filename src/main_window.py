@@ -68,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
         if(filename[0] != ''):
-            com = vscom.import_command(filename[0], self.platter)
+            com = vscom.ImportCommand(filename[0], self.platter)
             self.undo_stack.push(com)
 
     def initialize_tab(self):
@@ -210,7 +210,7 @@ class MainWindow(QtWidgets.QMainWindow):
         parts = self.platter.parts
         for part in parts:
             if part.picked:
-                com = vscom.translation_command(delta_pos, part.actor)
+                com = vscom.TranslationCommand(delta_pos, part.actor)
                 self.undo_stack.push(com)
 
     def move_object_y(self):
