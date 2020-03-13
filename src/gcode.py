@@ -1,18 +1,15 @@
 import vtk
+from PIL import Image
 import os
 
 
 def gcodeFactory(type):
-    
-    if('big_machine' == type):
-        return big_machine()
-    else:
-        return None
+    pass
 
-class big_machine():
+class LinuxCncWriter():
 
-    def __init__(self):
-        pass
+    def __init__(self, slicer):
+        self._slicer = slicer
 
     def write_file(self, folder_path, slicer):
         pass
