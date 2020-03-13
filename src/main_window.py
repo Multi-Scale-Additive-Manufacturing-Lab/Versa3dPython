@@ -32,7 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
         #Figure out a way to share settings
-        self.platter = ppl.print_platter((50,50,100))
+        self.platter = ppl.PrintPlatter((50,50,100))
 
         self.platter.signal_add_part.connect(self.render_parts)
         self.platter.signal_add_part.connect(self.add_obj_to_list)
@@ -222,7 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.translate(np.array([x, 0, 0]))
 
     # TODO implement undo for list
-    @pyqtSlot(ppl.print_object)
+    @pyqtSlot(ppl.PrintObject)
     def add_obj_to_list(self, obj):
         table = self.table_stl
         name = obj.name
@@ -237,11 +237,11 @@ class MainWindow(QtWidgets.QMainWindow):
         table.setItem(current_row, 1, copies_value)
         table.setItem(current_row, 2, scale_value)
 
-    @pyqtSlot(ppl.print_object)
+    @pyqtSlot(ppl.PrintObject)
     def render_parts(self, obj):
         self.stl_renderer.AddActor(obj.actor)
 
-    @pyqtSlot(ppl.print_object)
+    @pyqtSlot(ppl.PrintObject)
     def remove_parts(self, obj):
         self.stl_renderer.RemoveActor(obj.actor)
 

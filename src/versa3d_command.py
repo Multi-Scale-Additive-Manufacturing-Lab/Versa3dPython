@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QUndoCommand
 import vtk
-from src.print_platter import print_object
+from src.print_platter import PrintObject
 
 
 class ImportCommand(QUndoCommand):
@@ -26,7 +26,7 @@ class ImportCommand(QUndoCommand):
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
 
-        self._obj = print_object('import', actor)
+        self._obj = PrintObject('import', actor)
         self._platter = platter
 
     def redo(self):

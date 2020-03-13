@@ -1,10 +1,9 @@
 import vtk
-from vtk.util import numpy_support
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
 
 
-class print_object():
+class PrintObject():
     def __init__(self, name, vtk_obj):
         """
         object to be printed
@@ -62,8 +61,8 @@ class print_object():
 
 class print_platter(QObject):
     # Qt signal
-    signal_add_part = pyqtSignal(print_object)
-    signal_remove_part = pyqtSignal(print_object)
+    signal_add_part = pyqtSignal(PrintObject)
+    signal_remove_part = pyqtSignal(PrintObject)
 
     def __init__(self, size):
         """print platter class, represents printer plate
@@ -85,7 +84,7 @@ class print_platter(QObject):
         Add object to build plate
 
         Arguments:
-            part {print_object} -- object to be printed
+            part {PrintObject} -- object to be printed
         """
         self._parts.append(part)
         self.signal_add_part.emit(part)
@@ -95,7 +94,7 @@ class print_platter(QObject):
         Remove object from build plate
 
         Arguments:
-            part {print_object} -- object to be printed
+            part {PrintObject} -- object to be printed
         """
         self._parts.remove(part)
         self.signal_remove_part.emit(part)
@@ -136,5 +135,5 @@ class print_platter(QObject):
             actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
             actor.GetProperty().SetSpecularPower(30.0)
 
-            print_obj = print_object('Dummy_Sphere_{}'.format(i), actor)
+            print_obj = PrintObject('Dummy_Sphere_{}'.format(i), actor)
             self.add_parts(print_obj)

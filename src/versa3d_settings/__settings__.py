@@ -1,7 +1,6 @@
 from enum import Enum
 
 from PyQt5.QtCore import QSettings
-from PyQt5.QtCore import pyqtSlot
 from .__options__ import EnumOption, OrderedArrayOption, SingleOption
 
 
