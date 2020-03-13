@@ -59,7 +59,7 @@ class PrintObject():
         self._picked_state = False
 
 
-class print_platter(QObject):
+class PrintPlatter(QObject):
     # Qt signal
     signal_add_part = pyqtSignal(PrintObject)
     signal_remove_part = pyqtSignal(PrintObject)
