@@ -24,26 +24,33 @@ class GcodeTest(unittest.TestCase):
 
         self.print_platter = mock.MagicMock(parts=[print_obj])
 
-    @mock.patch('versa3d.slicing.PrinterSettings')
-    @mock.patch('versa3d.slicing.PrintheadSettings')
-    @mock.patch('versa3d.slicing.PrintSettings')
-    def test_generate_gcode(self, mock_print, mock_printhead, mock_printer):
+        self._print_patch = mock.patch('versa3d.slicing.PrintSettings')
+        self._print_patch.__getattr__ = lambda key, d = {'lt': 0.1}: d[key]
 
-        layer_thickness = mock.PropertyMock(return_value=0.1)
-        type(mock_print).lt = layer_thickness
+        self._printer_patch = mock.patch('versa3d.slicing.PrinterSettings')
+        self._printer_patch.__getattr__ = lambda key, d = {
+            'bds': [50.0, 50.0, 100.0]}: d[key]
 
-        dpi = mock.PropertyMock(return_value=[150, 150])
-        type(mock_printhead).dpi = dpi
+        self._printhead_patch = mock.patch('versa3d.slicing.PrintheadSettings')
+        self._printhead_patch.__getattr__ = lambda key, d = {
+            'dpi': [150, 150]}: d[key]
 
-        printer_size = mock.PropertyMock(return_value=[50.0, 50.0, 100.0])
-        type(mock_printer).bds = printer_size
+        self._print_patch.start()
+        self._printer_patch.start()
+        self._printhead_patch.start()
 
+    def test_generate_gcode(self):
         slicer = FullBlackSlicer(
             self.print_platter, 'default_settings', 'basic_printer', 'basic_printhead')
 
         slice_stack = slicer.slice()
 
         assert(len(slice_stack) != 0)
+
+    def tearDown(self):
+        self._print_patch.stop()
+        self._printer_patch.stop()
+        self._printhead_patch.stop()
 
 
 if __name__ == '__main__':
