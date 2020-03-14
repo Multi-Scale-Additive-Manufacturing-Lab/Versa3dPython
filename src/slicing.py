@@ -2,6 +2,8 @@ import vtk
 import numpy as np
 import math
 
+from versa3d_settings import PrinterSettings, PrintheadSettings, PrintSettings
+
 
 def create_2d_vtk_image(val, x, y, spacing):
     img = vtk.vtkImageData()
@@ -13,7 +15,7 @@ def create_2d_vtk_image(val, x, y, spacing):
 
 
 class SlicerFactory():
-    def __init__(self, ppl, printer, printhead):
+    def __init__(self, ppl, printer, printhead, printsetting):
         """[summary]
 
         Arguments:
@@ -24,11 +26,12 @@ class SlicerFactory():
         self._ppl = ppl
         self._printer_settings = printer
         self._printhead_settings = printhead
+        self._print_preset = printsetting
 
     def create_slicer(self, slicer_type):
 
         if('fblack' == slicer_type):
-            return FullBlackSlicer()
+            return FullBlackSlicer(self._ppl, self._print_preset, self._printer_settings, self._printhead_settings)
         else:
             return None
 
@@ -89,21 +92,27 @@ class Slice():
 
 
 class VoxelSlicer():
-    def __init__(self, printer_bounds, layer_thickness, dpi):
-        self._list_actors = []
+    def __init__(self, print_platter, print_preset_name, printer_name, printhead_name):
 
-        self._printer_dim = printer_bounds
+        self._list_parts = print_platter.parts
 
-        self._thickness = layer_thickness
+        print_settings = PrinterSettings(print_preset_name)
+        printer_attr = PrinterSettings(printer_name)
+        printhead_attr = PrintheadSettings(printhead_name)
+
+        self._printer_dim = printer_attr.bds
+
+        self._thickness = print_settings.lt
         self._slice_stack = []
+        dpi = printhead_attr.dpi
 
         self._build_voxel = [0]*2
         voxel_size = [0]*2
 
         for i in range(0, 2):
             self._build_voxel[i] = int(
-                math.ceil(printer_bounds[i]*dpi[i]/(0.0254*1000)))
-            voxel_size[i] = printer_bounds[i]/self._build_voxel[i]
+                math.ceil(self._printer_dim[i]*dpi[i]/(0.0254*1000)))
+            voxel_size[i] = self._printer_dim[i]/self._build_voxel[i]
 
         self._spacing = voxel_size+[self._thickness]
 
@@ -133,20 +142,20 @@ class VoxelSlicer():
         merge = vtk.vtkAppendPolyData()
         clean = vtk.vtkCleanPolyData()
 
-        for actor in self._list_actors:
+        for part in self._list_parts:
+
+            vtk_actor = part.actor
 
             transform = vtk.vtkTransform()
-            transform.SetMatrix(actor.GetMatrix())
+            transform.SetMatrix(vtk_actor.GetMatrix())
 
             PolyData = vtk.vtkPolyData()
-            PolyData.DeepCopy(actor.GetMapper().GetInput())
+            PolyData.DeepCopy(vtk_actor.GetMapper().GetInput())
 
             LocalToWorldCoordConverter = vtk.vtkTransformPolyDataFilter()
             LocalToWorldCoordConverter.SetTransform(transform)
             LocalToWorldCoordConverter.SetInputData(PolyData)
             LocalToWorldCoordConverter.Update()
-
-            Extent = actor.GetBounds()
 
             merge.AddInputData(LocalToWorldCoordConverter.GetOutput())
 
@@ -155,9 +164,6 @@ class VoxelSlicer():
         clean.Update()
 
         return clean.GetOutput()
-
-    def add_actor(self, actor):
-        self._list_actors.append(actor)
 
 
 class FullBlackSlicer(VoxelSlicer):
