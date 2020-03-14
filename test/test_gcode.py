@@ -25,15 +25,16 @@ class GcodeTest(unittest.TestCase):
         self.print_platter = mock.MagicMock(parts=[print_obj])
 
         self._print_patch = mock.patch('versa3d.slicing.PrintSettings')
-        self._print_patch.__getattr__ = lambda key, d = {'lt': 0.1}: d[key]
+
+        type(self._print_patch).lt = mock.PropertyMock(return_value=0.1)
 
         self._printer_patch = mock.patch('versa3d.slicing.PrinterSettings')
-        self._printer_patch.__getattr__ = lambda key, d = {
-            'bds': [50.0, 50.0, 100.0]}: d[key]
 
-        self._printhead_patch = mock.patch('versa3d.slicing.PrintheadSettings')
-        self._printhead_patch.__getattr__ = lambda key, d = {
-            'dpi': [150, 150]}: d[key]
+        type(self._printer_patch).bds = mock.PropertyMock(return_value=[50.0,50.0,100.0])
+
+        self._printhead_patch = mock.patch('versa3d.slicing.PrintheadSettings', dpi = [150,150])
+
+        type(self._printhead_patch).dpi = mock.PropertyMock(return_value=[150,150])
 
         self._print_patch.start()
         self._printer_patch.start()
