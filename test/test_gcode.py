@@ -2,8 +2,8 @@ import unittest
 from unittest import mock
 import vtk
 
-from src.slicing import FullBlackSlicer
-from src.print_platter import PrintObject
+from versa3d.slicing import FullBlackSlicer
+from versa3d.print_platter import PrintObject
 
 
 class GcodeTest(unittest.TestCase):
@@ -24,9 +24,9 @@ class GcodeTest(unittest.TestCase):
 
         self.print_platter = mock.MagicMock(parts=[print_obj])
 
-    @mock.patch('slicing.PrinterSettings')
-    @mock.patch('slicing.PrintheadSettings')
-    @mock.patch('slicing.PrintSettings')
+    @mock.patch('versa3d.slicing.PrinterSettings')
+    @mock.patch('versa3d.slicing.PrintheadSettings')
+    @mock.patch('versa3d.slicing.PrintSettings')
     def test_generate_gcode(self, mock_print, mock_printhead, mock_printer):
 
         layer_thickness = mock.PropertyMock(return_value=0.1)

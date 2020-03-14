@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QUndoCommand
 import vtk
-from src.print_platter import PrintObject
+from versa3d.print_platter import PrintObject
 
 
 class ImportCommand(QUndoCommand):

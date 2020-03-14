@@ -2,7 +2,7 @@ import vtk
 import numpy as np
 import math
 
-from versa3d_settings import PrinterSettings, PrintheadSettings, PrintSettings
+from versa3d.settings import PrinterSettings, PrintheadSettings, PrintSettings
 
 
 def create_2d_vtk_image(val, x, y, spacing):
