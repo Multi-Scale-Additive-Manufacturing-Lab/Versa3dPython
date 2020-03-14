@@ -3,7 +3,7 @@ from PIL import Image
 import os
 
 
-def gcodeFactory(type):
+def gcodeFactory():
     pass
 
 class LinuxCncWriter():

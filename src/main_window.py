@@ -10,7 +10,7 @@ from designer_files.icon import versa3d_icon
 from src.mouse_interaction import ActorHighlight
 import src.print_platter as ppl
 import src.versa3d_command as vscom
-from src.versa3d_settings import load_settings, print_settings, printer_settings, printhead_settings
+from src.versa3d_settings import load_settings, PrinterSettings, PrintheadSettings, PrintSettings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -24,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
-        self.settings_dict = load_settings()
+        #self.settings_dict = load_settings()
 
         self.stl_renderer = vtk.vtkRenderer()
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
@@ -62,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.action_import_stl.triggered.connect(self.import_stl)
 
-        self.initialize_tab()
+        #self.initialize_tab()
 
     def import_stl(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
