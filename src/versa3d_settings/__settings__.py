@@ -79,12 +79,9 @@ class GenericSettings():
         self._prefix = None
         self._lso = {}
 
-    def get_value(self, key):
-        path = f'{self._prefix}/{self._name}/{key}'
-        self._settings.beginGroup(path)
-        value = self._settings.value('value')
-        self._settings.endGroup()
-        return value
+    def __getattr__(self, key):
+        option = self._lso[key]
+        return option.value
 
     @property
     def name(self):
