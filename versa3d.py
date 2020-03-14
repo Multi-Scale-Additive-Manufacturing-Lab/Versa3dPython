@@ -8,7 +8,7 @@ Created on Mon Feb 26 11:47:41 2018
 import sys
 import os
 from PyQt5 import QtWidgets
-from src.main_window import MainWindow
+from versa3d.main_window import MainWindow
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)
