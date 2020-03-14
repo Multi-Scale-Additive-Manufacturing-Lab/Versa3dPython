@@ -96,7 +96,7 @@ class VoxelSlicer():
 
         self._list_parts = print_platter.parts
 
-        print_settings = PrinterSettings(print_preset_name)
+        print_settings = PrintSettings(print_preset_name)
         printer_attr = PrinterSettings(printer_name)
         printhead_attr = PrintheadSettings(printhead_name)
 
