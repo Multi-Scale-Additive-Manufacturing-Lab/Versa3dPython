@@ -37,6 +37,25 @@ class GcodeTest(unittest.TestCase):
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
 
+        z_range = actor.GetZRange()
+
+        new_pos = [0]*3
+
+        old_pos = actor.GetPosition()
+
+        bds = [50.0, 50.0, 100.0]
+
+        new_pos[0] = bds[0]/2
+        new_pos[1] = bds[1]/2
+
+        if(z_range[0] < 0):
+            new_pos[2] = old_pos[2]-z_range[0]
+        else:
+            new_pos[2] = old_pos[2]
+
+        actor.SetPosition(new_pos)
+        actor.RotateZ(45)
+
         print_obj = PrintObject('test obj', actor)
 
         self.print_platter = mock.MagicMock(parts=[print_obj])
