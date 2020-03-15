@@ -30,6 +30,9 @@ class PrintParam(Enum):
     BED_SELECT = 'bs'
     SATURATION = 'sat'
     N_PASS = 'n_p'
+    PRINT_SPEED = 'ps'
+    FEED_BED_VEL = 'fbv'
+    BUILD_BED_VEL = 'bbv'
 
 
 def load_stored_settings(name, settings):
@@ -180,3 +183,21 @@ class PrintSettings(GenericSettings):
             self._prefix, PrintParam.N_PASS, 1)
         self._lso[PrintParam.N_PASS].label = 'number of pass'
         self._lso[PrintParam.N_PASS].category = 'infill'
+
+        self._lso[PrintParam.PRINT_SPEED] = SingleOption(
+            self._prefix, PrintParam.PRINT_SPEED, 1.0)
+        self._lso[PrintParam.PRINT_SPEED].label = 'print speed'
+        self._lso[PrintParam.PRINT_SPEED].category = 'layer'
+        self._lso[PrintParam.PRINT_SPEED].sidetext = 'm/s'
+
+        self._lso[PrintParam.FEED_BED_VEL] = SingleOption(
+            self._prefix, PrintParam.FEED_BED_VEL, 1.0)
+        self._lso[PrintParam.FEED_BED_VEL].label = 'feed bed velocity'
+        self._lso[PrintParam.FEED_BED_VEL].category = 'layer'
+        self._lso[PrintParam.FEED_BED_VEL].sidetext = 'mm/s'
+
+        self._lso[PrintParam.BUILD_BED_VEL] = SingleOption(
+            self._prefix, PrintParam.BUILD_BED_VEL, 1.0)
+        self._lso[PrintParam.BUILD_BED_VEL].label = 'feed bed velocity'
+        self._lso[PrintParam.BUILD_BED_VEL].category = 'layer'
+        self._lso[PrintParam.BUILD_BED_VEL].sidetext = 'mm/s'
