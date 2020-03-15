@@ -157,15 +157,15 @@ class VoxelSlicer():
             transform = vtk.vtkTransform()
             transform.SetMatrix(vtk_actor.GetMatrix())
 
-            PolyData = vtk.vtkPolyData()
-            PolyData.DeepCopy(vtk_actor.GetMapper().GetInput())
+            polydata = vtk.vtkPolyData()
+            polydata.DeepCopy(vtk_actor.GetMapper().GetInput())
 
-            LocalToWorldCoordConverter = vtk.vtkTransformPolyDataFilter()
-            LocalToWorldCoordConverter.SetTransform(transform)
-            LocalToWorldCoordConverter.SetInputData(PolyData)
-            LocalToWorldCoordConverter.Update()
+            coord_sys_convert = vtk.vtkTransformPolyDataFilter()
+            coord_sys_convert.SetTransform(transform)
+            coord_sys_convert.SetInputData(polydata)
+            coord_sys_convert.Update()
 
-            merge.AddInputData(LocalToWorldCoordConverter.GetOutput())
+            merge.AddInputData(coord_sys_convert.GetOutput())
 
         merge.Update()
         clean.SetInputConnection(merge.GetOutputPort())
