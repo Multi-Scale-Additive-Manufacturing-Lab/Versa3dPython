@@ -5,6 +5,23 @@ import vtk
 from versa3d.slicing import FullBlackSlicer
 from versa3d.print_platter import PrintObject
 
+from collections import namedtuple
+
+
+def debug_setting():
+    setting = namedtuple('PrinterSettings', 'name lt')
+    return lambda name, lt = 0.1: setting(name, lt)
+
+
+def debug_printer():
+    setting = namedtuple('PrinterSettings', 'name bds')
+    return lambda name, bds = [50.0, 50.0, 100.0]: setting(name, bds)
+
+
+def debug_printhead():
+    setting = namedtuple('PrintheadSettings', 'name dpi')
+    return lambda name, dpi = [150.0, 150.0]: setting(name, dpi)
+
 
 class GcodeTest(unittest.TestCase):
 
@@ -24,17 +41,12 @@ class GcodeTest(unittest.TestCase):
 
         self.print_platter = mock.MagicMock(parts=[print_obj])
 
-        self._print_patch = mock.patch('versa3d.slicing.PrintSettings')
-
-        type(self._print_patch).lt = mock.PropertyMock(return_value=0.1)
-
-        self._printer_patch = mock.patch('versa3d.slicing.PrinterSettings')
-
-        type(self._printer_patch).bds = mock.PropertyMock(return_value=[50.0,50.0,100.0])
-
-        self._printhead_patch = mock.patch('versa3d.slicing.PrintheadSettings', dpi = [150,150])
-
-        type(self._printhead_patch).dpi = mock.PropertyMock(return_value=[150,150])
+        self._print_patch = mock.patch(
+            'versa3d.slicing.PrintSettings', new_callable=debug_setting)
+        self._printer_patch = mock.patch(
+            'versa3d.slicing.PrinterSettings', new_callable=debug_printer)
+        self._printhead_patch = mock.patch(
+            'versa3d.slicing.PrintheadSettings', new_callable=debug_printhead)
 
         self._print_patch.start()
         self._printer_patch.start()
