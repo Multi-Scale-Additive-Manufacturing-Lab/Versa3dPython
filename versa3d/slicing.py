@@ -1,8 +1,16 @@
 import vtk
 import numpy as np
 import math
+from vtk.util.numpy_support import vtk_to_numpy
 
 from versa3d.settings import PrinterSettings, PrintheadSettings, PrintSettings
+
+
+def convert_vtk_im_to_numpy(im):
+    rows, cols, _ = im.GetDimensions()
+    scalar = im.GetPointData().GetScalars()
+    np_im = vtk_to_numpy(scalar)
+    return np_im.reshape(rows, cols, -1)
 
 
 def create_2d_vtk_image(val, x, y, spacing):
