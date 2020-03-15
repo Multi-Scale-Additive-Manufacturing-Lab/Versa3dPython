@@ -8,19 +8,41 @@ from versa3d.print_platter import PrintObject
 from collections import namedtuple
 
 
-def debug_setting():
-    setting = namedtuple('PrinterSettings', 'name lt')
-    return lambda name, lt = 0.1: setting(name, lt)
+class DebugSetting():
+    def __init__(self, lt, rot_rol, rot_lin, h, s, w, fbv, bbv, ps):
+        self._lt = lt
+        self._rot_rol = rot_rol
+        self._rot_lin = rot_lin
+        self._h = h
+        self._s = s
+        self._w = w
+        self._fbv = fbv
+        self._bbv = bbv
+        self._ps = ps
+
+    def __call__(self, name=None):
+        setting = namedtuple('PrinterSettings', [
+                             'name', 'lt', 'rol_lin', 'rol_rpm', 'bbv', 'fbv', 'rwd', 'pl', 'pho', 'ps'])
+        return setting(name, self._lt, self._rot_lin, self._rot_rol, self._bbv, self._fbv, self._w, self._s, self._h, self._ps)
 
 
-def debug_printer():
-    setting = namedtuple('PrinterSettings', 'name bds')
-    return lambda name, bds = [50.0, 50.0, 100.0]: setting(name, bds)
+class DebugPrinter():
+    def __init__(self, bds, coord_o):
+        self._bds = bds
+        self._coord_o = coord_o
+
+    def __call__(self, name=None):
+        setting = namedtuple('PrinterSettings', 'name bds coord_o')
+        return setting(name, self._bds, self._coord_o)
 
 
-def debug_printhead():
-    setting = namedtuple('PrintheadSettings', 'name dpi')
-    return lambda name, dpi = [150.0, 150.0]: setting(name, dpi)
+class DebugPrinthead():
+    def __init__(self, dpi):
+        self._dpi = dpi
+
+    def __call__(self, name=None):
+        setting = namedtuple('PrintheadSettings', 'name dpi')
+        return setting(name, self._dpi)
 
 
 class GcodeTest(unittest.TestCase):
@@ -59,6 +81,14 @@ class GcodeTest(unittest.TestCase):
         print_obj = PrintObject('test obj', actor)
 
         self.print_platter = mock.MagicMock(parts=[print_obj])
+
+        def debug_setting(): return DebugSetting(
+            0.1, 360.0, 10.0, 0.1, 0.2, 0.1, 1.0, 1.0, 1.0)
+
+        def debug_printer(): return DebugPrinter(
+            [50.0, 50.0, 100.0], [0.0, 0.0])
+
+        def debug_printhead(): return DebugPrinthead([150, 150])
 
         self._print_patch = mock.patch(
             'versa3d.slicing.PrintSettings', new_callable=debug_setting)
