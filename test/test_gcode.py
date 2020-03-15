@@ -4,6 +4,7 @@ import vtk
 
 from versa3d.slicing import FullBlackSlicer
 from versa3d.print_platter import PrintObject
+from versa3d.gcode import LinuxCncWriter
 
 from collections import namedtuple
 
@@ -53,6 +54,8 @@ class GcodeTest(unittest.TestCase):
         reader.SetFileName('./test/test_file/3DBenchySmall.stl')
         reader.Update()
 
+        self._output_path = './test/test_output'
+
         mapper = vtk.vtkPolyDataMapper()
         mapper.SetInputConnection(reader.GetOutputPort())
 
@@ -90,16 +93,27 @@ class GcodeTest(unittest.TestCase):
 
         def debug_printhead(): return DebugPrinthead([150, 150])
 
-        self._print_patch = mock.patch(
+        self._print_patch_slicing = mock.patch(
             'versa3d.slicing.PrintSettings', new_callable=debug_setting)
-        self._printer_patch = mock.patch(
+        self._printer_patch_slicing = mock.patch(
             'versa3d.slicing.PrinterSettings', new_callable=debug_printer)
-        self._printhead_patch = mock.patch(
+        self._printhead_patch_slicing = mock.patch(
             'versa3d.slicing.PrintheadSettings', new_callable=debug_printhead)
 
-        self._print_patch.start()
-        self._printer_patch.start()
-        self._printhead_patch.start()
+        self._print_patch_slicing.start()
+        self._printer_patch_slicing.start()
+        self._printhead_patch_slicing.start()
+
+        self._print_patch_gcode = mock.patch(
+            'versa3d.gcode.PrintSettings', new_callable=debug_setting)
+        self._printer_patch_gcode = mock.patch(
+            'versa3d.gcode.PrinterSettings', new_callable=debug_printer)
+        self._printhead_patch_gcode = mock.patch(
+            'versa3d.gcode.PrintheadSettings', new_callable=debug_printhead)
+
+        self._print_patch_gcode.start()
+        self._printer_patch_gcode.start()
+        self._printhead_patch_gcode.start()
 
     def test_generate_gcode(self):
         slicer = FullBlackSlicer(
@@ -107,12 +121,20 @@ class GcodeTest(unittest.TestCase):
 
         slice_stack = slicer.slice()
 
+        writer = LinuxCncWriter(slicer, 'default_settings', 'basic_printer')
+
         assert(len(slice_stack) != 0)
 
+        writer.write_file(self._output_path)
+
     def tearDown(self):
-        self._print_patch.stop()
-        self._printer_patch.stop()
-        self._printhead_patch.stop()
+        self._print_patch_slicing.stop()
+        self._printer_patch_slicing.stop()
+        self._printhead_patch_slicing.stop()
+
+        self._print_patch_gcode.stop()
+        self._printer_patch_gcode.stop()
+        self._printhead_patch_gcode.stop()
 
 
 if __name__ == '__main__':

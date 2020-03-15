@@ -41,7 +41,7 @@ class LinuxCncWriter():
         self._roller_lin_vel = print_settings.rol_lin
         self._roller_rot_vel = print_settings.rol_rpm
 
-    def write_file(self, folder_path, slicer):
+    def write_file(self, folder_path):
         pass
 
     def home_axis(self, axis):
