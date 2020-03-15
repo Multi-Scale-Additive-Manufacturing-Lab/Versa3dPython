@@ -95,7 +95,7 @@ class Slice():
         return self._thickness
 
     @property
-    def vtk_image(self):
+    def image(self):
         return self._image
 
 
@@ -218,8 +218,7 @@ class FullBlackSlicer(VoxelSlicer):
             self._imgstenc.SetInputData(black_img)
             self._imgstenc.Update()
 
-            image = vtk.vtkImageData()
-            image.DeepCopy(self._imgstenc.GetOutput())
+            image = convert_vtk_im_to_numpy(self._imgstenc.GetOutput())
             return [slice(origin[2], self._thickness, image)]
 
         return None
