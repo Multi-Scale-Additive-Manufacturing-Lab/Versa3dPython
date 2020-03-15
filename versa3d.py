@@ -8,25 +8,25 @@ Created on Mon Feb 26 11:47:41 2018
 import sys
 import os
 from PyQt5 import QtWidgets
-from src.main_window import MainWindow
+from versa3d.main_window import MainWindow
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    APP = QtWidgets.QApplication(sys.argv)
 
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-        ui_path = os.path.join(base_path, 'GUI', 'Versa3dMainWindow.ui')
+        BASE_PATH = sys._MEIPASS
+        UI_PATH = os.path.join(BASE_PATH, 'GUI', 'Versa3dMainWindow.ui')
     except Exception:
-        base_path = os.path.abspath(".")
-        ui_path = os.path.join(
-            base_path, 'designer_files', 'Versa3dMainWindow.ui')
+        BASE_PATH = os.path.abspath(".")
+        UI_PATH = os.path.join(
+            BASE_PATH, 'designer_files', 'Versa3dMainWindow.ui')
 
-    app.setOrganizationName("msam")
-    app.setOrganizationDomain("uw.msam")
-    app.setApplicationName("Versa3d")
+    APP.setOrganizationName("msam")
+    APP.setOrganizationDomain("uw.msam")
+    APP.setApplicationName("Versa3d")
 
-    window = MainWindow(ui_path)
-    window.show()
+    WINDOW = MainWindow(UI_PATH)
+    WINDOW.show()
 
-    sys.exit(app.exec_())
+    sys.exit(APP.exec_())

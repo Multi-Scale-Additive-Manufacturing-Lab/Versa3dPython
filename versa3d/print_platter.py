@@ -1,10 +1,9 @@
 import vtk
-from vtk.util import numpy_support
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
 
 
-class print_object():
+class PrintObject():
     def __init__(self, name, vtk_obj):
         """
         object to be printed
@@ -60,30 +59,21 @@ class print_object():
         self._picked_state = False
 
 
-class print_platter(QObject):
+class PrintPlatter(QObject):
     # Qt signal
-    signal_add_part = pyqtSignal(print_object)
-    signal_remove_part = pyqtSignal(print_object)
+    signal_add_part = pyqtSignal(PrintObject)
+    signal_remove_part = pyqtSignal(PrintObject)
 
-    def __init__(self, printer_name='basic_printer'):
+    def __init__(self, size):
         """print platter class, represents printer plate
         """
         QObject.__init__(self)
         self._parts = []
-        self._printer = printer_name
-
-        self._settings = QSettings()
+        self._size = size
 
     @property
     def size(self):
-        x_sc = self._settings.value(
-            '{}/bed_x'.format(self._printer), 50, type=float)
-        y_sc = self._settings.value(
-            '{}/bed_y'.format(self._printer), 50, type=float)
-        z_sc = self._settings.value(
-            '{}/bed_z'.format(self._printer), 100, type=float)
-
-        return (x_sc, y_sc, z_sc)
+        return self._size
 
     @property
     def parts(self):
@@ -94,7 +84,7 @@ class print_platter(QObject):
         Add object to build plate
 
         Arguments:
-            part {print_object} -- object to be printed
+            part {PrintObject} -- object to be printed
         """
         self._parts.append(part)
         self.signal_add_part.emit(part)
@@ -104,7 +94,7 @@ class print_platter(QObject):
         Remove object from build plate
 
         Arguments:
-            part {print_object} -- object to be printed
+            part {PrintObject} -- object to be printed
         """
         self._parts.remove(part)
         self.signal_remove_part.emit(part)
@@ -145,5 +135,5 @@ class print_platter(QObject):
             actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
             actor.GetProperty().SetSpecularPower(30.0)
 
-            print_obj = print_object('Dummy_Sphere_{}'.format(i), actor)
+            print_obj = PrintObject('Dummy_Sphere_{}'.format(i), actor)
             self.add_parts(print_obj)

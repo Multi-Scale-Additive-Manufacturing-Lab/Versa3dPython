@@ -1,7 +1,7 @@
 import vtk
 
 
-class actor_highlight:
+class ActorHighlight:
     def __init__(self, parent):
         """
         highlight interactor observer. Called when SelectionChangedEvent
@@ -23,7 +23,6 @@ class actor_highlight:
         """
 
         if isinstance(caller, vtk.vtkInteractorStyleRubberBand3D):
-            colors = vtk.vtkNamedColors()
 
             start_pos = caller.GetStartPosition()
             end_pos = caller.GetEndPosition()
