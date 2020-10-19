@@ -22,7 +22,7 @@ class DebugSetting():
         self._ps = ps
 
     def __call__(self, name=None):
-        setting = namedtuple('PrinterSettings', [
+        setting = namedtuple('PrintSettings', [
                              'name', 'lt', 'rol_lin', 'rol_rpm', 'bbv', 'fbv', 'rwd', 'pl', 'pho', 'ps'])
         return setting(name, self._lt, self._rot_lin, self._rot_rol, self._bbv, self._fbv, self._w, self._s, self._h, self._ps)
 
@@ -33,7 +33,7 @@ class DebugPrinter():
         self._coord_o = coord_o
 
     def __call__(self, name=None):
-        setting = namedtuple('PrinterSettings', 'name bds coord_o')
+        setting = namedtuple('PrinterSettings', 'name_bds_coord_o')
         return setting(name, self._bds, self._coord_o)
 
 
@@ -42,7 +42,7 @@ class DebugPrinthead():
         self._dpi = dpi
 
     def __call__(self, name=None):
-        setting = namedtuple('PrintheadSettings', 'name dpi')
+        setting = namedtuple('PrintheadSettings', 'name_dpi')
         return setting(name, self._dpi)
 
 
