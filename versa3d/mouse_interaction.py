@@ -42,6 +42,8 @@ class ActorHighlight:
             for i in range(num_picked_actor):
                 actor = list_actors.GetItemAsObject(i)
                 actor.Pick()
+            
+            renderer.GetRenderWindow().Render()
 
     def reset_picked_actors(self):
         self.parent.platter.reset_picked()
