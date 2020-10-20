@@ -24,12 +24,13 @@ def create_2d_vtk_image(val, x, y, spacing):
 
 class SlicerFactory():
     def __init__(self, ppl, printer, printhead, printsetting):
-        """[summary]
+        """ Slicer Factory
 
-        Arguments:
-            ppl {print_platter} -- print platter
-            printer {printer_settings} -- printer settings
-            printhead {printhead_settings} -- printhead settings
+        Args:
+            ppl (PrintPlatter): print platter
+            printer (PrinterSettings): printer settings
+            printhead (PrintheadSettings): printhead settings
+            printsetting (PrintSettings): print settings
         """
         self._ppl = ppl
         self._printer_settings = printer
@@ -47,13 +48,13 @@ class SlicerFactory():
 def slice_poly(limit, increment, polydata):
     """slice polydata in z direction into contour
 
-    Arguments:
-        limit {list} -- min and max
-        increment {float} -- thickness
-        polydata {vtkpolydata} -- surface to slice
+    Args:
+        limit (list): min and max
+        increment (float): thickness
+        polydata (vtkPolyData): surface to slice
 
     Returns:
-        list -- list of vtkpolydata contour
+        list: list of vtkpolydata contour
     """
 
     list_contour = []
@@ -144,7 +145,7 @@ class VoxelSlicer():
         polydata is in world coord
 
         Returns:
-            vtkPolydata -- surface
+            vtkPolydata: surface
         """
 
         merge = vtk.vtkAppendPolyData()

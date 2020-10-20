@@ -3,23 +3,22 @@ import vtk
 
 class ActorHighlight:
     def __init__(self, parent):
-        """
-        highlight interactor observer. Called when SelectionChangedEvent
+        """ highlight interactor observer. Called when SelectionChangedEvent
         is emitted by vtkInteractorStyleRubberBand3D
 
-        Arguments:
-            parent {QMainWindow} -- parent class
+        Args:
+            parent (QMainWindow): parent class
         """
         super().__init__()
 
         self.parent = parent
 
     def __call__(self, caller, ev):
-        """[summary]
+        """ event callback
 
-        Arguments:
-            caller {vtkRenderWindowInteractor} -- object being observed
-            ev {string} -- event type description
+        Args:
+            caller (vtkRenderWindowInteractor): object being observed
+            ev (string): event type description
         """
 
         if isinstance(caller, vtk.vtkInteractorStyleRubberBand3D):
@@ -42,7 +41,7 @@ class ActorHighlight:
             for i in range(num_picked_actor):
                 actor = list_actors.GetItemAsObject(i)
                 actor.Pick()
-            
+
             renderer.GetRenderWindow().Render()
 
     def reset_picked_actors(self):

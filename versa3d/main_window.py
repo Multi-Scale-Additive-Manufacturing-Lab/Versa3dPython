@@ -6,7 +6,6 @@ from PyQt5 import QtGui
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-from designer_files.icon import versa3d_icon
 from versa3d.mouse_interaction import ActorHighlight
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
@@ -14,12 +13,11 @@ import versa3d.versa3d_command as vscom
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    """
-    main window
-    Arguments:
-        QtWidgets {QMainWindow} -- main window
-    """
+    """Main Window
 
+    Args:
+        QtWidgets (QMainWindow): main window
+    """
     def __init__(self, ui_file_path):
         super().__init__()
         uic.loadUi(ui_file_path, self)
@@ -31,8 +29,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
-        #Figure out a way to share settings
-        self.platter = ppl.PrintPlatter((50,50,100))
+        # Figure out a way to share settings
+        self.platter = ppl.PrintPlatter((50, 50, 100))
 
         self.platter.signal_add_part.connect(self.render_parts)
         self.platter.signal_add_part.connect(self.add_obj_to_list)
@@ -62,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.action_import_stl.triggered.connect(self.import_stl)
 
-        #self.initialize_tab()
+        # self.initialize_tab()
 
     def import_stl(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
@@ -248,8 +246,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def setup_scene(self, size):
         """set grid scene
 
-        Arguments:
-            size {array(3,)} -- size of scene
+        Args:
+            size (array(3,)): size of scene
         """
         colors = vtk.vtkNamedColors()
 

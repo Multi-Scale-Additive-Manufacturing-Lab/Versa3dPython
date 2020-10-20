@@ -5,12 +5,11 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
 
 class PrintObject():
     def __init__(self, name, vtk_obj):
-        """
-        object to be printed
+        """object to be printed
 
-        Arguments:
-            name {string} -- object name
-            vtk_obj {vtkactor} -- vtkactor being rendered
+        Args:
+            name (string): object name
+            vtk_obj (vtkactor): vtkactor being rendered
         """
         super().__init__()
         self._vtkactor = vtk_obj
@@ -32,11 +31,11 @@ class PrintObject():
         return self._picked_state
 
     def pick(self, caller, ev):
-        """pick call back
+        """set pick status
 
-        Arguments:
-            caller {vtkRenderWindowInteractor} -- object being observed
-            ev {string} -- event type description
+        Args:
+            caller (vtkRenderWindowInteractor): object being observed
+            ev (string): event type description
         """
         if(not self._picked_state):
             colors = vtk.vtkNamedColors()
@@ -65,8 +64,11 @@ class PrintPlatter(QObject):
     signal_remove_part = pyqtSignal(PrintObject)
 
     def __init__(self, size):
-        """print platter class, represents printer plate
-        """
+        """Print platter class
+
+        Args:
+            size (array(2,)): print bed size
+        """        
         QObject.__init__(self)
         self._parts = []
         self._size = size
@@ -80,21 +82,19 @@ class PrintPlatter(QObject):
         return self._parts
 
     def add_parts(self, part):
-        """
-        Add object to build plate
+        """ add part to print platter
 
-        Arguments:
-            part {PrintObject} -- object to be printed
-        """
+        Args:
+            part (PrintObject): object to be printed
+        """ 
         self._parts.append(part)
         self.signal_add_part.emit(part)
 
     def remove_part(self, part):
-        """
-        Remove object from build plate
+        """Remove object from build plate
 
-        Arguments:
-            part {PrintObject} -- object to be printed
+        Args:
+            part (PrintObject): object to be printed
         """
         self._parts.remove(part)
         self.signal_remove_part.emit(part)
