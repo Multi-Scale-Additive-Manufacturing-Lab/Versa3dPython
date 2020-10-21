@@ -23,7 +23,7 @@ if __name__ == "__main__":
             BASE_PATH, 'designer_files', 'Versa3dMainWindow.ui')
 
     APP.setOrganizationName("msam")
-    APP.setOrganizationDomain("uw.msam")
+    APP.setOrganizationDomain("https://msam-uwaterloo.ca/")
     APP.setApplicationName("Versa3d")
 
     WINDOW = MainWindow(UI_PATH)
