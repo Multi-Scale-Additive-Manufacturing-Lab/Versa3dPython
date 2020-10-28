@@ -1,203 +1,244 @@
-from enum import Enum
+
+import json
+import re
+from collections import namedtuple
 
 from PyQt5.QtCore import QSettings
-from .__options__ import EnumOption, PointOption, SingleOption
+import numpy as np
+
+DEFAULT_CONFIG = './configs/default_config.json'
 
 
-class Setting(Enum):
-    PRINTER = 'printer_settings'
-    PRINTHEAD = 'printhead_settings'
-    PRINT_PRESET = 'print_settings'
+class Versa3dSettings():
 
-
-class Printhead(Enum):
-    DPI = 'dpi'
-
-
-class Printer(Enum):
-    BUILD_BED_SIZE = 'bds'
-    COORD_OFFSET = 'coord_o'
-    MODEL = 'model'
-
-
-class PrintParam(Enum):
-    LAYER_THICKESS = 'lt'
-    ROLLER_ROT = 'rol_rpm'
-    ROLLER_LIN = 'rol_lin'
-    POWDER_LOSS_OFFSET = 'pl'
-    POWDER_HEIGHT_OFFSET = 'pho'
-    ROLLER_WORK_DIST = 'rwd'
-    BED_SELECT = 'bs'
-    SATURATION = 'sat'
-    N_PASS = 'n_p'
-    PRINT_SPEED = 'ps'
-    FEED_BED_VEL = 'fbv'
-    BUILD_BED_VEL = 'bbv'
-
-
-def load_stored_settings(name, settings):
-    settings.beginGroup(name)
-    list_stored = settings.childGroups()
-    settings.endGroup()
-
-    list_settings = []
-    for setting_name in list_stored:
-        setting_obj = PrintSettings(setting_name)
-        setting_obj.load_settings()
-        list_settings.append(setting_obj)
-
-    return list_settings
-
-
-def load_settings(settings=None):
-
-    if(settings is None):
-        settings = QSettings()
-
-    list_printer = load_stored_settings(Setting.PRINTER, settings)
-    list_printhead = load_stored_settings(Setting.PRINTHEAD, settings)
-    list_print_setting = load_stored_settings(
-        Setting.PRINT_PRESET, settings)
-
-    if(len(list_printer) == 0):
-        list_printer.append(PrinterSettings())
-
-    if(len(list_printhead) == 0):
-        list_printhead.append(PrintheadSettings())
-
-    if(len(list_print_setting) == 0):
-        list_print_setting.append(PrintSettings())
-
-    return {Setting.PRINTER: list_printer,
-            Setting.PRINTHEAD: list_printhead,
-            Setting.PRINT_PRESET: list_print_setting}
-
-
-class GenericSettings():
-    def __init__(self, name):
+    def __init__(self):
         super().__init__()
-        self._name = name
-        self._settings = QSettings()
+        self.settings = QSettings()
+        self.initialized = False
+        self.printer_name = 'default_machine'
+        self.printhead_name = 'default_printhead'
+        self.parameter_preset_name = 'default_preset'
 
-        self._prefix = None
-        self._lso = {}
+        if not self.initialized:
+            self.settings = self.init_default()
+            self.initialized = True
 
-    def __getattr__(self, key):
-        option = self._lso[key]
-        return option.value
+        self._printer_obj = self.load_settings('printer', self.printer_name)
+        self._printhead_obj = self.load_settings(
+            'printhead', self.printhead_name)
+        self._preset_obj = self.load_settings(
+            'parameter_preset', self.parameter_preset_name)
 
-    @property
-    def name(self):
-        return self._name
+        self.printer = self._printer_obj()
+        self.printhead = self._printhead_obj()
+        self.parameter_preset = self._preset_obj()
 
+    def check_if_empty(self):
+        return len(self.settings.allKeys()) == 0
 
-class PrinterSettings(GenericSettings):
+    def _map_to_name(self, section):
+        if(section == 'printer'):
+            return self.printer_name
+        elif(section == 'parameter_preset'):
+            return self.parameter_preset_name
+        elif(section == 'printhead'):
+            return self.printhead_name
+        else:
+            raise Exception('unknown section')
 
-    def __init__(self, name="basic_printer"):
-        super().__init__(name)
+    def init_default(self):
+        if self.check_if_empty():
+            with open(DEFAULT_CONFIG) as f:
+                default_config = json.load(f)
 
-        self._prefix = Setting.PRINTER
+            for section, sec_val in default_config.items():
+                self.settings.beginGroup(section)
+                self.settings.beginGroup(self._map_to_name(section))
+                for param, value in sec_val.items():
+                    self.settings.beginGroup(param)
+                    self.settings.setValue('value', value['value'])
+                    self.settings.setValue('type', value['type'])
+                    self.settings.endGroup()
+                self.settings.endGroup()
+                self.settings.endGroup()
+        return self.settings
 
-        self._lso[Printer.BUILD_BED_SIZE] = PointOption(
-            self._prefix, Printer.BUILD_BED_SIZE, [50, 50, 100])
-        self._lso[Printer.BUILD_BED_SIZE].label = 'build bed size'
-        self._lso[Printer.BUILD_BED_SIZE].sidetext = 'mm'
-        self._lso[Printer.BUILD_BED_SIZE].category = 'plate'
+    def change_printer(self, name, new_set=False):
+        self.printer_name = name
+        self._preset_obj = self.load_settings('printer', name, new_set)
+        self.printer = self._preset_obj()
+        return self.printer
 
-        self._lso[Printer.COORD_OFFSET] = PointOption(
-            self._prefix, Printer.COORD_OFFSET, [0.0, 0.0, 0.0])
-        self._lso[Printer.COORD_OFFSET].label = 'coordinate offset'
-        self._lso[Printer.COORD_OFFSET].sidetext = 'mm'
-        self._lso[Printer.COORD_OFFSET].category = 'plate'
+    def change_printhead(self, name, new_set=False):
+        self.printhead_name = name
+        self._printhead_obj = self.load_settings('printhead', name, new_set)
+        self.printhead = self._printhead_obj()
+        return self.printhead
 
+    def change_preset(self, name, new_set=False):
+        self.parameter_preset_name = name
+        self._preset_obj = self.load_settings(
+            'parameter_preset', name, new_set)
+        self.parameter_preset = self._preset_obj()
+        return self.parameter_preset
 
-class PrintheadSettings(GenericSettings):
+    def update_printer_value(self, key, value):
+        self.printer = self.printer._replace(**{key: value})
+        return self.printer
 
-    def __init__(self, name='basic_printhead'):
-        super().__init__(name)
+    def update_printhead_value(self, key, value):
+        self.printhead = self.printhead._replace(**{key: value})
+        return self.printhead
 
-        self._prefix = Setting.PRINTHEAD
+    def update_preset_value(self, key, value):
+        self.parameter_preset = self.parameter_preset._replace(**{key: value})
+        return self.parameter_preset
 
-        self._lso[Printhead.DPI] = PointOption(
-            self._prefix, Printhead.DPI, [150, 150])
-        self._lso[Printhead.DPI].label = 'dpi'
-        self._lso[Printhead.DPI].category = 'resolution'
+    def save_to_disk(self):
+        list_settings = {
+            'printer': self.printer,
+            'printhead': self.printhead,
+            'parameter_preset': self.parameter_preset
+        }
 
+        list_name = {
+            'printer': self.printer_name,
+            'printhead': self.printhead_name,
+            'parameter_preset': self.parameter_preset_name
+        }
 
-class PrintSettings(GenericSettings):
+        try:
+            for section, obj in list_settings.items():
+                name = list_name[section]
+                for param, value in obj._asdict().items():
+                    self.set_key_to_disk(section, name, param, value)
 
-    def __init__(self, name='default_settings'):
-        super().__init__(name)
+            return True
+        except:
+            raise Exception('disk write failed')
 
-        self._prefix = f'{Setting.PRINT_PRESET}/{name}'
+    def load_settings(self, section, name, new_set=False):
+        self.settings.beginGroup(section)
+        list_of_preset = self.settings.childGroups()
+        self.settings.beginGroup(name)
+        list_of_settings = self.settings.childGroups()
+        self.settings.endGroup()
+        self.settings.endGroup()
 
-        self._lso[PrintParam.LAYER_THICKNESS] = SingleOption(
-            self._prefix, PrintParam.LAYER_THICKESS, 100.0)
-        self._lso[PrintParam.LAYER_THICKNESS].label = 'layer thickness'
-        # do greek letter later
-        self._lso[PrintParam.LAYER_THICKNESS].sidetext = 'microns'
-        self._lso[PrintParam.LAYER_THICKNESS].category = 'layer'
+        if name in list_of_preset:
+            setting_dict = {}
+            for g in list_of_settings:
+                setting_dict[g] = self.get_key_from_disk(section, g, name)
+            return namedtuple(section, setting_dict.keys(), defaults=setting_dict.values())
+        elif new_set:
+            setting_dict = {}
+            obj = getattr(self, section)._asdict()
+            return namedtuple(section, obj.keys(), defaults=obj.values())
+        else:
+            raise Exception(
+                'no {} settings with name {}'.format(section, name))
 
-        self._lso[PrintParam.ROLLER_ROT] = SingleOption(
-            self._prefix, PrintParam.ROLLER_ROT, 100.0)
-        self._lso[PrintParam.ROLLER_ROT].label = 'roller rotation speed'
-        self._lso[PrintParam.ROLLER_ROT].sidetext = 'rpm'
-        self._lso[PrintParam.ROLLER_ROT].category = 'layer'
+    def get_key_from_disk(self, section, key, name=None):
+        if name is None:
+            name = self._map_to_name(section)
 
-        self._lso[PrintParam.ROLLER_LIN] = SingleOption(
-            self._prefix, PrintParam.ROLLER_LIN, 10.0)
-        self._lso[PrintParam.ROLLER_LIN].label = 'roller linear speed'
-        self._lso[PrintParam.ROLLER_LIN].sidetext = 'mm'
-        self._lso[PrintParam.ROLLER_LIN].category = 'layer'
+        self.settings.beginGroup(section)
+        self.settings.beginGroup(name)
+        self.settings.beginGroup(key)
+        type_str = self.settings.value('type', None, str)
+        if(type_str is None or len(type_str) == 0):
+            raise Exception('type not specified for {}'.format(key))
+        elif re.match(r'Array(?=\<)', type_str):
+            t_str = re.search(r'(?<=\<)[a-z]+(?=\>)', type_str).group()
+            val = np.array(self.settings.value(
+                'value', [], self.string_to_type(t_str)))
+        else:
+            val = self.settings.value(
+                'value', type=self.string_to_type(type_str))
+        self.settings.endGroup()
+        self.settings.endGroup()
+        self.settings.endGroup()
+        return val
 
-        self._lso[PrintParam.POWDER_LOSS_OFFSET] = SingleOption(
-            self._prefix, PrintParam.POWDER_LOSS_OFFSET, 10.0)
-        self._lso[PrintParam.POWDER_LOSS_OFFSET].label = 'powder loss offset'
-        self._lso[PrintParam.POWDER_LOSS_OFFSET].sidetext = '%'
-        self._lso[PrintParam.POWDER_LOSS_OFFSET].category = 'layer'
+    def set_key_to_disk(self, section, name, key, value):
+        if name is None:
+            name = self._map_to_name(section)
 
-        self._lso[PrintParam.POWDER_HEIGHT_OFFSET] = SingleOption(
-            self._prefix, PrintParam.POWDER_HEIGHT_OFFSET, 10.0)
-        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].label = 'printheight offset'
-        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].sidetext = 'microns'
-        self._lso[PrintParam.POWDER_HEIGHT_OFFSET].category = 'layer'
+        self.settings.beginGroup(section)
+        self.settings.beginGroup(name)
+        self.settings.beginGroup(key)
+        if isinstance(value, np.ndarray):
+            self.settings.setValue('type', self.np_type_to_string(value))
+            self.settings.setValue('value', value.tolist())
+        else:
+            self.settings.setValue('type', self.type_to_string(value))
+            self.settings.setValue('value', value)
+        self.settings.endGroup()
+        self.settings.endGroup()
+        self.settings.endGroup()
 
-        self._lso[PrintParam.ROLLER_WORK_DIST] = SingleOption(
-            self._prefix, PrintParam.ROLLER_WORK_DIST, 10.0)
-        self._lso[PrintParam.ROLLER_WORK_DIST].label = 'roller work distance'
-        self._lso[PrintParam.ROLLER_WORK_DIST].sidetext = 'microns'
-        self._lso[PrintParam.ROLLER_WORK_DIST].category = 'layer'
+    @staticmethod
+    def np_type_to_string(value):
+        """convert np.array to type string
 
-        self._lso[PrintParam.BED_SELECT] = EnumOption(
-            self._prefix, PrintParam.BED_SELECT, 0, ['bed 1', 'bed 2', 'bed 3'])
-        self._lso[PrintParam.BED_SELECT].label = 'bed selection'
-        self._lso[PrintParam.BED_SELECT].category = 'layer'
+        Args:
+            value (np.ndarray): convert numpy array to type string
 
-        self._lso[PrintParam.SATURATION] = SingleOption(
-            self._prefix, PrintParam.SATURATION, 100.0)
-        self._lso[PrintParam.SATURATION].label = 'saturation'
-        self._lso[PrintParam.SATURATION].sidetext = '%'
-        self._lso[PrintParam.SATURATION].category = 'infill'
+        Raises:
+            Exception: unsupported type
 
-        self._lso[PrintParam.N_PASS] = SingleOption(
-            self._prefix, PrintParam.N_PASS, 1)
-        self._lso[PrintParam.N_PASS].label = 'number of pass'
-        self._lso[PrintParam.N_PASS].category = 'infill'
+        Returns:
+            string: string description of type
+        """
+        if np.issubdtype(value.dtype, np.integer):
+            return 'Array<{}>'.format('int')
+        elif np.issubdtype(value.dtype, np.floating):
+            return 'Array<{}>'.format('float')
+        elif np.issubdtype(value.dtype, np.unicode_) or np.issubdtype(value.dtype, np.string_):
+            return 'Array<{}>'.format('string')
+        else:
+            raise Exception("unsupported type")
 
-        self._lso[PrintParam.PRINT_SPEED] = SingleOption(
-            self._prefix, PrintParam.PRINT_SPEED, 1.0)
-        self._lso[PrintParam.PRINT_SPEED].label = 'print speed'
-        self._lso[PrintParam.PRINT_SPEED].category = 'layer'
-        self._lso[PrintParam.PRINT_SPEED].sidetext = 'm/s'
+    @staticmethod
+    def type_to_string(value):
+        """convert single value to string type
 
-        self._lso[PrintParam.FEED_BED_VEL] = SingleOption(
-            self._prefix, PrintParam.FEED_BED_VEL, 1.0)
-        self._lso[PrintParam.FEED_BED_VEL].label = 'feed bed velocity'
-        self._lso[PrintParam.FEED_BED_VEL].category = 'layer'
-        self._lso[PrintParam.FEED_BED_VEL].sidetext = 'mm/s'
+        Args:
+            value (non-iterable): Anything except iteratble
 
-        self._lso[PrintParam.BUILD_BED_VEL] = SingleOption(
-            self._prefix, PrintParam.BUILD_BED_VEL, 1.0)
-        self._lso[PrintParam.BUILD_BED_VEL].label = 'feed bed velocity'
-        self._lso[PrintParam.BUILD_BED_VEL].category = 'layer'
-        self._lso[PrintParam.BUILD_BED_VEL].sidetext = 'mm/s'
+        Raises:
+            Exception: unsupported type
+
+        Returns:
+            string: string description of type
+        """
+        if isinstance(value, int):
+            return 'int'
+        elif isinstance(value, float):
+            return 'float'
+        elif isinstance(value, str):
+            return 'string'
+        else:
+            raise Exception("unsupported type")
+
+    @staticmethod
+    def string_to_type(type_str):
+        """from string return type
+
+        Args:
+            type_str (string): type string
+
+        Raises:
+            Exception: unsupported type
+
+        Returns:
+            type: return type object
+        """
+        if type_str == 'int':
+            return int
+        elif type_str == 'float':
+            return float
+        elif type_str == 'string':
+            return str
+        else:
+            raise Exception("unsupported type")

@@ -1,4 +1,2 @@
-from .__settings__ import load_settings
-from .__settings__ import PrintSettings
-from .__settings__ import PrinterSettings
-from .__settings__ import PrintheadSettings
+from .__settings__ import Versa3dSettings
+from .__settings__ import DEFAULT_CONFIG

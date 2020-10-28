@@ -1,0 +1,68 @@
+{
+    "printer" : {
+        "build_bed_size" : {
+            "type" : "Array<float>",
+            "value" : [50,50]
+        },
+        "coord_offset" : {
+            "type" : "Array<float>",
+            "value" : [0,0]
+        }
+    },
+    "printhead" : {
+        "dpi" : {
+            "type" : "Array<int>",
+            "value" : [50,50]
+        }
+    },
+    "parameter_preset" : {
+        "layer_thickness" : {
+            "type" : "float",
+            "value" : 0.1
+        },
+        "roller_rpm" : {
+            "type" : "float",
+            "value" : 100
+        },
+        "roller_linear_speed" : {
+            "type" : "float",
+            "value" : 10
+        },
+        "powder_loss_offset" : {
+            "type" : "float",
+            "value" : 0.2
+        },
+        "powder_height_offset" : {
+            "type" : "float",
+            "value" : 0.2
+        },
+        "roller_work_dist" : {
+            "type" : "float",
+            "value" : 0.2
+        },
+        "bed_select" : {
+            "type" : "int",
+            "value" : 1
+        },
+        "saturation" : {
+            "type" : "float",
+            "value" : 100
+        },
+        "n_pass" : {
+            "type" : "int",
+            "value" : 4
+        },
+        "print_speed" : {
+            "type" : "float",
+            "value" : 20
+        },
+        "feed_bed_velocity" : {
+            "type" : "float",
+            "value" : 10
+        },
+        "build_ved_velocity" : {
+            "type" : "float",
+            "value" : 10
+        }
+    }
+}
