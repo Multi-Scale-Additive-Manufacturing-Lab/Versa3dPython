@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5 import QtGui
 import vtk
 from vtk.util import numpy_support
@@ -18,6 +18,7 @@ class MainWindow(QtWidgets.QMainWindow):
     Args:
         QtWidgets (QMainWindow): main window
     """
+
     def __init__(self, ui_file_path):
         super().__init__()
         uic.loadUi(ui_file_path, self)
@@ -69,140 +70,6 @@ class MainWindow(QtWidgets.QMainWindow):
             com = vscom.ImportCommand(filename[0], self.platter)
             self.undo_stack.push(com)
 
-    def initialize_tab(self):
-
-        tab_names = {'print_settings': "Print Setting",
-                     'printhead_settings': "PrintHead",
-                     'printer_settings': "Printer"}
-
-        for setting_name, tab_name in tab_names.items():
-
-            page = QtWidgets.QWidget()
-            self.MainViewTab.addTab(page, tab_name)
-
-            layout = QtWidgets.QHBoxLayout()
-            leftSide = QtWidgets.QVBoxLayout()
-            rightSide = QtWidgets.QHBoxLayout()
-
-            stackedWidget = QtWidgets.QStackedWidget()
-            rightSide.addWidget(stackedWidget)
-
-            PageSize = page.size()
-            RightSideSpacer = QtWidgets.QSpacerItem(PageSize.width()*30/32, 5)
-            rightSide.addSpacerItem(RightSideSpacer)
-
-            layout.addLayout(leftSide)
-            layout.addLayout(rightSide)
-
-            TopLeftSideLayout = QtWidgets.QHBoxLayout()
-
-            preset_selector = QtWidgets.QComboBox()
-            save_button = QtWidgets.QToolButton()
-            delete_button = QtWidgets.QToolButton()
-
-            SaveIcon = QtGui.QIcon(":/generic/save.svg")
-            save_button.setIcon(SaveIcon)
-
-            DeleteIcon = QtGui.QIcon(":/generic/trash.svg")
-            delete_button.setIcon(DeleteIcon)
-
-            TopLeftSideLayout.addWidget(preset_selector)
-            TopLeftSideLayout.addWidget(save_button)
-            TopLeftSideLayout.addWidget(delete_button)
-
-            leftSide.addLayout(TopLeftSideLayout)
-
-            CategoryList = QtWidgets.QListWidget()
-
-            leftSide.addWidget(CategoryList)
-
-            settings_list = self.settings_dict[setting_name]
-
-            for stored_setting in settings_list:
-                preset_selector.addItem(stored_setting.name)
-
-            """
-            #CategoryList.itemClicked.connect(self.switchPage)
-
-            pageIndex = 0
-            for key, item in self.settings_dict.items():
-                category = item.category
-
-                if(len(CategoryList.findItems(category,QtCore.Qt.MatchFixedString)) == 0 and category != "" ):
-                    CategoryList.addItem(category)
-                    subPage = QtWidgets.QWidget()
-                    self.mapPage[category] = (stackedWidget,pageIndex)
-                    pageIndex = pageIndex + 1
-
-                    stackedWidget.addWidget(subPage)
-                    subPageLayout = QtWidgets.QVBoxLayout()
-                    subPage.setLayout(subPageLayout)
-                
-                subPage = stackedWidget.widget(self.mapPage[category][1])
-                self.populatePage(item,subPage)
-            """
-            page.setLayout(layout)
-
-    def populatePage(self, item, page):
-
-        label = item.label
-        ValType = item.type
-        sidetext = item.sidetext
-        default_value = item.default_value
-
-        layout = page.layout()
-
-        sublayout = QtWidgets.QHBoxLayout()
-
-        if(ValType == "Enum"):
-            ComboBox = QtWidgets.QComboBox(page)
-            enum = item.getEnum()
-            for key, val in enum.items():
-                ComboBox.addItem(key)
-
-            item.setQObject(ComboBox)
-            self.addItem(label, sidetext, [ComboBox], page, sublayout)
-
-        elif(ValType in ["float", "double"]):
-            DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-            self.addItem(label, sidetext, [DoubleSpinBox], page, sublayout)
-            DoubleSpinBox.setValue(default_value)
-            item.setQObject(DoubleSpinBox)
-
-        elif(ValType == "int"):
-            IntSpinBox = QtWidgets.QSpinBox(page)
-            self.addItem(label, sidetext, [IntSpinBox], page, sublayout)
-            IntSpinBox.setValue(default_value)
-            item.setQObject(IntSpinBox)
-
-        elif(ValType == "2dPoint"):
-            listOfQtWidget = []
-            for i in range(0, 2):
-                DoubleSpinBox = QtWidgets.QDoubleSpinBox(page)
-                listOfQtWidget.append(DoubleSpinBox)
-                DoubleSpinBox.setValue(default_value[i])
-                item.addQObject(DoubleSpinBox)
-
-            self.addItem(label, sidetext, listOfQtWidget, page, sublayout)
-
-        layout.addLayout(sublayout)
-
-    def addItem(self, label, sidetext, ListQtWidget, page, layout):
-        if(label != ""):
-            layout.addWidget(QtWidgets.QLabel(label, page))
-
-        for QtWidget in ListQtWidget:
-            layout.addWidget(QtWidget)
-
-        if(sidetext != ""):
-            layout.addWidget(QtWidgets.QLabel(sidetext, page))
-
-    @pyqtSlot(QtWidgets.QListWidgetItem)
-    def switchPage(self, item):
-        category = item.text()
-        stackedWidget, index = self.mapPage[category]
-        stackedWidget.setCurrentIndex(index)
-
     # TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
     def translate(self, delta_pos):
         parts = self.platter.parts
@@ -210,6 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if part.picked:
                 com = vscom.TranslationCommand(delta_pos, part.actor)
                 self.undo_stack.push(com)
+                self.stl_renderer.GetRenderWindow().Render()
 
     def move_object_y(self):
         y = self.y_delta.value()
