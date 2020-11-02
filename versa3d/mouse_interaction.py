@@ -1,7 +1,8 @@
 import vtk
+from PyQt5.QtWidgets import QUndoCommand
 
 
-class ActorHighlight:
+class ActorHighlight(QUndoCommand):
     def __init__(self, parent):
         """ highlight interactor observer. Called when SelectionChangedEvent
         is emitted by vtkInteractorStyleRubberBand3D
@@ -12,6 +13,7 @@ class ActorHighlight:
         super().__init__()
 
         self.parent = parent
+        self.list_picked = []
 
     def __call__(self, caller, ev):
         """ event callback
@@ -36,13 +38,18 @@ class ActorHighlight:
             list_actors = picker.GetProp3Ds()
             num_picked_actor = list_actors.GetNumberOfItems()
 
-            self.reset_picked_actors()
+            self.undo()
 
             for i in range(num_picked_actor):
                 actor = list_actors.GetItemAsObject(i)
                 actor.Pick()
+                self.list_picked.append(actor)
 
             renderer.GetRenderWindow().Render()
-
-    def reset_picked_actors(self):
+    
+    def redo(self):
+        for actor in self.list_picked:
+            actor.Pick()
+    
+    def undo(self):
         self.parent.platter.reset_picked()
