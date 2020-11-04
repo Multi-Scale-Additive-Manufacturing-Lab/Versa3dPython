@@ -9,7 +9,6 @@ import numpy as np
 from versa3d.mouse_interaction import ActorHighlight
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
-#from versa3d.settings import load_settings, PrinterSettings, PrintheadSettings, PrintSettings
 
 
 class MainWindow(QtWidgets.QMainWindow):
