@@ -4,7 +4,7 @@ import math
 from vtk.util.numpy_support import vtk_to_numpy
 from collections import namedtuple
 
-Slice = namedtuple('Slice', ['height', 'thickness', 'image'])
+Slice = namedtuple('Slice', ['height', 'thickness', 'image', 'contour'])
 
 
 def convert_vtk_im_to_numpy(im):
@@ -18,7 +18,7 @@ def create_2d_vtk_image(val, x, y, spacing):
     img = vtk.vtkImageData()
     img.SetSpacing(spacing)
     img.SetDimensions([x, y, 1])
-    img.AllocateScalars(vtk.VTK_FLOAT, 1)
+    img.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
     img.GetPointData().GetScalars().Fill(val)
     return img
 
@@ -48,25 +48,11 @@ class VoxelSlicer():
         self._build_voxel = np.ceil(
             self._printer_dim[0:2]*dpi/(0.0254*1000)).astype(int)
 
-        self._spacing = np.append(self._printer_dim[0:2]/self._build_voxel[0:2], self._thickness)
-
-        self._extruder = vtk.vtkLinearExtrusionFilter()
-        self._extruder.SetScaleFactor(1.)
-        self._extruder.SetExtrusionTypeToNormalExtrusion()
-        self._extruder.SetVector(0, 0, 1)
-
-        self._poly2sten = vtk.vtkPolyDataToImageStencil()
-        # important for when SetVector is 0,0,1
-        self._poly2sten.SetTolerance(0)
-        self._poly2sten.SetOutputSpacing(self._spacing)
-        self._poly2sten.SetInputConnection(self._extruder.GetOutputPort())
-
-        self._imgstenc = vtk.vtkImageStencil()
-        self._imgstenc.SetStencilConnection(self._poly2sten.GetOutputPort())
-        self._imgstenc.SetBackgroundValue(255)
+        self._spacing = np.append(
+            self._printer_dim[0:2]/self._build_voxel[0:2], self._thickness)
 
     @staticmethod
-    def slice_poly(heights, polydata):
+    def slice_source(heights, polydata):
         """slice polydata in z direction into contour
 
         Args:
@@ -93,8 +79,7 @@ class VoxelSlicer():
             stripper.JoinContiguousSegmentsOn()
 
             stripper.Update()
-            contour = stripper.GetOutput()
-            list_contour.append(contour)
+            list_contour.append(stripper)
 
         return list_contour
 
@@ -102,46 +87,66 @@ class VoxelSlicer():
 class FullBlackSlicer(VoxelSlicer):
 
     def slice(self):
-
         self.parts.ComputeBounds()
         bound = self.parts.GetBounds()
 
-        img_dim = [int(math.ceil((bound[2*i+1]-bound[2*i]) /
-                                 self._spacing[i]))+1 for i in range(2)]
-
-        black_img = create_2d_vtk_image(
-            0, img_dim[0], img_dim[1], self._spacing)
         heights = np.arange(bound[4], bound[5], self._thickness)
-        list_contour = self.slice_poly(heights, self.parts)
 
-        for contour in list_contour:
-            individual_slice = self.full_black_slice(contour, bound, black_img)
+        list_contour_src = self.slice_source(heights, self.parts)
+
+        for contour_src in list_contour_src:
+            individual_slice = self.full_black_slice(contour_src, bound)
             if(individual_slice is not None):
                 self._slice_stack.append(individual_slice)
 
         return self._slice_stack
 
-    def full_black_slice(self, contour, bound, black_img):
-        origin = [0]*3
-        contour_bounds = contour.GetBounds()
-        origin[0] = bound[0]
-        origin[1] = bound[2]
+    def full_black_slice(self, contour_src, bound):
+        origin = np.zeros(3, dtype=float)
+        contour_bounds = contour_src.GetOutput().GetBounds()
+        origin[0:2] = bound[0:4:2]
         origin[2] = contour_bounds[4]
+
+        img_dim = np.zeros(3, dtype=int)
+
+        for i in range(2):
+            img_dim[i] = np.ceil(
+                (bound[2*i+1]-bound[2*i])/self._spacing[i]) + 1
+
+        img_dim[2] = 1
+
+        black_img = create_2d_vtk_image(
+            0, img_dim[0], img_dim[1], self._spacing)
 
         # white image origin and stencil origin must line up
         black_img.SetOrigin(origin)
 
-        if(contour.GetNumberOfLines() > 0):
-            self._extruder.SetInputData(contour)
-            self._extruder.Update()
+        if(contour_src.GetOutput().GetNumberOfLines() > 0):
 
-            self._poly2sten.SetOutputOrigin(origin)
-            self._poly2sten.Update()
+            extruder = vtk.vtkLinearExtrusionFilter()
+            extruder.SetScaleFactor(1.)
+            extruder.SetExtrusionTypeToNormalExtrusion()
+            extruder.SetVector(0, 0, 1)
+            extruder.SetInputConnection(contour_src.GetOutputPort())
+            extruder.Update()
 
-            self._imgstenc.SetInputData(black_img)
-            self._imgstenc.Update()
+            poly2sten = vtk.vtkPolyDataToImageStencil()
+            # important for when SetVector is 0,0,1
+            poly2sten.SetInputConnection(extruder.GetOutputPort())
+            poly2sten.SetTolerance(0)
+            poly2sten.SetOutputSpacing(self._spacing)
+            poly2sten.SetOutputOrigin(origin)
+            poly2sten.SetOutputWholeExtent(black_img.GetExtent())
+            poly2sten.Update()
 
-            image = convert_vtk_im_to_numpy(self._imgstenc.GetOutput())
-            return Slice(origin[2], self._thickness, image)
+            imgstenc = vtk.vtkImageStencil()
+            imgstenc.SetStencilConnection(poly2sten.GetOutputPort())
+            imgstenc.ReverseStencilOff()
+            imgstenc.SetBackgroundValue(255)
+            imgstenc.SetInputData(black_img)
+            imgstenc.Update()
+
+            image = imgstenc.GetOutput()
+            return Slice(origin[2], self._thickness, image, contour_src.GetOutput())
 
         return None
