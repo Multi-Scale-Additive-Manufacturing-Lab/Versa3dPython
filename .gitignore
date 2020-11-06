@@ -1,3 +1,5 @@
+test_output/
+
 # Compiled python files
 *.py[oc]
 
