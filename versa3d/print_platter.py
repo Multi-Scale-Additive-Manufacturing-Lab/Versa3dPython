@@ -1,34 +1,70 @@
 import vtk
 import numpy as np
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
+from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
+class PrintPlatterSource(VTKPythonAlgorithmBase):
+
+    def __init__(self):
+        VTKPythonAlgorithmBase.__init__(self,
+            nInputPorts=0,
+            nOutputPorts=1, outputType='vtkPolyData')
+
+        self.merge_filter = vtk.vtkAppendPolyData()
+        self.merge_filter.UserManagedInputsOff()
+        self.print_objects = {}
+    
+    def add_part(self, id, obj):
+        self.print_objects[id] = obj
+        self.merge_filter.AddInputConnection(0, obj.poly_src.GetOutputPort())
+        self.Modified()
+        return id
+    
+    def remove_part(self, id):
+        rm_obj = self.print_objects.pop(id)
+        self.merge_filter.RemoveInputConnection(0, rm_obj.poly_src.GetOutputPort())
+        self.Modified()
+        return rm_obj
+    
+    def RequestData(self, request, inInfo, outInfo):
+        info = outInfo.GetInformationObject(0)
+        output = vtk.vtkPolyData.GetData(info)
+        self.merge_filter.Update()
+        output.ShallowCopy(self.merge_filter.GetOutput())
+        return 1
 
 class PrintObject():
-    def __init__(self, name, vtk_obj):
+    def __init__(self, name, obj_src):
         """object to be printed
 
         Args:
             name (string): object name
-            vtk_obj (vtkactor): vtkactor being rendered
+            vtk_obj (vtkPolyDataAlgorithm): object source
         """
         super().__init__()
-        self._vtkactor = vtk_obj
-        self._picked_state = False
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(obj_src.GetOutputPort())
+        self.actor = vtk.vtkActor()
+        self.actor.SetMapper(mapper)
+        self.poly_src = self.convert_to_polydata(self.actor, obj_src)
+
+        self.picked = False
         self._backup_prop = None
-        self._name = name
-        self._vtkactor.AddObserver('PickEvent', self.pick)
+        self.name = name
+        self.actor.AddObserver('PickEvent', self.pick)
+    
+    @staticmethod
+    def convert_to_polydata(actor, poly_src):
+        clean = vtk.vtkCleanPolyData()
 
-    @property
-    def actor(self):
-        return self._vtkactor
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(actor.GetMatrix())
 
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def picked(self):
-        return self._picked_state
+        coord_converter = vtk.vtkTransformPolyDataFilter()
+        coord_converter.SetTransform(transform)
+        coord_converter.SetInputConnection(poly_src.GetOutputPort())
+        coord_converter.Update()
+        return coord_converter
 
     def pick(self, caller, ev):
         """set pick status
@@ -56,84 +92,3 @@ class PrintObject():
             self._vtkactor.ApplyProperties()
 
         self._picked_state = False
-
-
-class PrintPlatter(QObject):
-    # Qt signal
-    signal_add_part = pyqtSignal(PrintObject)
-    signal_remove_part = pyqtSignal(PrintObject)
-
-    def __init__(self, size):
-        """Print platter class
-
-        Args:
-            size (array(2,)): print bed size
-        """        
-        QObject.__init__(self)
-        self._parts = []
-        self._size = size
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def parts(self):
-        return self._parts
-
-    def add_parts(self, part):
-        """ add part to print platter
-
-        Args:
-            part (PrintObject): object to be printed
-        """ 
-        self._parts.append(part)
-        self.signal_add_part.emit(part)
-
-    def remove_part(self, part):
-        """Remove object from build plate
-
-        Args:
-            part (PrintObject): object to be printed
-        """
-        self._parts.remove(part)
-        self.signal_remove_part.emit(part)
-
-    def reset_picked(self):
-        for part in self._parts:
-            if(part.picked):
-                part.unpick()
-
-    def set_up_dummy_sphere(self):
-        """set up dummy sphere for debug
-        """
-        for i in range(5):
-            source = vtk.vtkSphereSource()
-
-            # random position and radius
-            x = vtk.vtkMath.Random(0, 50)
-            y = vtk.vtkMath.Random(0, 50)
-            z = vtk.vtkMath.Random(0, 100)
-            radius = vtk.vtkMath.Random(.5, 1.0)
-
-            source.SetRadius(radius)
-            source.SetCenter(x, y, z)
-            source.SetPhiResolution(11)
-            source.SetThetaResolution(21)
-
-            mapper = vtk.vtkPolyDataMapper()
-            mapper.SetInputConnection(source.GetOutputPort())
-            actor = vtk.vtkActor()
-            actor.SetMapper(mapper)
-
-            r = vtk.vtkMath.Random(.4, 1.0)
-            g = vtk.vtkMath.Random(.4, 1.0)
-            b = vtk.vtkMath.Random(.4, 1.0)
-            actor.GetProperty().SetDiffuseColor(r, g, b)
-            actor.GetProperty().SetDiffuse(.8)
-            actor.GetProperty().SetSpecular(.5)
-            actor.GetProperty().SetSpecularColor(1.0, 1.0, 1.0)
-            actor.GetProperty().SetSpecularPower(30.0)
-
-            print_obj = PrintObject('Dummy_Sphere_{}'.format(i), actor)
-            self.add_parts(print_obj)

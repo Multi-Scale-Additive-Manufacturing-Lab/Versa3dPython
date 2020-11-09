@@ -7,8 +7,9 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from versa3d.mouse_interaction import ActorHighlight
-import versa3d.print_platter as ppl
-import versa3d.versa3d_command as vscom
+from versa3d.controller import Versa3dController
+#import versa3d.print_platter as ppl
+#import versa3d.versa3d_command as vscom
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -29,86 +30,69 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
+        self.controller = Versa3dController(self.stl_renderer, self)
+
         # Figure out a way to share settings
-        self.platter = ppl.PrintPlatter((50, 50, 100))
+        #self.platter = ppl.PrintPlatter((50, 50, 100))
 
-        self.platter.signal_add_part.connect(self.render_parts)
-        self.platter.signal_add_part.connect(self.add_obj_to_list)
+        #self.platter.signal_add_part.connect(self.render_parts)
+        #self.platter.signal_add_part.connect(self.add_obj_to_list)
 
-        self.platter.signal_remove_part.connect(self.remove_parts)
+        #self.platter.signal_remove_part.connect(self.remove_parts)
 
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
-        actor_highlight_obs = ActorHighlight(self)
+        #actor_highlight_obs = ActorHighlight(self)
 
-        style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
+        #style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
-        self.setup_scene(self.platter.size)
-        self.platter.set_up_dummy_sphere()
+        self.setup_scene((50, 50, 100))
+        #self.platter.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
-
-        self.undo_stack = QtWidgets.QUndoStack(self)
-        self.undo_stack.setUndoLimit(10)
 
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
 
-        self.action_undo.triggered.connect(self.undo_stack.undo)
-        self.action_redo.triggered.connect(self.undo_stack.redo)
+        self.action_import_stl.triggered.connect(self.controller.import_object)
 
-        self.action_import_stl.triggered.connect(self.import_stl)
+        self.action_undo.triggered.connect(self.controller.undo_stack.undo)
+        self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
         # self.initialize_tab()
 
-    def import_stl(self):
-        filename = QtWidgets.QFileDialog.getOpenFileName(
-            self, 'Open stl', "", "stl (*.stl)")
-        if(filename[0] != ''):
-            com = vscom.ImportCommand(filename[0], self.platter)
-            self.undo_stack.push(com)
-
-    # TODO change undo redo, if multiple actor are chosen. Undo and Redo all of them
-    def translate(self, delta_pos):
-        parts = self.platter.parts
-        for part in parts:
-            if part.picked:
-                com = vscom.TranslationCommand(delta_pos, part.actor)
-                self.undo_stack.push(com)
-                self.stl_renderer.GetRenderWindow().Render()
-
     def move_object_y(self):
         y = self.y_delta.value()
-        self.translate(np.array([0, y, 0]))
+        self.controller.translate(np.array([0, y, 0]))
 
     def move_object_x(self):
         x = self.x_delta.value()
-        self.translate(np.array([x, 0, 0]))
+        self.controller.translate(np.array([x, 0, 0]))
 
     # TODO implement undo for list
-    @pyqtSlot(ppl.PrintObject)
-    def add_obj_to_list(self, obj):
-        table = self.table_stl
-        name = obj.name
-        table.insertRow(table.rowCount())
+    #@pyqtSlot(ppl.PrintObject)
+    #def add_obj_to_list(self, obj):
+    #    table = self.table_stl
+    #    name = obj.name
+    #    table.insertRow(table.rowCount())
 
-        name_entry = QtWidgets.QTableWidgetItem(name)
-        scale_value = QtWidgets.QTableWidgetItem(str(1.0))
-        copies_value = QtWidgets.QTableWidgetItem(str(1.0))
+    #    name_entry = QtWidgets.QTableWidgetItem(name)
+    #    scale_value = QtWidgets.QTableWidgetItem(str(1.0))
+    #    copies_value = QtWidgets.QTableWidgetItem(str(1.0))
 
-        current_row = table.rowCount() - 1
-        table.setItem(current_row, 0, name_entry)
-        table.setItem(current_row, 1, copies_value)
-        table.setItem(current_row, 2, scale_value)
+    #    current_row = table.rowCount() - 1
+    #    table.setItem(current_row, 0, name_entry)
+    #    table.setItem(current_row, 1, copies_value)
+    #    table.setItem(current_row, 2, scale_value)
 
-    @pyqtSlot(ppl.PrintObject)
-    def render_parts(self, obj):
-        self.stl_renderer.AddActor(obj.actor)
+    #@pyqtSlot(ppl.PrintObject)
+    #def render_parts(self, obj):
+    #    self.stl_renderer.AddActor(obj.actor)
 
-    @pyqtSlot(ppl.PrintObject)
-    def remove_parts(self, obj):
-        self.stl_renderer.RemoveActor(obj.actor)
+    #@pyqtSlot(ppl.PrintObject)
+    #def remove_parts(self, obj):
+    #    self.stl_renderer.RemoveActor(obj.actor)
 
     def setup_scene(self, size):
         """set grid scene

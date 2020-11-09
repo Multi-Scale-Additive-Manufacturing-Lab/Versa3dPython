@@ -1,39 +1,42 @@
+import os
+
 from PyQt5.QtWidgets import QUndoCommand
+from PyQt5.QtCore import QUuid
 import vtk
-from versa3d.print_platter import PrintObject
+from versa3d.print_platter import PrintPlatterSource, PrintObject
 
 
 class ImportCommand(QUndoCommand):
-    def __init__(self, path, platter, parent=None):
+    def __init__(self, path, renderer, print_platter, parent=None):
         """[summary]
 
         Arguments:
             QUndoCommand {QUndoCommand} -- Qt Undo command class
             path {string} -- file path
-            platter {print_platter} -- print platter object
+            print_platter {PrintPlatterSource} -- print platter object
 
         Keyword Arguments:
             parent {QObject} -- Not used (default: {None})
         """
         super().__init__(parent)
+        _, name = os.path.split(path)
         reader = vtk.vtkSTLReader()
         reader.SetFileName(path)
         reader.Update()
-
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(reader.GetOutputPort())
-
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-
-        self._obj = PrintObject('import', actor)
-        self._platter = platter
+        self._obj = PrintObject(name, reader)
+        self._platter = print_platter
+        self.id = QUuid.createUuid()
+        self.renderer = renderer
 
     def redo(self):
-        self._platter.add_parts(self._obj)
+        self._platter.add_part(self.id, self._obj)
+        self.renderer.AddActor(self._obj.actor)
+        self.renderer.GetRenderWindow().Render()
 
     def undo(self):
-        self._platter.remove_part(self._obj)
+        self._platter.remove_part(self.id)
+        self.renderer.RemoveActor(self._obj.actor)
+        self.renderer.GetRenderWindow().Render()
 
 
 class TranslationCommand(QUndoCommand):
