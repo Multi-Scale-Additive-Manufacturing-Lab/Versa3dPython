@@ -25,6 +25,10 @@ class PrintPlatterSource(VTKPythonAlgorithmBase):
         self.merge_filter.RemoveInputConnection(0, rm_obj.poly_src.GetOutputPort())
         self.Modified()
         return rm_obj
+
+    def reset_picked(self):
+        for _, obj in self.print_objects.items():
+            obj.unpick()
     
     def RequestData(self, request, inInfo, outInfo):
         info = outInfo.GetInformationObject(0)
@@ -73,22 +77,22 @@ class PrintObject():
             caller (vtkRenderWindowInteractor): object being observed
             ev (string): event type description
         """
-        if(not self._picked_state):
+        if(not self.picked):
             colors = vtk.vtkNamedColors()
-            actor_property = self._vtkactor.GetProperty()
+            actor_property = self.actor.GetProperty()
             self._backup_prop = vtk.vtkProperty()
             self._backup_prop.DeepCopy(actor_property)
 
             actor_property.SetColor(colors.GetColor3d('Red'))
             actor_property.SetDiffuse(1.0)
             actor_property.SetSpecular(0.0)
-            self._vtkactor.ApplyProperties()
+            self.actor.ApplyProperties()
 
-            self._picked_state = True
+            self.picked = True
 
     def unpick(self):
-        if(self._picked_state and (self._backup_prop is not None)):
-            self._vtkactor.GetProperty().DeepCopy(self._backup_prop)
-            self._vtkactor.ApplyProperties()
+        if(self.picked and (self._backup_prop is not None)):
+            self.actor.GetProperty().DeepCopy(self._backup_prop)
+            self.actor.ApplyProperties()
 
-        self._picked_state = False
+        self.picked = False

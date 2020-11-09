@@ -43,9 +43,9 @@ class MainWindow(QtWidgets.QMainWindow):
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
-        #actor_highlight_obs = ActorHighlight(self)
+        actor_highlight_obs = ActorHighlight(self.stl_renderer, self.controller.platter)
 
-        #style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
+        style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
         self.setup_scene((50, 50, 100))
         #self.platter.set_up_dummy_sphere()

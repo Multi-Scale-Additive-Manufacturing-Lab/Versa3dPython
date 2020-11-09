@@ -3,16 +3,19 @@ from PyQt5.QtWidgets import QUndoCommand
 
 
 class ActorHighlight(QUndoCommand):
-    def __init__(self, parent):
+    def __init__(self, renderer, ppl, parent = None):
         """ highlight interactor observer. Called when SelectionChangedEvent
         is emitted by vtkInteractorStyleRubberBand3D
 
         Args:
-            parent (QMainWindow): parent class
+            renderer (vtkRenderer) : renderer
+            ppl (PrintPlatterSource) : print platter
+            parent (QUndoCommand): parent class
         """
-        super().__init__()
+        super().__init__(parent)
 
-        self.parent = parent
+        self.renderer = renderer
+        self.platter = ppl
         self.list_picked = []
 
     def __call__(self, caller, ev):
@@ -28,12 +31,10 @@ class ActorHighlight(QUndoCommand):
             start_pos = caller.GetStartPosition()
             end_pos = caller.GetEndPosition()
 
-            renderer = self.parent.stl_renderer
-
             picker = vtk.vtkRenderedAreaPicker()
 
             picker.AreaPick(start_pos[0], start_pos[1],
-                            end_pos[0], end_pos[1], renderer)
+                            end_pos[0], end_pos[1], self.renderer)
 
             list_actors = picker.GetProp3Ds()
             num_picked_actor = list_actors.GetNumberOfItems()
@@ -45,11 +46,11 @@ class ActorHighlight(QUndoCommand):
                 actor.Pick()
                 self.list_picked.append(actor)
 
-            renderer.GetRenderWindow().Render()
+            self.renderer.GetRenderWindow().Render()
     
     def redo(self):
         for actor in self.list_picked:
             actor.Pick()
     
     def undo(self):
-        self.parent.platter.reset_picked()
+        self.platter.reset_picked()
