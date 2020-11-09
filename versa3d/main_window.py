@@ -32,23 +32,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.controller = Versa3dController(self.stl_renderer, self)
 
-        # Figure out a way to share settings
-        #self.platter = ppl.PrintPlatter((50, 50, 100))
-
-        #self.platter.signal_add_part.connect(self.render_parts)
-        #self.platter.signal_add_part.connect(self.add_obj_to_list)
-
-        #self.platter.signal_remove_part.connect(self.remove_parts)
-
         style = vtk.vtkInteractorStyleRubberBand3D()
         self.stl_interactor.SetInteractorStyle(style)
 
-        actor_highlight_obs = ActorHighlight(self.stl_renderer, self.controller.platter)
+        actor_highlight_obs = ActorHighlight(
+            self.stl_renderer, self.controller.platter)
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
         self.setup_scene((50, 50, 100))
-        #self.platter.set_up_dummy_sphere()
+        # self.platter.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
 
@@ -61,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
         # self.initialize_tab()
-    
+
     def import_object(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
@@ -76,8 +69,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller.translate(np.array([x, 0, 0]))
 
     # TODO implement undo for list
-    #@pyqtSlot(ppl.PrintObject)
-    #def add_obj_to_list(self, obj):
+    # @pyqtSlot(ppl.PrintObject)
+    # def add_obj_to_list(self, obj):
     #    table = self.table_stl
     #    name = obj.name
     #    table.insertRow(table.rowCount())
@@ -90,14 +83,6 @@ class MainWindow(QtWidgets.QMainWindow):
     #    table.setItem(current_row, 0, name_entry)
     #    table.setItem(current_row, 1, copies_value)
     #    table.setItem(current_row, 2, scale_value)
-
-    #@pyqtSlot(ppl.PrintObject)
-    #def render_parts(self, obj):
-    #    self.stl_renderer.AddActor(obj.actor)
-
-    #@pyqtSlot(ppl.PrintObject)
-    #def remove_parts(self, obj):
-    #    self.stl_renderer.RemoveActor(obj.actor)
 
     def setup_scene(self, size):
         """set grid scene
