@@ -21,9 +21,7 @@ class Versa3dController(QObject):
             if(part.picked):
                 part.unpick()
 
-    def import_object(self):
-        filename = QtWidgets.QFileDialog.getOpenFileName(
-            self.parent, 'Open stl', "", "stl (*.stl)")
+    def import_object(self, filename):
         if(filename[0] != ''):
             com = vscom.ImportCommand(filename[0], self.renderer, self.platter)
             self.undo_stack.push(com)

@@ -55,12 +55,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
 
-        self.action_import_stl.triggered.connect(self.controller.import_object)
+        self.action_import_stl.triggered.connect(self.import_object)
 
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
         # self.initialize_tab()
+    
+    def import_object(self):
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Open stl', "", "stl (*.stl)")
+        self.controller.import_object(filename)
 
     def move_object_y(self):
         y = self.y_delta.value()
