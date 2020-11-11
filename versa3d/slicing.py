@@ -23,13 +23,6 @@ def create_2d_vtk_image(val, x, y, spacing):
     return img
 
 
-def create_slicer(self, slicer_type, parts, printer, printhead, print_settings):
-    if('fblack' == slicer_type):
-        return FullBlackSlicer(parts, print_settings, printer, printhead)
-    else:
-        return None
-
-
 class VoxelSlicer():
     def __init__(self, polydata, print_preset, printer_setting, printhead_setting):
 
