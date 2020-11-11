@@ -23,15 +23,13 @@ class Versa3dSettings():
             self.settings = self.init_default()
             self.initialized = True
 
-        self._printer_obj = self.load_settings('printer', self.printer_name)
-        self._printhead_obj = self.load_settings(
-            'printhead', self.printhead_name)
-        self._preset_obj = self.load_settings(
-            'parameter_preset', self.parameter_preset_name)
+        self._printer_obj = self.load_settings('printer')
+        self._printhead_obj = self.load_settings('printhead')
+        self._parameter_preset_obj = self.load_settings('parameter_preset')
 
-        self.printer = self._printer_obj()
-        self.printhead = self._printhead_obj()
-        self.parameter_preset = self._preset_obj()
+        self.printer = self._printer_obj[self.printer_name]
+        self.printhead = self._printhead_obj[self.printhead_name]
+        self.parameter_preset = self._parameter_preset_obj[self.parameter_preset_name]
 
     def check_if_empty(self):
         return len(self.settings.allKeys()) == 0
@@ -63,24 +61,40 @@ class Versa3dSettings():
                 self.settings.endGroup()
         return self.settings
 
-    def change_printer(self, name, new_set=False):
+    def change_printer(self, name):
         self.printer_name = name
-        self._preset_obj = self.load_settings('printer', name, new_set)
-        self.printer = self._preset_obj()
+        self.printer = self._printer_obj[name]
         return self.printer
 
-    def change_printhead(self, name, new_set=False):
+    def change_printhead(self, name):
         self.printhead_name = name
-        self._printhead_obj = self.load_settings('printhead', name, new_set)
-        self.printhead = self._printhead_obj()
+        self.printhead = self._printhead_obj[name]
         return self.printhead
 
-    def change_preset(self, name, new_set=False):
+    def change_preset(self, name):
         self.parameter_preset_name = name
-        self._preset_obj = self.load_settings(
-            'parameter_preset', name, new_set)
-        self.parameter_preset = self._preset_obj()
+        self.parameter_preset = self._parameter_preset_obj[name]
         return self.parameter_preset
+
+    @staticmethod
+    def permute_name(ls_key, name):
+        i = 1
+        while name in ls_key:
+            name = name + '_{}'.format(i)
+            i += 1
+        return name
+
+    def clone_setting(self, section, name=None):
+        if name is None:
+            ls_key = getattr(self, section).keys()
+            name = self.permute_name(ls_key, name)
+
+        obj = getattr(self, section)._asdict()
+        list_setting = getattr(self, '_{}_obj'.format(section))
+        list_setting[name] = namedtuple(
+            section, obj.keys(), defaults=obj.values())()
+        setattr(self, '_{}_obj'.format(section), list_setting)
+        return list_setting[name]
 
     def update_printer_value(self, key, value):
         self.printer = self.printer._replace(**{key: value})
@@ -117,26 +131,28 @@ class Versa3dSettings():
         except:
             raise Exception('disk write failed')
 
-    def load_settings(self, section, name, new_set=False):
+    def load_settings(self, section):
         self.settings.beginGroup(section)
         list_of_preset = self.settings.childGroups()
-        self.settings.beginGroup(name)
-        list_of_settings = self.settings.childGroups()
-        self.settings.endGroup()
         self.settings.endGroup()
 
-        if name in list_of_preset:
+        preset_dict = {}
+        for name in list_of_preset:
             setting_dict = {}
+
+            self.settings.beginGroup(section)
+            self.settings.beginGroup(name)
+            list_of_settings = self.settings.childGroups()
+            self.settings.endGroup()
+            self.settings.endGroup()
+
             for g in list_of_settings:
                 setting_dict[g] = self.get_key_from_disk(section, g, name)
-            return namedtuple(section, setting_dict.keys(), defaults=setting_dict.values())
-        elif new_set:
-            setting_dict = {}
-            obj = getattr(self, section)._asdict()
-            return namedtuple(section, obj.keys(), defaults=obj.values())
-        else:
-            raise Exception(
-                'no {} settings with name {}'.format(section, name))
+            obj = namedtuple(section, setting_dict.keys(),
+                             defaults=setting_dict.values())
+            preset_dict[name] = obj()
+
+        return preset_dict
 
     def get_key_from_disk(self, section, key, name=None):
         if name is None:

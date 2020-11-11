@@ -31,7 +31,8 @@ class SettingsTest(unittest.TestCase):
     def test_set_settings(self):
         test_array = np.array([100.0, 100.0])
         modified_printer_name = 'modified_printer_10'
-        self.singleton.change_printer(modified_printer_name, True)
+        self.singleton.clone_setting('printer', modified_printer_name)
+        self.singleton.change_printer(modified_printer_name)
         self.assertEqual(self.singleton.printer_name, modified_printer_name)
 
         self.singleton.update_printer_value('coord_offset', test_array)
