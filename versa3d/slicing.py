@@ -61,8 +61,8 @@ class VoxelSlicer(VTKPythonAlgorithmBase):
 
     def RequestData(self, request, inInfo, outInfo):
         voxelizer = vtk.vtkImplicitModeller()
-        voxelizer.SetMaximumDistance(0.5)
-        voxelizer.SetAdjustDistance(0.5)
+        voxelizer.SetMaximumDistance(0.1)
+        voxelizer.SetAdjustDistance(0.1)
         voxelizer.SetProcessModeToPerVoxel()
         voxelizer.AdjustBoundsOn()
         voxelizer.SetOutputScalarTypeToUnsignedChar()

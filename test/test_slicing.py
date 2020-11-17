@@ -63,6 +63,12 @@ class SlicingTest(unittest.TestCase):
         writer.Update()
         writer.Write()
 
+        writer_3d = vtk.vtkXMLImageDataWriter()
+        writer_3d.SetFileName(os.path.join(self.out_dir, 'test.vti'))
+        writer_3d.SetInputData(slice_stack)
+        writer_3d.Update()
+        writer_3d.Write()
+
 
 if __name__ == '__main__':
     unittest.main()
