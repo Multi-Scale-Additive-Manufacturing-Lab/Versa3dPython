@@ -1,11 +1,11 @@
 import unittest
 import numpy as np
 import vtk
-from collections import namedtuple
 import os
 
-from versa3d.slicing import FullBlackSlicer
-from matplotlib import pyplot as plt
+from versa3d.slicing import VoxelSlicer
+
+from test.util import render_image
 
 
 class SlicingTest(unittest.TestCase):
@@ -15,20 +15,8 @@ class SlicingTest(unittest.TestCase):
         reader.SetFileName('./test/test_file/3DBenchySmall.stl')
         reader.Update()
 
-        self.printer = namedtuple(
-            'printer',
-            ['build_bed_size']
-        )
-
-        self.print_setting = namedtuple(
-            'parameter_preset',
-            ['layer_thickness']
-        )
-
-        self.printhead = namedtuple(
-            'printhead',
-            ['dpi']
-        )
+        self.resolution = np.array([600, 600])
+        self.layer_thickness = 0.1
 
         bounds = reader.GetOutput().GetBounds()
         transform = vtk.vtkTransform()
@@ -36,9 +24,9 @@ class SlicingTest(unittest.TestCase):
         for i in range(3):
             if(bounds[2*i] < 0):
                 translate_vec[i] = -bounds[2*i]*1.5
-        
+
         transform.Translate(translate_vec)
-        
+
         poly_translate = vtk.vtkTransformPolyDataFilter()
         poly_translate.SetTransform(transform)
         poly_translate.SetInputConnection(reader.GetOutputPort())
@@ -51,18 +39,26 @@ class SlicingTest(unittest.TestCase):
         os.makedirs(self.out_dir, exist_ok=True)
 
     def test_slice_boat(self):
-        slicer = FullBlackSlicer(self.part, self.print_setting(0.1), self.printer(
-            np.array([50, 50, 100])), self.printhead(np.array([600, 600])))
+        slicer = VoxelSlicer()
+        slicer.resolution = self.resolution
+        slicer.layer_thickness = self.layer_thickness
+        slicer.SetInputDataObject(self.part)
+        slicer.Update()
 
-        slice_stack = slicer.slice()
-        self.assertTrue(len(slice_stack) > 0)
+        slice_stack = slicer.GetOutputDataObject(0)
+        img_dim = slice_stack.GetDimensions()
+        self.assertTrue(img_dim[2] > 0)
+        (x_min, x_max, y_min, y_max, _, _) = slice_stack.GetExtent()
 
-        mid_point = int(len(slice_stack)/2)
-        vtk_im = slice_stack[mid_point].image
-        rows, cols, _ = vtk_im.GetDimensions()
+        mid_point = int(img_dim[2]/2)
+        single_im = vtk.vtkExtractVOI()
+        single_im.SetVOI(x_min, x_max, y_min, y_max, mid_point, mid_point)
+        single_im.SetSampleRate(1, 1, 1)
+        single_im.SetInputData(slice_stack)
+        single_im.Update()
 
         writer = vtk.vtkBMPWriter()
-        writer.SetInputData(vtk_im)
+        writer.SetInputData(single_im.GetOutput())
         writer.SetFileName(os.path.join(self.out_dir, 'test.bmp'))
         writer.Update()
         writer.Write()
