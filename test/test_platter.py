@@ -1,8 +1,6 @@
 import unittest
 import vtk
-from test.util import render_polydata
-from versa3d.print_platter import PrintPlatterSource, PrintObject
-
+from versa3d.print_platter import PrintObject
 
 class PlatterTest(unittest.TestCase):
 
@@ -23,18 +21,20 @@ class PlatterTest(unittest.TestCase):
             source.SetPhiResolution(11)
             source.SetThetaResolution(21)
 
-            obj = PrintObject('sphere_{}'.format(i), source)
+            obj = PrintObject(source)
+            obj.saturation = 0.8
+            obj.infill = 'black'
+            obj.Update()
 
             self.list_sphere.append(obj)
 
     def test_add_sphere(self):
-        platter = PrintPlatterSource()
-
-        for i, obj in enumerate(self.list_sphere):
-            platter.add_part('sphere_{}'.format(i), obj)
+        platter = vtk.vtkAppendPolyData()
+        for obj in self.list_sphere:
+            platter.AddInputData(obj.GetOutputDataObject(0))
 
         platter.Update()
-        poly_data = platter.GetOutputDataObject(0)
+        poly_data = platter.GetOutput()
 
         split = vtk.vtkConnectivityFilter()
         split.SetInputData(poly_data)
@@ -44,16 +44,17 @@ class PlatterTest(unittest.TestCase):
         self.assertEqual(n_output, self.n_sphere)
 
     def test_remove_sphere(self):
-        platter = PrintPlatterSource()
-
-        for i, obj in enumerate(self.list_sphere):
-            platter.add_part(i, obj)
+        platter = vtk.vtkAppendPolyData()
+        for obj in self.list_sphere:
+            platter.AddInputData(obj.GetOutputDataObject(0))
+            
+        poly_data = platter.GetOutput()
 
         platter.Update()
-        platter.remove_part(0)
+        platter.RemoveInputData(self.list_sphere[0].GetOutputDataObject(0))
         platter.Update()
 
-        poly_data = platter.GetOutputDataObject(0)
+        poly_data = platter.GetOutput()
 
         split = vtk.vtkConnectivityFilter()
         split.SetInputData(poly_data)

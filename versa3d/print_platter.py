@@ -1,74 +1,56 @@
 import vtk
 import numpy as np
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSettings
+from vtk.numpy_interface import dataset_adapter as dsa
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
+from vtk.util import keys
+from PyQt5.QtCore import QUuid
 
-class PrintPlatterSource(VTKPythonAlgorithmBase):
-
-    def __init__(self):
+class PrintObject(VTKPythonAlgorithmBase):
+    def __init__(self, poly_src):
         VTKPythonAlgorithmBase.__init__(self,
             nInputPorts=0,
             nOutputPorts=1, outputType='vtkPolyData')
-
-        self.merge_filter = vtk.vtkAppendPolyData()
-        self.merge_filter.UserManagedInputsOff()
-        self.print_objects = {}
-    
-    def add_part(self, id, obj):
-        self.print_objects[id] = obj
-        self.merge_filter.AddInputConnection(0, obj.poly_src.GetOutputPort())
-        self.Modified()
-        return id
-    
-    def remove_part(self, id):
-        rm_obj = self.print_objects.pop(id)
-        self.merge_filter.RemoveInputConnection(0, rm_obj.poly_src.GetOutputPort())
-        self.Modified()
-        return rm_obj
-
-    def reset_picked(self):
-        for _, obj in self.print_objects.items():
-            obj.unpick()
-    
-    def RequestData(self, request, inInfo, outInfo):
-        info = outInfo.GetInformationObject(0)
-        output = vtk.vtkPolyData.GetData(info)
-        self.merge_filter.Update()
-        output.ShallowCopy(self.merge_filter.GetOutput())
-        return 1
-
-class PrintObject():
-    def __init__(self, name, obj_src):
-        """object to be printed
-
-        Args:
-            name (string): object name
-            vtk_obj (vtkPolyDataAlgorithm): object source
-        """
-        super().__init__()
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(obj_src.GetOutputPort())
+        self._poly_src = poly_src
+        self._mapper = vtk.vtkPolyDataMapper()
+        self._mapper.SetInputConnection(self._poly_src.GetOutputPort())
         self.actor = vtk.vtkActor()
-        self.actor.SetMapper(mapper)
-        self.poly_src = self.convert_to_polydata(self.actor, obj_src)
+        self.actor.SetMapper(self._mapper)
 
         self.picked = False
         self._backup_prop = None
-        self.name = name
+        self.name = QUuid.createUuid().toString()
         self.actor.AddObserver('PickEvent', self.pick)
+
+        self._saturation = None
+        self._infill = None
+    
+    @property
+    def saturation(self):
+        return self._saturation
+    
+    @saturation.setter
+    def saturation(self, val):
+        if val != self._saturation:
+            self._saturation = val
+            self.Modified()
+
+    @property
+    def infill(self):
+        return self._infill
+    
+    @infill.setter
+    def infill(self, val):
+        if val != self.infill:
+            self._infill = val
+            self.Modified()
+
+    @staticmethod
+    def saturation_key():
+        return keys.MakeKey(keys.DoubleKey, "saturation", "PrintObject")
     
     @staticmethod
-    def convert_to_polydata(actor, poly_src):
-        clean = vtk.vtkCleanPolyData()
-
-        transform = vtk.vtkTransform()
-        transform.SetMatrix(actor.GetMatrix())
-
-        coord_converter = vtk.vtkTransformPolyDataFilter()
-        coord_converter.SetTransform(transform)
-        coord_converter.SetInputConnection(poly_src.GetOutputPort())
-        coord_converter.Update()
-        return coord_converter
+    def infill_key():
+        return keys.MakeKey(keys.StringKey, "infill", "PrintObject")
 
     def pick(self, caller, ev):
         """set pick status
@@ -96,3 +78,29 @@ class PrintObject():
             self.actor.ApplyProperties()
 
         self.picked = False
+    
+    def RequestInformation(self, request, inInfo, outInfo):
+        outInfo.GetInformationObject(0).Set(
+            self.saturation_key(),
+            self._saturation)
+        
+        outInfo.GetInformationObject(0).Set(
+            self.infill_key(),
+            self._infill
+        )
+        
+        return 1
+
+    def RequestData(self, request, inInfo, outInfo):
+        output = vtk.vtkPolyData.GetData(outInfo)
+
+        transform = vtk.vtkTransform()
+        transform.SetMatrix(self.actor.GetMatrix())
+
+        coord_converter = vtk.vtkTransformPolyDataFilter()
+        coord_converter.SetTransform(transform)
+        coord_converter.SetInputConnection(self._poly_src.GetOutputPort())
+        coord_converter.Update()
+        output.ShallowCopy(coord_converter.GetOutput())
+
+        return 1
