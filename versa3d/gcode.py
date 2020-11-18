@@ -1,57 +1,136 @@
+from abc import ABC, abstractmethod
 import vtk
-from PIL import Image
+from tempfile import TemporaryDirectory
 import os
+import shutil
 
-from versa3d.settings import PrinterSettings, PrintheadSettings, PrintSettings
+class GCodeWriter(ABC):
 
+    def __init__(self):
+        self.printer = None
+        self.tmp_dir = TemporaryDirectory()
+        self.filename = os.path.join(self.tmp_dir, 'toolpath.gcode')
+        self.img_folder = os.path.join(self.tmp_dir,'img')
+        os.makedirs(self.img_folder, exist_ok=True)
+        self.step = []
 
-def GcodeWriterFactory():
-    def __init__(self, slicer, print_setting, printer_name, printhead_name):
-        self._slicer = slicer
-        self._print_set = print_setting
-        self._printer = printer_name
-        self._printhead = printhead_name
-
-    def create_writer(self, writer_type):
-        if('LinuxCnc' == writer_type):
-            return LinuxCncWriter(self._slicer, self._print_set, self._printer)
-        else:
-            return None
-
-
-class LinuxCncWriter():
-
-    def __init__(self, slicer, print_preset_name, printer_name):
-        self._slicer = slicer
-
-        print_settings = PrintSettings(print_preset_name)
-        printer_attr = PrinterSettings(printer_name)
-
-        self._printer_dim = printer_attr.bds
-
-        self._printspeed = print_settings.ps
-        self._H = print_settings.pho
-        self._S = print_settings.pl
-        self._W = print_settings.rwd
-        self._feed_bed_vel = print_settings.fbv
-        self._build_bed_velocity = print_settings.bbv
-
-        self._print_bed_offset = printer_attr.coord_o
-
-        self._roller_lin_vel = print_settings.rol_lin
-        self._roller_rot_vel = print_settings.rol_rpm
-
-    def write_file(self, folder_path):
-        pass
-
+    @abstractmethod
     def home_axis(self, axis):
         pass
 
-    def move_axis(self, speed, pos, axis):
+    @abstractmethod
+    def move(self, pos):
+        pass
+    
+    @abstractmethod
+    def initialise_printhead(self, print_head_num):
         pass
 
-    def jog_axis(self, speed, pos, axis):
+    @abstractmethod
+    def print_image(self, image):
+        pass
+    
+    @abstractmethod
+    def spit(self, print_head_num):
+        pass
+    
+    @abstractmethod
+    def roller_start(self, rpm, ccw=True):
+        pass
+    
+    @abstractmethod
+    def roller_stop(self):
         pass
 
-    def print_image(self, img_id):
-        pass
+BM_AXIS_MAP = {
+    1: 'X',
+    2: 'Y',
+    3: 'Z',
+    4: 'T'
+}
+
+
+class BigMachineGcode(GCodeWriter):
+
+    def set_units(self, units):
+        unit_dict = {'metric': 'G21', 'imperial' : 'G20'}
+        return lambda : unit_dict[units]
+
+    def set_position_offset(self, pos):
+        def f():
+            command = 'G92'
+            for i, p in enumerate(pos):
+                if p != 0:
+                    command += ' {%s}{%f}'.format(BM_AXIS_MAP[i], p)
+            return command + '\n'
+
+        return f 
+
+    def set_distance_mode(self, mode):
+        mode_dict = {'abs' : 'G90', 'rel' : 'G91'}
+        return lambda : mode_dict[mode] + '\n'
+
+    def move(self, pos):
+        """[summary]
+
+        Args:
+            pos (ndarray): array of position
+        """
+        def f():
+            command = 'G0'
+            for i, p in enumerate(pos):
+                if p != 0:
+                    command += ' {%s}{%f}'.format(BM_AXIS_MAP[i], p)
+            return command + '\n'
+
+        return f
+
+    def home_axis(self, axis):
+        def f():
+            command = ''
+            for i in axis:
+                command += ' {%s}'.format(i)
+            return 'G28' + command + '\n'
+
+        return f
+
+    def initialise_printhead(self, printhead_num):
+        def f():
+            return 'M93 P{%i}\n'.format(printhead_num)
+
+        return f
+
+    def print_image(self, img_name, img, printhead_num, x, y, speed):
+        def f():
+
+            im_writer = vtk.vtkBMPWriter()
+            im_writer.SetFileName(os.path.join(self.img_folder, img_name))
+            im_writer.SetInputData(img)
+            im_writer.Update()
+            im_writer.Write()
+            return 'M95 P{%i} X{%f} Y{%f} S{%f}\n'.format(printhead_num, x, y, speed)
+
+        return f
+
+    def spit(self, printhead_num):
+        def f():
+            return 'M95 P{%i}\n'.format(printhead_num)
+
+        return f
+
+    def roller_start(self, rpm, ccw=True):
+        if ccw:
+            return lambda: 'M3 S{%f}\n'.format(rpm)
+        else:
+            return lambda: 'M4 S{%f}\n'.format(rpm)
+    
+    def roller_stop(self):
+        return 'M3\n'
+
+    def export_file(self, path, ls_steps):
+        with open(self.filename, mode = 'w') as f:
+            for step in ls_steps:
+                f.write(step())
+        shutil.make_archive(path, 'zip', self.tmp_dir)
+
+            

@@ -36,7 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_interactor.SetInteractorStyle(style)
 
         actor_highlight_obs = ActorHighlight(
-            self.stl_renderer, self.controller.platter)
+            self.stl_renderer, self.controller)
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 

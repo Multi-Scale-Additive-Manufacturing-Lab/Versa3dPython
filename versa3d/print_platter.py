@@ -18,7 +18,7 @@ class PrintObject(VTKPythonAlgorithmBase):
 
         self.picked = False
         self._backup_prop = None
-        self.name = QUuid.createUuid().toString()
+        self.id = QUuid.createUuid().toString()
         self.actor.AddObserver('PickEvent', self.pick)
 
         self._saturation = None
