@@ -1,5 +1,6 @@
 
 import json
+from functools import partial
 import re
 from collections import namedtuple
 
@@ -8,6 +9,15 @@ import numpy as np
 
 DEFAULT_CONFIG = './configs/default_config.json'
 
+MAP_TYPE = {
+    'int': int,
+    'string': str,
+    'float': float,
+    'Array<int>': partial(np.array, dtype=int),
+    'Array<float>': partial(np.array, dtype=float),
+    'Array<string>': partial(np.array, dtype=str)
+}
+
 
 class Versa3dSettings():
 
@@ -15,9 +25,6 @@ class Versa3dSettings():
         super().__init__()
         self.settings = QSettings()
         self.initialized = False
-        self.printer_name = 'default_machine'
-        self.printhead_name = 'default_printhead'
-        self.parameter_preset_name = 'default_preset'
 
         if not self.initialized:
             self.settings = self.init_default()
@@ -26,107 +33,84 @@ class Versa3dSettings():
         self._printer_obj = self.load_settings('printer')
         self._printhead_obj = self.load_settings('printhead')
         self._parameter_preset_obj = self.load_settings('parameter_preset')
-
-        self.printer = self._printer_obj[self.printer_name]
-        self.printhead = self._printhead_obj[self.printhead_name]
-        self.parameter_preset = self._parameter_preset_obj[self.parameter_preset_name]
+    
+    @property
+    def printer(self):
+        return self._printer_obj
+    
+    @property
+    def printhead(self):
+        return self._printhead_obj
+    
+    @property
+    def parameter_preset(self):
+        return self._parameter_preset_obj
 
     def check_if_empty(self):
         return len(self.settings.allKeys()) == 0
-
-    def _map_to_name(self, section):
-        if(section == 'printer'):
-            return self.printer_name
-        elif(section == 'parameter_preset'):
-            return self.parameter_preset_name
-        elif(section == 'printhead'):
-            return self.printhead_name
-        else:
-            raise Exception('unknown section')
 
     def init_default(self):
         if self.check_if_empty():
             with open(DEFAULT_CONFIG) as f:
                 default_config = json.load(f)
+            ls_template = default_config['template']
 
-            for section, sec_val in default_config.items():
-                self.settings.beginGroup(section)
-                self.settings.beginGroup(self._map_to_name(section))
-                for param, value in sec_val.items():
-                    self.settings.beginGroup(param)
-                    self.settings.setValue('value', value['value'])
-                    self.settings.setValue('type', value['type'])
+            for name, template in ls_template.items():
+                for section, sec_val in template.items():
+                    self.settings.beginGroup(section)
+                    self.settings.beginGroup(name)
+                    for param, value in sec_val.items():
+                        self.settings.beginGroup(param)
+                        self.settings.setValue('value', value['value'])
+                        self.settings.setValue('type', value['type'])
+                        self.settings.endGroup()
                     self.settings.endGroup()
-                self.settings.endGroup()
-                self.settings.endGroup()
+                    self.settings.endGroup()
         return self.settings
 
-    def change_printer(self, name):
-        self.printer_name = name
-        self.printer = self._printer_obj[name]
-        return self.printer
+    def get_printer(self, name):
+        return self._printer_obj[name]
 
-    def change_printhead(self, name):
-        self.printhead_name = name
-        self.printhead = self._printhead_obj[name]
-        return self.printhead
+    def get_printhead(self, name):
+        return self._printhead_obj[name]
 
-    def change_preset(self, name):
-        self.parameter_preset_name = name
-        self.parameter_preset = self._parameter_preset_obj[name]
-        return self.parameter_preset
+    def get_preset(self, name):
+        return self._parameter_preset_obj[name]
+    
+    def clone_printer(self, name, target_name):
+        obj = self.clone_setting( 'printer', self._printer_obj[name])
+        self._printer_obj[target_name] = obj
+    
+    def clone_printhead(self, name, target_name):
+        obj = self.clone_setting( 'printhead', self._printhead_obj[name])
+        self._printhead_obj[target_name] = obj
+    
+    def clone_param(self, name, target_name):
+        obj = self.clone_setting( 'parameter_preset', self._parameter_preset_obj[name])
+        self._parameter_preset_obj[target_name] = obj
 
-    @staticmethod
-    def permute_name(ls_key, name):
-        i = 1
-        while name in ls_key:
-            name = name + '_{}'.format(i)
-            i += 1
-        return name
+    def clone_setting(self, section, old_obj):
+        dict_obj = old_obj._asdict()
+        return namedtuple( section, dict_obj.keys(), defaults=dict_obj.values())()
 
-    def clone_setting(self, section, name=None):
-        if name is None:
-            ls_key = getattr(self, section).keys()
-            name = self.permute_name(ls_key, name)
+    def update_printer_value(self, name, key, value):
+        self._printer_obj[name] = self._printer_obj[name]._replace(**{key: value})
+        return self._printer_obj[name]
 
-        obj = getattr(self, section)._asdict()
-        list_setting = getattr(self, '_{}_obj'.format(section))
-        list_setting[name] = namedtuple(
-            section, obj.keys(), defaults=obj.values())()
-        setattr(self, '_{}_obj'.format(section), list_setting)
-        return list_setting[name]
+    def update_printhead_value(self, name, key, value):
+        self._printhead_obj[name] = self._printhead_obj[name]._replace(**{key: value})
+        return self._printhead_obj[name]
 
-    def update_printer_value(self, key, value):
-        self.printer = self.printer._replace(**{key: value})
-        return self.printer
+    def update_preset_value(self, name, key, value):
+        self._parameter_preset_obj[name] = self._parameter_preset_obj[name]._replace(**{key: value})
+        return self._parameter_preset_obj[name]
 
-    def update_printhead_value(self, key, value):
-        self.printhead = self.printhead._replace(**{key: value})
-        return self.printhead
-
-    def update_preset_value(self, key, value):
-        self.parameter_preset = self.parameter_preset._replace(**{key: value})
-        return self.parameter_preset
-
-    def save_to_disk(self):
-        list_settings = {
-            'printer': self.printer,
-            'printhead': self.printhead,
-            'parameter_preset': self.parameter_preset
-        }
-
-        list_name = {
-            'printer': self.printer_name,
-            'printhead': self.printhead_name,
-            'parameter_preset': self.parameter_preset_name
-        }
-
+    def save_to_disk(self, section, name):
+        obj_ls = getattr(self, section)
+        settings = obj_ls[name]    
         try:
-            for section, obj in list_settings.items():
-                name = list_name[section]
-                for param, value in obj._asdict().items():
-                    self.set_key_to_disk(section, name, param, value)
-
+            for param, value in settings._asdict().items():
+                self.set_key_to_disk(section, name, param, value)
             return True
         except:
             raise Exception('disk write failed')
@@ -154,31 +138,22 @@ class Versa3dSettings():
 
         return preset_dict
 
-    def get_key_from_disk(self, section, key, name=None):
-        if name is None:
-            name = self._map_to_name(section)
-
+    def get_key_from_disk(self, section, key, name):
         self.settings.beginGroup(section)
         self.settings.beginGroup(name)
         self.settings.beginGroup(key)
         type_str = self.settings.value('type', None, str)
         if(type_str is None or len(type_str) == 0):
             raise Exception('type not specified for {}'.format(key))
-        elif re.match(r'Array(?=\<)', type_str):
-            t_str = re.search(r'(?<=\<)[a-z]+(?=\>)', type_str).group()
-            val = np.array(self.settings.value(
-                'value', [], self.string_to_type(t_str)))
         else:
-            val = self.settings.value(
-                'value', type=self.string_to_type(type_str))
+            val = MAP_TYPE[type_str](self.settings.value(
+                'value'))
         self.settings.endGroup()
         self.settings.endGroup()
         self.settings.endGroup()
         return val
 
     def set_key_to_disk(self, section, name, key, value):
-        if name is None:
-            name = self._map_to_name(section)
 
         self.settings.beginGroup(section)
         self.settings.beginGroup(name)
@@ -234,27 +209,5 @@ class Versa3dSettings():
             return 'float'
         elif isinstance(value, str):
             return 'string'
-        else:
-            raise Exception("unsupported type")
-
-    @staticmethod
-    def string_to_type(type_str):
-        """from string return type
-
-        Args:
-            type_str (string): type string
-
-        Raises:
-            Exception: unsupported type
-
-        Returns:
-            type: return type object
-        """
-        if type_str == 'int':
-            return int
-        elif type_str == 'float':
-            return float
-        elif type_str == 'string':
-            return str
         else:
             raise Exception("unsupported type")

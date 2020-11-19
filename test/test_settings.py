@@ -17,34 +17,33 @@ class SettingsTest(unittest.TestCase):
     def test_setting_init(self):
         self.assertTrue(self.singleton.initialized)
         with open(DEFAULT_CONFIG) as f:
-            default_config = json.load(f)
+            default_config = json.load(f)['template']
+
+        default_name = 'Binder Jetting'
 
         saved_coord_offset = np.array(
-            default_config['printer']['coord_offset']['value'])
+            default_config[default_name]['printer']['coord_offset']['value'])
         self.assertTrue(np.all(saved_coord_offset ==
-                               self.singleton.printer.coord_offset))
+                               self.singleton.get_printer(default_name).coord_offset))
 
-        saved_value = default_config['parameter_preset']['layer_thickness']['value']
+        saved_value = default_config[default_name]['parameter_preset']['layer_thickness']['value']
         self.assertEqual(
-            saved_value, self.singleton.parameter_preset.layer_thickness)
+            saved_value, self.singleton.get_preset(default_name).layer_thickness)
 
     def test_set_settings(self):
         test_array = np.array([100.0, 100.0])
+        default_name = 'Binder Jetting'
         modified_printer_name = 'modified_printer_10'
-        self.singleton.clone_setting('printer', modified_printer_name)
-        self.singleton.change_printer(modified_printer_name)
-        self.assertEqual(self.singleton.printer_name, modified_printer_name)
-
-        self.singleton.update_printer_value('coord_offset', test_array)
-        self.singleton.save_to_disk()
+        self.singleton.clone_printer(default_name, modified_printer_name)
+        self.singleton.update_printer_value(modified_printer_name, 'coord_offset', test_array)
+        self.singleton.save_to_disk('printer', modified_printer_name)
 
         singleton_2 = Versa3dSettings()
-        default_val = singleton_2.printer.coord_offset
+        default_val = singleton_2.get_printer(default_name).coord_offset
         self.assertFalse(
             np.all(default_val == test_array)
         )
-        singleton_2.change_printer(modified_printer_name)
-        changed_val = singleton_2.printer.coord_offset
+        changed_val = singleton_2.get_printer(modified_printer_name).coord_offset
         self.assertTrue(
             np.all(changed_val == test_array)
         )
