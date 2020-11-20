@@ -4,7 +4,8 @@ import vtk
 import os
 
 from versa3d.slicing import VoxelSlicer
-
+from vtk.numpy_interface import dataset_adapter as dsa
+import matplotlib.pyplot as plt
 from test.util import render_image
 
 
@@ -37,6 +38,29 @@ class SlicingTest(unittest.TestCase):
         self.out_dir = './test/test_output/slicing'
 
         os.makedirs(self.out_dir, exist_ok=True)
+
+    def test_infill(self):
+        bounds = np.array(self.part.GetBounds())
+        vox_size = np.ceil(bounds[1::2]/0.1).astype(int)
+        voxelizer = vtk.vtkImplicitModeller()
+        voxelizer.SetSampleDimensions(vox_size)
+        voxelizer.SetModelBounds(bounds)
+        voxelizer.SetInputData(self.part)
+        #voxelizer.SetMaximumDistance(0.001)
+        #voxelizer.SetAdjustDistance(0.1)
+        voxelizer.SetProcessModeToPerVoxel()
+        #voxelizer.AdjustBoundsOff()
+        voxelizer.SetOutputScalarTypeToFloat()
+        voxelizer.Update()
+
+        obj = dsa.WrapDataObject(voxelizer.GetOutput())
+        array = obj.PointData['ImageScalars'].reshape(vox_size, order = 'F')
+
+        fig, ax = plt.subplots()
+        s = ax.imshow(array[..., 50])
+        fig.colorbar(s, ax=ax)
+        plt.show()
+
 
     def test_slice_boat(self):
         slicer = VoxelSlicer()

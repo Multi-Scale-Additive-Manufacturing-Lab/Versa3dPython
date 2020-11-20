@@ -60,26 +60,34 @@ class VoxelSlicer(VTKPythonAlgorithmBase):
         return 1
 
     def RequestData(self, request, inInfo, outInfo):
-        voxelizer = vtk.vtkImplicitModeller()
-        voxelizer.SetMaximumDistance(0.01)
-        voxelizer.SetAdjustDistance(0.01)
-        voxelizer.SetProcessModeToPerVoxel()
-        voxelizer.AdjustBoundsOn()
-        voxelizer.SetOutputScalarTypeToUnsignedChar()
-
-        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
-
         input_src = vtk.vtkPolyData.GetData(inInfo[0])
-
         bounds = np.array(input_src.GetBounds())
+        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         img_dim = self.compute_dim(bounds, spacing)
+        origin = bounds[0::2]
 
-        voxelizer.SetSampleDimensions(img_dim)
-        voxelizer.SetModelBounds(bounds)
-        voxelizer.SetInputData(input_src)
-        voxelizer.Update()
+        background_img = vtk.vtkImageData()
+        background_img.SetSpacing(spacing)
+        background_img.SetDimensions(img_dim)
+        background_img.SetOrigin(origin)
+        background_img.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        background_img.GetPointData().GetScalars().Fill(0)
+
+        poly_sten = vtk.vtkPolyDataToImageStencil()
+        poly_sten.SetInputData(input_src)
+        poly_sten.SetOutputOrigin(origin)
+        poly_sten.SetOutputSpacing(spacing)
+        poly_sten.SetOutputWholeExtent(background_img.GetExtent())
+        poly_sten.Update()
+
+        stencil = vtk.vtkImageStencil()
+        stencil.SetInputData(background_img)
+        stencil.SetStencilConnection(poly_sten.GetOutputPort())
+        stencil.SetBackgroundValue(255)
+        stencil.ReverseStencilOff()
+        stencil.Update()
 
         output = vtk.vtkImageData.GetData(outInfo)
-        output.ShallowCopy(voxelizer.GetOutput())
+        output.ShallowCopy(stencil.GetOutput())
 
         return 1
