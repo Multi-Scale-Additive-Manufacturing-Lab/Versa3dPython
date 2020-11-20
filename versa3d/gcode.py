@@ -57,15 +57,14 @@ class BigMachineGcode(GCodeWriter):
         def f():
             command = 'G92'
             for i, p in enumerate(pos):
-                if p != 0:
-                    command += " %s%f" % (BM_AXIS_MAP[i], p)
-            return command + '\n'
+                command += " %s%f" % (BM_AXIS_MAP[i], p)
+            return command + '; Set Position Offset\n'
 
         return f
 
     def set_distance_mode(self, mode):
         mode_dict = {'abs': 'G90', 'rel': 'G91'}
-        return lambda: mode_dict[mode] + '\n'
+        return lambda: mode_dict[mode] + '; Set Distance mode\n'
 
     def move(self, pos):
         """[summary]
@@ -76,8 +75,7 @@ class BigMachineGcode(GCodeWriter):
         def f():
             command = 'G0'
             for i, p in enumerate(pos):
-                if p != 0:
-                    command += " %s%f" % (BM_AXIS_MAP[i], p)
+                command += " %s%f" % (BM_AXIS_MAP[i], p)
             return command + '\n'
 
         return f
@@ -87,12 +85,12 @@ class BigMachineGcode(GCodeWriter):
             command = ''
             for i in axis:
                 command += ' %s' % i
-            return 'G28' + command + '\n'
+            return 'G28' + command + '; home axis\n'
 
         return f
 
     def initialise_printhead(self, printhead_num):
-        return lambda: 'M93 P%i\n' % (printhead_num)
+        return lambda: 'M93 P%i ; Initialize printhead\n' % (printhead_num)
 
     def print_image(self, img_name, img, z, printhead_num, x, y, speed):
         def f():
@@ -108,21 +106,21 @@ class BigMachineGcode(GCodeWriter):
             im_writer.SetInputData(single_slice.GetOutput())
             im_writer.Update()
             im_writer.Write()
-            return "M95 P%i X%f Y%f S%f\n" % (printhead_num, x, y, speed)
+            return "M95 P%i I%i X%f Y%f S%f; Print layer\n" % (printhead_num, z, x, y, speed)
 
         return f
 
     def spit(self, printhead_num):
-        return lambda: "M95 P%i\n" % printhead_num
+        return lambda: "M95 P%i; spit printhead\n" % printhead_num
 
     def roller_start(self, rpm, ccw=True):
         if ccw:
-            return lambda: "M3 S%f\n" % rpm
+            return lambda: "M3 S%f; Roller start ccw\n" % rpm
         else:
-            return lambda: "M4 S%f\n" % rpm
+            return lambda: "M4 S%f; Roller start cw\n" % rpm
 
     def roller_stop(self):
-        return lambda: 'M3\n'
+        return lambda: 'M3; Roller Stop\n'
 
     def export_file(self, path, ls_steps):
         with open(self.filename, mode='w') as f:

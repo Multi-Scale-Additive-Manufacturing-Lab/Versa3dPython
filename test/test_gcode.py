@@ -17,7 +17,8 @@ class GcodeTest(unittest.TestCase):
 
         self._output_path = './test/test_output/gcode_output'
 
-        self.PrinterObj = namedtuple('printer', ['build_bed_size'])
+        self.PrinterObj = namedtuple(
+            'printer', ['build_bed_size', 'coord_offset'])
         self.ParamObj = namedtuple(
             'parameter_preset', ['roller_rpm', 'print_speed'])
 
@@ -27,7 +28,8 @@ class GcodeTest(unittest.TestCase):
         slicer.gcode_flavour = 'BigMachine'
         slicer.tool_path_pattern = 'StandardBinderJetting'
 
-        slicer.printer = self.PrinterObj(np.array([100, 100], dtype=float))
+        slicer.printer = self.PrinterObj(
+            np.array([100, 100], dtype=float), np.array([30, 30], dtype=int))
         slicer.param = self.ParamObj(100, 20)
 
         slicer.SetInputDataObject(self.part)

@@ -49,6 +49,8 @@ class BinderJettingPlanner(GenericToolPathPlanner):
         if self._param is None and param:
             planner.Modified()
             self._param = param
+            self._roller_rpm = param.roller_rpm
+            self._print_speed = param.print_speed
         elif self._param and param:
             if self._roller_rpm != param.roller_rpm:
                 planner.Modified()
@@ -61,35 +63,42 @@ class BinderJettingPlanner(GenericToolPathPlanner):
         if self._printer is None and printer:
             planner.Modified()
             self._printer = printer
+            self._build_bed_size = printer.build_bed_size
+            self._coord_offset = printer.coord_offset
         elif self._printer and printer:
             if np.any(self._build_bed_size != printer.build_bed_size):
                 planner.Modified()
                 self._build_bed_size = printer.build_bed_size
+            elif np.any(self._coord_offset != printer.coord_offset):
+                planner.Modified()
+                self._coord_offset = printer.coord_offset
 
     def generate_step(self, gcode_writer, image):
         z_spacing = image.GetSpacing()[2]
         z_d = image.GetDimensions()[2]
+        origin = np.array(image.GetOrigin())
 
         ls_step = []
-
+        ls_step.append(gcode_writer.set_units('metric'))
         ls_step.append(gcode_writer.home_axis(['X', 'Y', 'Z', 'U']))
 
-        ls_step.append(gcode_writer.set_position_offset([30, 30]))
+        ls_step.append(gcode_writer.set_position_offset(self._coord_offset))
         ls_step.append(gcode_writer.initialise_printhead(1))
 
         for z in range(z_d):
+            ls_step.append(gcode_writer.move([0, 0, 0, 0]))
             ls_step.append(gcode_writer.set_distance_mode('abs'))
-            ls_step.append(gcode_writer.roller_start(1, 200))
+            ls_step.append(gcode_writer.roller_start(1, self._roller_rpm))
 
             ls_step.append(gcode_writer.set_distance_mode('rel'))
             ls_step.append(gcode_writer.move([0, 0, z_spacing, 0]))
             ls_step.append(gcode_writer.move([0, 0, 0, z_spacing]))
 
             ls_step.append(gcode_writer.set_distance_mode('abs'))
-            ls_step.append(gcode_writer.move([0, 200, 0, 0]))
+            ls_step.append(gcode_writer.move([0, self._build_bed_size[1], 0, 0]))
 
             ls_step.append(gcode_writer.print_image(
-                'img_{}.bmp'.format(z), image, z, 1, 0, 0, 30))
+                'img_{}.bmp'.format(z), image, z, 1, origin[0], origin[1], self._print_speed))
 
             ls_step.append(gcode_writer.roller_stop())
 
