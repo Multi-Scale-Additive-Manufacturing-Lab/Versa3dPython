@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1004</width>
-    <height>640</height>
+    <width>1032</width>
+    <height>691</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,17 +31,41 @@
      <layout class="QHBoxLayout" name="movement_bar">
       <item>
        <widget class="QPushButton" name="push_button_y">
+        <property name="minimumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="icon/versa3d_icon.qrc">
-          <normaloff>:/arrow/arrow-left.svg</normaloff>:/arrow/arrow-left.svg</iconset>
+         <iconset>
+          <normaloff>icon/arrow-left.svg</normaloff>icon/arrow-left.svg</iconset>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="y_delta">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="minimum">
          <double>-99.989999999999995</double>
         </property>
@@ -52,17 +76,41 @@
       </item>
       <item>
        <widget class="QPushButton" name="push_button_x">
+        <property name="minimumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="icon/versa3d_icon.qrc">
-          <normaloff>:/arrow/arrow-up.svg</normaloff>:/arrow/arrow-up.svg</iconset>
+         <iconset>
+          <normaloff>icon/arrow-right.svg</normaloff>icon/arrow-right.svg</iconset>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="x_delta">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="minimum">
          <double>-100.000000000000000</double>
         </property>
@@ -76,17 +124,41 @@
       </item>
       <item>
        <widget class="QPushButton" name="push_button_rotate">
+        <property name="minimumSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="icon/versa3d_icon.qrc">
-          <normaloff>:/arrow/corner-right-up.svg</normaloff>:/arrow/corner-right-up.svg</iconset>
+         <iconset>
+          <normaloff>icon/corner-right-up.svg</normaloff>icon/corner-right-up.svg</iconset>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="delta_rotate">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>50</height>
+         </size>
+        </property>
         <property name="minimum">
          <double>-360.000000000000000</double>
         </property>
@@ -97,6 +169,19 @@
          <double>90.000000000000000</double>
         </property>
        </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>
@@ -140,45 +225,78 @@
         <item>
          <layout class="QVBoxLayout" name="right_side_vertical_layout">
           <item>
-           <layout class="QFormLayout" name="formLayout">
-            <item row="1" column="0">
-             <widget class="QLabel" name="PrintSettingLabel">
-              <property name="text">
-               <string>Print settings: </string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QComboBox" name="PrintSettingComboBox"/>
-            </item>
+           <layout class="QGridLayout" name="gridLayout">
             <item row="2" column="0">
-             <widget class="QLabel" name="PrintHeadLabel">
-              <property name="text">
-               <string>Print Head:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="PrintHeadComboBox"/>
-            </item>
-            <item row="3" column="0">
              <widget class="QLabel" name="PrinterLabel">
               <property name="text">
                <string>Printer:</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
+            <item row="1" column="0">
+             <widget class="QLabel" name="PrintHeadLabel">
+              <property name="text">
+               <string>Print Head:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="PrintSettingComboBox"/>
+            </item>
+            <item row="2" column="1">
              <widget class="QComboBox" name="PrinterComboBox"/>
             </item>
-            <item row="4" column="1">
-             <widget class="QPushButton" name="ExportGCodeButton">
+            <item row="1" column="1">
+             <widget class="QComboBox" name="PrintHeadComboBox"/>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="PrintSettingLabel">
               <property name="text">
-               <string>Export G-Code</string>
+               <string>Print settings: </string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QPushButton" name="ModifyPrintSettings">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>icon/cog.svg</normaloff>icon/cog.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QPushButton" name="ModifyPrintheadSettings">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>icon/cog.svg</normaloff>icon/cog.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QPushButton" name="ModifyPrinterSettings">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>icon/cog.svg</normaloff>icon/cog.svg</iconset>
               </property>
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="ExportGCodeButton">
+            <property name="text">
+             <string>Export G-Code</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QTableWidget" name="table_stl">
@@ -227,8 +345,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1004</width>
-     <height>21</height>
+     <width>1032</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -312,8 +430,5 @@
    <header>vtk.qt.QVTKRenderWindowInteractor</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="icon/versa3d_icon.qrc"/>
- </resources>
  <connections/>
 </ui>
