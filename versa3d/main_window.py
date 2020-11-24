@@ -8,8 +8,7 @@ from vtk.util import numpy_support
 import numpy as np
 from versa3d.mouse_interaction import ActorHighlight
 from versa3d.controller import Versa3dController
-#import versa3d.print_platter as ppl
-#import versa3d.versa3d_command as vscom
+from versa3d.settings_window import SettingsWindow
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -48,6 +47,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
 
+        self.push_button_mod_print_settings.clicked.connect(self.show_settings_window)
+        self.push_button_mod_printer.clicked.connect(self.show_settings_window)
+        self.push_button_mod_printhead.clicked.connect(self.show_settings_window)
+
         self.action_import_stl.triggered.connect(self.import_object)
 
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
@@ -67,6 +70,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def move_object_x(self):
         x = self.x_delta.value()
         self.controller.translate(np.array([x, 0, 0]))
+    
+    def show_settings_window(self):
+        win = SettingsWindow(self)
+        win.show()
 
     # TODO implement undo for list
     # @pyqtSlot(ppl.PrintObject)
