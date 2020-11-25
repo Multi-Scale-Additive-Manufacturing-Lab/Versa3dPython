@@ -1,81 +1,202 @@
 {
-    "template": {
-        "Binder Jetting": {
-            "printer": {
-                "build_bed_size": {
-                    "type": "Array<float>",
-                    "value": [
-                        50,
-                        50
-                    ]
-                },
-                "coord_offset": {
-                    "type": "Array<float>",
-                    "value": [
-                        0,
-                        0
-                    ]
-                }
-            },
-            "printhead": {
-                "dpi": {
-                    "type": "Array<int>",
-                    "value": [
-                        50,
-                        50
-                    ]
-                }
-            },
-            "parameter_preset": {
-                "layer_thickness": {
-                    "type": "float",
-                    "value": 0.1
-                },
-                "roller_rpm": {
-                    "type": "float",
-                    "value": 100
-                },
-                "roller_linear_speed": {
-                    "type": "float",
-                    "value": 10
-                },
-                "powder_loss_offset": {
-                    "type": "float",
-                    "value": 0.2
-                },
-                "powder_height_offset": {
-                    "type": "float",
-                    "value": 0.2
-                },
-                "roller_work_dist": {
-                    "type": "float",
-                    "value": 0.2
-                },
-                "bed_select": {
-                    "type": "int",
-                    "value": 1
-                },
-                "saturation": {
-                    "type": "float",
-                    "value": 100
-                },
-                "n_pass": {
-                    "type": "int",
-                    "value": 4
-                },
-                "print_speed": {
-                    "type": "float",
-                    "value": 20
-                },
-                "feed_bed_velocity": {
-                    "type": "float",
-                    "value": 10
-                },
-                "build_ved_velocity": {
-                    "type": "float",
-                    "value": 10
-                }
-            }
+    "binder_jetting_printer": {
+        "type" : "printer",
+        "default_name": "default_bj_printer",
+        "build_bed_size": {
+            "type": "Array<float>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "bed size",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        },
+        "coord_offset": {
+            "type": "Array<float>",
+            "value": [
+                0,
+                0
+            ],
+            "label": "XY coordinate offset",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        }
+    },
+    "binder_jetting_printhead": {
+        "type" : "printhead",
+        "default_name": "default_bj_printhead",
+        "dpi": {
+            "type": "Array<int>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "Printhead DPI",
+            "category": "general",
+            "section": "Resolution",
+            "unit": "dpi"
+        }
+    },
+    "binder_jetting_parameter_preset": {
+        "type" : "parameter_preset",
+        "default_name": "defaut_bj_parameter",
+        "layer_thickness": {
+            "type": "float",
+            "value": 0.1,
+            "label": "layer thickness",
+            "category": "Layer Parameters",
+            "section": "Layer Height",
+            "unit": "mm"
+        },
+        "roller_rpm": {
+            "type": "float",
+            "value": 100,
+            "label": "Roller Rotational Speed",
+            "category": "Powder Spreading",
+            "section": "Roller Settings",
+            "unit": "rpm"
+        },
+        "roller_linear_speed": {
+            "type": "float",
+            "value": 10,
+            "label": "Roller Translational Speed",
+            "category": "Powder Spreading",
+            "section": "Roller Settings",
+            "unit": "mm/s"
+        },
+        "powder_loss_offset": {
+            "type": "float",
+            "value": 0.2,
+            "label": "Powder Loss Offset",
+            "category": "Powder Spreading",
+            "section": "Powder Flowability",
+            "unit": "mm"
+        },
+        "powder_height_offset": {
+            "type": "float",
+            "value": 0.2,
+            "label": "Powder Height Offset",
+            "category": "Layer Parameters",
+            "section": "Layer Height",
+            "unit": "mm"
+        },
+        "roller_work_dist": {
+            "type": "float",
+            "value": 0.2,
+            "label": "Roller Work Distance",
+            "category": "Powder Spreading",
+            "section": "Roller Settings",
+            "unit": "mm"
+        },
+        "bed_select": {
+            "type": "int",
+            "value": 1,
+            "label": "Bed Selection",
+            "category": "Feedstock",
+            "section": "Powder"
+        },
+        "saturation": {
+            "type": "float",
+            "value": 100,
+            "label": "Saturation",
+            "category": "Layer Parameters",
+            "section": "Binder Deposition",
+            "unit": "%"
+        },
+        "n_pass": {
+            "type": "int",
+            "value": 4,
+            "label": "Number of Pass",
+            "category": "Layer Parameters",
+            "section": "Binder Deposition"
+        },
+        "print_speed": {
+            "type": "float",
+            "value": 20,
+            "label": "Print Speed",
+            "category": "Layer Parameters",
+            "section": "Binder Deposition",
+            "unit": "mm/s"
+        },
+        "feed_bed_velocity": {
+            "type": "float",
+            "value": 10,
+            "label": "Feed Bed Velocity",
+            "category": "Powder Spreading",
+            "section": "Powder beds properties",
+            "unit": "mm/s"
+        },
+        "build_ved_velocity": {
+            "type": "float",
+            "value": 10,
+            "label": "Build Bed Velocity",
+            "category": "Powder Spreading",
+            "section": "Powder beds properties",
+            "unit": "mm/s"
+        }
+    },
+    "dlp_printer": {
+        "type" : "printer",
+        "default_name": "dlp_printer",
+        "build_bed_size": {
+            "type": "Array<float>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "bed size",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        },
+        "coord_offset": {
+            "type": "Array<float>",
+            "value": [
+                0,
+                0
+            ],
+            "label": "XY coordinate offset",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        }
+    },
+    "dlp_printhead": {
+        "type" : "printhead",
+        "default_name": "default_dlp_printhead",
+        "dpi": {
+            "type": "Array<int>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "Printhead DPI",
+            "category": "general",
+            "section": "Resolution",
+            "unit": "dpi"
+        }
+    },
+    "dlp_parameter_preset": {
+        "type" : "parameter_preset",
+        "default_name": "defaut_dlp_parameter",
+        "layer_thickness": {
+            "type": "float",
+            "value": 0.1,
+            "label": "layer thickness",
+            "category": "Layer Parameters",
+            "section": "Layer Height",
+            "unit": "mm"
+        },
+        "layer_offset": {
+            "type": "float",
+            "value": 0.2,
+            "label": "Layer Loss Offset",
+            "category": "Polymer Spreading",
+            "section": "Polymer Flowability",
+            "unit": "mm"
         }
     }
 }
