@@ -22,8 +22,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
-        #self.settings_dict = load_settings()
-
         self.stl_renderer = vtk.vtkRenderer()
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
@@ -40,21 +38,26 @@ class MainWindow(QtWidgets.QMainWindow):
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
         self.setup_scene((50, 50, 100))
-        # self.platter.set_up_dummy_sphere()
 
         self.stl_interactor.Initialize()
 
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
 
-        self.push_button_mod_print_settings.clicked.connect(self.show_settings_window)
-        self.push_button_mod_printer.clicked.connect(self.show_settings_window)
-        self.push_button_mod_printhead.clicked.connect(self.show_settings_window)
+        self.push_button_mod_print_settings.clicked.connect(self.show_param_window)
+        self.push_button_mod_printer.clicked.connect(self.show_printer_window)
+        self.push_button_mod_printhead.clicked.connect(self.show_printhead_window)
 
         self.action_import_stl.triggered.connect(self.import_object)
 
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
+
+        self.controller.settings.add_printer_signal.connect(self.populate_printer_drop_down)
+        self.controller.settings.add_printhead_signal.connect(self.populate_printhead_drop_down)
+        self.controller.settings.add_parameter_preset_signal.connect(self.populate_preset_drop_down)
+
+        self.controller.load_settings()
 
         # self.initialize_tab()
 
@@ -71,10 +74,31 @@ class MainWindow(QtWidgets.QMainWindow):
         x = self.x_delta.value()
         self.controller.translate(np.array([x, 0, 0]))
     
-    def show_settings_window(self):
-        win = SettingsWindow(self)
+    def show_printer_window(self):
+        self.show_settings_window('printer')
+    
+    def show_param_window(self):
+        self.show_settings_window('parameter_preset')
+    
+    def show_printhead_window(self):
+        self.show_settings_window('printhead')
+    
+    def show_settings_window(self, type_string):
+        win = SettingsWindow(self.controller, type_string, self)
         win.show()
-
+    
+    @pyqtSlot(str)
+    def populate_printer_drop_down(self, value):
+        self.printer_cmb_box.addItem(value)
+    
+    @pyqtSlot(str)
+    def populate_printhead_drop_down(self, value):
+        self.printhead_cmb_box.addItem(value)
+    
+    @pyqtSlot(str)
+    def populate_preset_drop_down(self, value):
+        self.print_settings_cmb_box.addItem(value)
+    
     # TODO implement undo for list
     # @pyqtSlot(ppl.PrintObject)
     # def add_obj_to_list(self, obj):

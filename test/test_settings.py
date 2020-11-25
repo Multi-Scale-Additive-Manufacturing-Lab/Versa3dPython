@@ -16,9 +16,10 @@ class SettingsTest(unittest.TestCase):
         settings.clear()
 
         self.singleton = Versa3dSettings()
-
+        self.singleton.init_default()
+        self.singleton.load_all()
+        
     def test_setting_init(self):
-        self.assertTrue(self.singleton.initialized)
         with open(DEFAULT_CONFIG) as f:
             default_config = json.load(f)
 
@@ -42,6 +43,7 @@ class SettingsTest(unittest.TestCase):
         self.singleton.save_to_disk('printer', modified_printer_name)
 
         singleton_2 = Versa3dSettings()
+        singleton_2.load_all()
         default_val = singleton_2.get_printer(default_name).coord_offset
         self.assertFalse(
             np.all(default_val == test_array)

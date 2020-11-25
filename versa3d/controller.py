@@ -4,7 +4,6 @@ import vtk
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings
-#from versa3d.tool_path_planner import ToolPathGenerator
 
 
 class Versa3dController(QObject):
@@ -16,14 +15,21 @@ class Versa3dController(QObject):
         #self.mem = Memory(location = self.cache_dir.name)
         #self.slicing_pipeline = self.mem.cache(slicing_pipeline)
 
-        #self.settings = Versa3dSettings()
-
+        self.settings = Versa3dSettings()
+        
         self.print_objects = {}
         self.platter = vtk.vtkAppendPolyData()
         self.platter.UserManagedInputsOff()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
+    
+    def get_settings(self, setting_type):
+        return getattr(self.settings, setting_type)
+    
+    def load_settings(self):
+        self.settings.init_default()
+        self.settings.load_all()
     
     def add_part(self, idx, obj):
         self.print_objects[idx] = obj

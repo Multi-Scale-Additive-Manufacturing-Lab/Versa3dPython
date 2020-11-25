@@ -96,7 +96,8 @@
             "value": 1,
             "label": "Bed Selection",
             "category": "Feedstock",
-            "section": "Powder"
+            "section": "Powder",
+            "unit" : ""
         },
         "saturation": {
             "type": "float",
@@ -111,7 +112,8 @@
             "value": 4,
             "label": "Number of Pass",
             "category": "Layer Parameters",
-            "section": "Binder Deposition"
+            "section": "Binder Deposition",
+            "unit" : ""
         },
         "print_speed": {
             "type": "float",
