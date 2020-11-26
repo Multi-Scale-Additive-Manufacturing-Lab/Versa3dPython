@@ -18,12 +18,10 @@ class SettingsTest(unittest.TestCase):
         self.singleton = Versa3dSettings()
         self.singleton.init_default()
         self.singleton.load_all()
-        
+
     def test_setting_init(self):
         with open(DEFAULT_CONFIG) as f:
             default_config = json.load(f)
-
-        default_name = 'binder_jetting_printer'
 
         saved_coord_offset = np.array(
             default_config['binder_jetting_printer']['coord_offset']['value'])
