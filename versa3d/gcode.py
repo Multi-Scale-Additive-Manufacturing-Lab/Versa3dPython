@@ -3,6 +3,9 @@ import vtk
 from tempfile import TemporaryDirectory
 import os
 import shutil
+from PIL import Image
+from vtk.numpy_interface import dataset_adapter as dsa
+import numpy as np
 
 
 class GCodeWriter(ABC):
@@ -44,14 +47,14 @@ class GCodeWriter(ABC):
         pass
 
 
-BM_AXIS_MAP = ['X', 'Y', 'Z', 'T']
+BM_AXIS_MAP = ['X', 'Y']
 
 
 class BigMachineGcode(GCodeWriter):
 
     def set_units(self, units):
         unit_dict = {'metric': 'G21', 'imperial': 'G20'}
-        return lambda: unit_dict[units]
+        return lambda: unit_dict[units] + '; Set Unit \n'
 
     def set_position_offset(self, pos):
         def f():
@@ -73,10 +76,32 @@ class BigMachineGcode(GCodeWriter):
             pos (ndarray): array of position
         """
         def f():
-            command = 'G0'
+            command = 'G1'
             for i, p in enumerate(pos):
                 command += " %s%f" % (BM_AXIS_MAP[i], p)
-            return command + '\n'
+            return command + '; Move axis \n'
+
+        return f
+
+    def move_feed_bed(self, pos, fb=1, mode='rel'):
+        def f():
+            command = 'M203'
+            mode_i = 0
+            if mode == 'abs':
+                mode_i = 1
+
+            return command + ' F%i' % (fb) + ' T%f' % (pos) + ' A%i' % (mode_i) + ' ; Mode Feed bed \n'
+
+        return f
+
+    def move_build_bed(self, pos, bb=1, mode='rel'):
+        def f():
+            command = 'M204'
+            mode_i = 0
+            if mode == 'abs':
+                mode_i = 1
+
+            return command + ' F%i' % (bb) + ' T%f' % (pos) + ' A%i' % (mode_i) + ' ; Mode Build bed \n'
 
         return f
 
@@ -90,7 +115,7 @@ class BigMachineGcode(GCodeWriter):
         return f
 
     def initialise_printhead(self, printhead_num):
-        return lambda: 'M93 P%i ; Initialize printhead\n' % (printhead_num)
+        return lambda: 'M6 P1 ; Select Imtech\nM93 P%i ; Initialize printhead\n' % (printhead_num)
 
     def print_image(self, img_name, img, z, printhead_num, x, y, speed):
         def f():
@@ -101,11 +126,13 @@ class BigMachineGcode(GCodeWriter):
             single_slice.SetVOI(0, x_d - 1, 0, y_d - 1, z, z)
             single_slice.Update()
 
-            im_writer = vtk.vtkBMPWriter()
-            im_writer.SetFileName(os.path.join(self.img_folder, img_name))
-            im_writer.SetInputData(single_slice.GetOutput())
-            im_writer.Update()
-            im_writer.Write()
+            image = dsa.WrapDataObject(single_slice.GetOutput())
+            point_data = image.PointData['ImageScalars'].reshape(
+                image.GetDimensions()[0:2], order='F').T
+            pil_im = Image.fromarray(point_data)
+            pil_im.convert('1')
+            pil_im.save(os.path.join(self.img_folder, img_name))
+
             return "M95 P%i I%i X%f Y%f S%f; Print layer\n" % (printhead_num, z, x, y, speed)
 
         return f

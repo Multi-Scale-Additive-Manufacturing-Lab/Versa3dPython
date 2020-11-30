@@ -86,16 +86,13 @@ class BinderJettingPlanner(GenericToolPathPlanner):
         ls_step.append(gcode_writer.initialise_printhead(1))
 
         for z in range(z_d):
-            ls_step.append(gcode_writer.move([0, 0, 0, 0]))
-            ls_step.append(gcode_writer.set_distance_mode('abs'))
+            ls_step.append(gcode_writer.move([0, 0]))
             ls_step.append(gcode_writer.roller_start(1, self._roller_rpm))
+            
+            ls_step.append(gcode_writer.move_feed_bed(z_spacing))
+            ls_step.append(gcode_writer.move_build_bed( z_spacing))
 
-            ls_step.append(gcode_writer.set_distance_mode('rel'))
-            ls_step.append(gcode_writer.move([0, 0, z_spacing, 0]))
-            ls_step.append(gcode_writer.move([0, 0, 0, z_spacing]))
-
-            ls_step.append(gcode_writer.set_distance_mode('abs'))
-            ls_step.append(gcode_writer.move([0, self._build_bed_size[1], 0, 0]))
+            ls_step.append(gcode_writer.move([0, self._build_bed_size[1]]))
 
             ls_step.append(gcode_writer.print_image(
                 'img_{}.bmp'.format(z), image, z, 1, origin[0], origin[1], self._print_speed))
