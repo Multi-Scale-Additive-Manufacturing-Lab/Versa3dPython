@@ -11,11 +11,9 @@ DEFAULT_CONFIG = './configs/default_config.json'
 
 MAP_TYPE = {
     'int': int,
-    'string': str,
     'float': float,
     'Array<int>': partial(np.array, dtype=int),
-    'Array<float>': partial(np.array, dtype=float),
-    'Array<string>': partial(np.array, dtype=str)
+    'Array<float>': partial(np.array, dtype=float)
 }
 
 UI_PATH = 'ui_settings'
@@ -59,7 +57,7 @@ class Versa3dSettings(QObject):
             default_config = json.load(f)
 
         param_key_list = ['type', 'value']
-        ui_key_list = ['label', 'section', 'category', 'section', 'unit']
+        ui_param_list = ['label','unit','type']
 
         for setting_class_name, setting_dict in default_config.items():
             setting_type = setting_dict.pop('type')
@@ -70,36 +68,16 @@ class Versa3dSettings(QObject):
             self.settings.setValue("%s/cls_name" %
                                    format(param_path), setting_class_name)
             for param_key, param_dict in setting_dict.items():
-                for u_key in ui_key_list:
-                    self.settings.setValue(
-                        "%s/%s/%s" % (ui_path, param_key, u_key), param_dict[u_key])
+                ui_key = "%s/%s/%s" % (ui_path, param_dict['category'], param_dict['section'])
+                for u_key in ui_param_list:
+                    self.settings.setValue("%s/%s" % (ui_key, u_key), param_dict[u_key])
+
+                self.settings.setValue("%s/param" % (ui_key), param_key)
 
                 for p_key in param_key_list:
                     self.settings.setValue(
                         "%s/%s/%s" % (param_path, param_key, p_key), param_dict[p_key])
-
-    def get_ui_param(self, section):
-        self.settings.beginGroup(UI_PATH)
-        self.settings.beginGroup(section)
-        preset_name = self.settings.childGroups()
-        ls_ui = {}
-        for name in preset_name:
-            ls_ui[name] = {}
-            self.settings.beginGroup(name)
-            preset_type = self.settings.value('type')
-            ls_ui[name]['type'] = preset_type
-            param_list = self.settings.childGroups()
-            for param in param_list:
-                self.settings.beginGroup(param)
-                ui_dict = {}
-                labels = ['label', 'category', 'section']
-                for l in labels:
-                    ui_dict[l] = self.settings.value(l)
-
-                ls_ui[param] = ui_dict
-
-        return ls_ui
-
+                        
     def load_all(self):
         self._printer_list = self.load_settings('printer')
         self._printhead_list = self.load_settings('printhead')
@@ -246,8 +224,6 @@ class Versa3dSettings(QObject):
             return 'Array<{}>'.format('int')
         elif np.issubdtype(value.dtype, np.floating):
             return 'Array<{}>'.format('float')
-        elif np.issubdtype(value.dtype, np.unicode_) or np.issubdtype(value.dtype, np.string_):
-            return 'Array<{}>'.format('string')
         else:
             raise Exception("unsupported array type")
 
@@ -268,8 +244,6 @@ class Versa3dSettings(QObject):
             return 'int'
         elif isinstance(value, float):
             return 'float'
-        elif isinstance(value, str):
-            return 'string'
         elif isinstance(value, np.ndarray):
             return Versa3dSettings.np_type_to_string(value)
         else:
