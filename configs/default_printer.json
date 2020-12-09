@@ -1,0 +1,52 @@
+{
+    "bj_printer": {
+        "process" : "bjp",
+        "build_bed_size": {
+            "type": "array<float>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "bed size",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        },
+        "coord_offset": {
+            "type": "array<float>",
+            "value": [
+                0,
+                0
+            ],
+            "label": "XY coordinate offset",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        }
+    },
+    "dlp_printer": {
+        "process" : "dlp",
+        "build_bed_size": {
+            "type": "array<float>",
+            "value": [
+                50,
+                50
+            ],
+            "label": "bed size",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        },
+        "coord_offset": {
+            "type": "array<float>",
+            "value": [
+                0,
+                0
+            ],
+            "label": "XY coordinate offset",
+            "category": "general",
+            "section": "bed settings",
+            "unit": "mm"
+        }
+    }
+}

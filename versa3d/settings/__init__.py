@@ -1,3 +1,2 @@
-from .__settings__ import Versa3dSettings
-from .__settings__ import DEFAULT_CONFIG
-from .__settings__ import UI_PATH
+from .versa3d_settings import Versa3dSettings, PRINTER_CONFIG, PRINTHEAD_CONFIG, PRESET_PARAM_CONFIG
+from .versa3d_entry import SingleEntry, IntEntry, FloatEntry, EnumEntry, ArrayFloatEntry, ArrayIntEntry, MAP_TYPE

@@ -1,48 +1,6 @@
 {
-    "binder_jetting_printer": {
-        "type" : "printer",
-        "default_name": "default_bj_printer",
-        "build_bed_size": {
-            "type": "Array<float>",
-            "value": [
-                50,
-                50
-            ],
-            "label": "bed size",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
-        },
-        "coord_offset": {
-            "type": "Array<float>",
-            "value": [
-                0,
-                0
-            ],
-            "label": "XY coordinate offset",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
-        }
-    },
-    "binder_jetting_printhead": {
-        "type" : "printhead",
-        "default_name": "default_bj_printhead",
-        "dpi": {
-            "type": "Array<int>",
-            "value": [
-                50,
-                50
-            ],
-            "label": "Printhead DPI",
-            "category": "general",
-            "section": "Resolution",
-            "unit": "dpi"
-        }
-    },
-    "binder_jetting_parameter_preset": {
-        "type" : "parameter_preset",
-        "default_name": "defaut_bj_parameter",
+    "bj_parameter": {
+        "process" : "bjp",
         "layer_thickness": {
             "type": "float",
             "value": 0.1,
@@ -96,8 +54,7 @@
             "value": 1,
             "label": "Bed Selection",
             "category": "Feedstock",
-            "section": "Powder",
-            "unit" : ""
+            "section": "Powder"
         },
         "saturation": {
             "type": "float",
@@ -112,8 +69,7 @@
             "value": 4,
             "label": "Number of Pass",
             "category": "Layer Parameters",
-            "section": "Binder Deposition",
-            "unit" : ""
+            "section": "Binder Deposition"
         },
         "print_speed": {
             "type": "float",
@@ -138,52 +94,18 @@
             "category": "Powder Spreading",
             "section": "Powder beds properties",
             "unit": "mm/s"
-        }
-    },
-    "dlp_printer": {
-        "type" : "printer",
-        "default_name": "dlp_printer",
-        "build_bed_size": {
-            "type": "Array<float>",
-            "value": [
-                50,
-                50
-            ],
-            "label": "bed size",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
         },
-        "coord_offset": {
-            "type": "Array<float>",
-            "value": [
-                0,
-                0
-            ],
-            "label": "XY coordinate offset",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
+        "fill_pattern" : {
+            "type": "enum",
+            "enum_list" : ["Full", "Grayscale", "Dithering"],
+            "value": 1,
+            "label": "Fill Pattern",
+            "category": "Layer Parameters",
+            "section": "Binder Deposition"
         }
     },
-    "dlp_printhead": {
-        "type" : "printhead",
-        "default_name": "default_dlp_printhead",
-        "dpi": {
-            "type": "Array<int>",
-            "value": [
-                50,
-                50
-            ],
-            "label": "Printhead DPI",
-            "category": "general",
-            "section": "Resolution",
-            "unit": "dpi"
-        }
-    },
-    "dlp_parameter_preset": {
-        "type" : "parameter_preset",
-        "default_name": "defaut_dlp_parameter",
+    "dlp_parameter": {
+        "process" : "dlp",
         "layer_thickness": {
             "type": "float",
             "value": 0.1,
