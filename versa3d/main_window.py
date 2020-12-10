@@ -9,6 +9,7 @@ import numpy as np
 from versa3d.mouse_interaction import ActorHighlight
 from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
+from versa3d.settings import SettingTypeKey
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -85,11 +86,11 @@ class MainWindow(QtWidgets.QMainWindow):
     
     @pyqtSlot(str, str)
     def populate_printer_drop_down(self, setting_type, value):
-        if(setting_type == 'preset_printer'):
+        if(setting_type == str(SettingTypeKey.printer)):
             self.printer_cmb_box.addItem(value)
-        elif(setting_type == 'preset_printhead'):
+        elif(setting_type == str(SettingTypeKey.printhead)):
             self.printhead_cmb_box.addItem(value)
-        elif(setting_type == 'preset_param'):
+        elif(setting_type == str(SettingTypeKey.print_param)):
             self.print_settings_cmb_box.addItem(value)
     
     # TODO implement undo for list
