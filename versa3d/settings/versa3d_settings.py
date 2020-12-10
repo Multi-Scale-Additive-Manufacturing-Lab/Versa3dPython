@@ -62,10 +62,10 @@ class Versa3dSettings(QObject):
             for param, param_value in setting_val.items():
                 entry_obj = MAP_TYPE[param_value['type']]
                 if param_value['type'] == 'enum':
-                    entry_inst = entry_obj(q_path, param, param_value['value'], param_value['enum_list'])
+                    entry_inst = entry_obj(param, param_value['value'], param_value['enum_list'])
                 else:
-                    entry_inst = entry_obj(q_path, param, param_value['value'])
-                entry_inst.write_settings()
+                    entry_inst = entry_obj(param, param_value['value'])
+                entry_inst.write_settings(q_path)
 
     def init_default(self):
         file_ls = [PRESET_PARAM_CONFIG, PRINTHEAD_CONFIG, PRINTER_CONFIG]
@@ -89,8 +89,8 @@ class Versa3dSettings(QObject):
                 settings.beginGroup(param)
                 param_type = settings.value('type', type = str)
                 entry_obj = MAP_TYPE[param_type]
-                entry_inst = entry_obj(q_path, param)
-                entry_inst.load_entry()
+                entry_inst = entry_obj(param)
+                entry_inst.load_entry(q_path)
                 setting_dict[param] = entry_inst
                 settings.endGroup()
             settings.endGroup()
@@ -112,7 +112,7 @@ class Versa3dSettings(QObject):
     def clone_setting(self, setting_set):
         new_setting = {}
         for entry_name, entry in setting_set.items():
-            new_setting[entry_name] = copy.deepcopy(entry)
+            new_setting[entry_name] = entry.copy()
         return new_setting
     
     def clone_printer(self, name, new_name):
@@ -127,18 +127,18 @@ class Versa3dSettings(QObject):
         self._param_preset_list[new_name] = self.clone_setting(self._param_preset_list[name])
         self.add_setting_signal.emit('preset', new_name)
     
-    def save_to_disk(self, setting_dict):
+    def save_to_disk(self, q_path, setting_dict):
         for entry in setting_dict.values():
-            entry.write_settings()
+            entry.write_settings(q_path)
     
     def save_printer(self, name):
-        self.save_to_disk(self._printer_list[name])
+        self.save_to_disk( 'preset_printer/%s' % name, self._printer_list[name])
     
     def save_printhead(self, name):
-        self.save_to_disk(self._printhead_list[name])
+        self.save_to_disk( 'preset_printhead/%s' % name, self._printhead_list[name])
     
     def save_preset(self, name):
-        self.save_to_disk(self._param_preset_list[name])
+        self.save_to_disk('preset_param/%s' % name, self._param_preset_list[name])
     
     def remove_printer(self, name):
         qsetting = QSettings()
