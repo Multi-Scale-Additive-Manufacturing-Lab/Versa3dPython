@@ -82,19 +82,32 @@ class EnumEntry(SingleEntry):
         self.enum_list = settings.value("%s/%s" % (self.entry_path, 'enum_list'))
         self._value = self.default_val
 
-    
-class ArrayIntEntry(SingleEntry):
-    def __init__(self, q_path, name, default_val = None, parent = None):
-        SingleEntry.__init__(self, q_path, name, default_val, parent)
-        if isinstance(default_val, list):
-            self._value = np.array(default_val, dtype = int)
-
-    @pyqtSlot(int, int)
+class ArrayEntry(SingleEntry):
     def update_value(self, idx, val):
         if self._value[idx] != val:
             self._value[idx] = val
             self.modified = True
+    @property
+    def value(self):
+        return self._value
     
+    @value.setter
+    def value(self, value):
+        if np.all(self._value != value):
+            self.modified = True
+            self._value = value
+    
+class ArrayIntEntry(ArrayEntry):
+    def __init__(self, q_path, name, default_val = None, parent = None):
+        SingleEntry.__init__(self, q_path, name, default_val, parent)
+        if isinstance(default_val, list):
+            self.default_val = np.array(default_val, dtype = int)
+            self._value = self.default_val
+
+    @pyqtSlot(int, int)
+    def update_value(self, idx, val):
+        ArrayEntry.update_value(self, idx, val)
+
     def write_settings(self):
         settings = QSettings()
         settings.setValue("%s/%s" % (self.entry_path, 'value'), self.value.tolist())
@@ -102,20 +115,20 @@ class ArrayIntEntry(SingleEntry):
     
     def load_entry(self):
         settings = QSettings()
-        self.default_val = np.array(settings.value("%s/%s" % (self.entry_path, 'value')), dtype = int)
-        self.value = self.default_val
+        val = settings.value("%s/%s" % (self.entry_path, 'value'))
+        self.default_val = np.array(val, dtype = int)
+        self._value = self.default_val
 
-class ArrayFloatEntry(SingleEntry):
+class ArrayFloatEntry(ArrayEntry):
     def __init__(self, q_path, name, default_val = None, parent = None):
-        SingleEntry.__init__(self, q_path, name, default_val, parent)
+        ArrayEntry.__init__(self, q_path, name, default_val, parent)
         if isinstance(default_val, list):
-            self.value = np.array(default_val, dtype = float)
+            self.default_val = np.array(default_val, dtype = float)
+            self._value = self.default_val
 
-    @pyqtSlot(int, float)
+    @pyqtSlot(int, int)
     def update_value(self, idx, val):
-        if self._value[idx] != val:
-            self._value[idx] = val
-            self.modified = True
+        ArrayEntry.update_value(self, idx, val)
     
     def write_settings(self):
         settings = QSettings()
@@ -124,7 +137,8 @@ class ArrayFloatEntry(SingleEntry):
     
     def load_entry(self):
         settings = QSettings()
-        self.default_val = np.array(settings.value("%s/%s" % (self.entry_path, 'value')), dtype = float)
+        val = settings.value("%s/%s" % (self.entry_path, 'value'))
+        self.default_val = np.array(val, dtype = float)
         self._value = self.default_val
 
 MAP_TYPE = {

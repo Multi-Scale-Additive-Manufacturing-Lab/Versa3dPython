@@ -14,11 +14,12 @@ PRINTHEAD_CONFIG = './configs/default_printhead.json'
 PRESET_PARAM_CONFIG = './configs/default_preset.json'
 
 class PrintSettings(UserDict):
-    def __init__(self, process_type, val=None):
+    def __init__(self, process_type, setting_type, val=None):
         if val is None:
             val = {}
         super().__init__(val)
         self.process_type = process_type
+        self.type = setting_type
 
 class Versa3dSettings(QObject):
     add_setting_signal = pyqtSignal(str, str)
@@ -49,14 +50,15 @@ class Versa3dSettings(QObject):
         qsetting = QSettings()
         return len(qsetting.allKeys()) == 0
 
-    def init_from_json(self, setting_type, json_path):
+    def init_from_json(self, setting_class, json_path):
         with open(json_path) as f:
             config = json.load(f)
         qsetting = QSettings()
         for setting_name, setting_val in config.items():
-            q_path = '%s/%s' % (setting_type, setting_name)
+            q_path = '%s/%s' % (setting_class, setting_name)
             process_type = setting_val.pop('process')
             qsetting.setValue('%s/%s' % (q_path, 'process'), process_type)
+            qsetting.setValue('%s/%s' % (q_path, 'type'), setting_name)
             for param, param_value in setting_val.items():
                 entry_obj = MAP_TYPE[param_value['type']]
                 if param_value['type'] == 'enum':
@@ -67,20 +69,22 @@ class Versa3dSettings(QObject):
 
     def init_default(self):
         file_ls = [PRESET_PARAM_CONFIG, PRINTHEAD_CONFIG, PRINTER_CONFIG]
-        setting_type = ['preset_param', 'preset_printhead', 'preset_printer']
-        for setting_type, file_path in zip(setting_type, file_ls):
-            self.init_from_json(setting_type, file_path)
+        setting_cls = ['preset_param', 'preset_printhead', 'preset_printer']
+        for s_cls, f_path in zip(setting_cls, file_ls):
+            self.init_from_json(s_cls, f_path)
         
-    def load_from_qsetting(self, setting_type):
+    def load_from_qsetting(self, setting_class):
         settings = QSettings()
-        settings.beginGroup(setting_type)
+        settings.beginGroup(setting_class)
 
         ls_setting_dict = OrderedDict()
         for setting_name in settings.childGroups():
             settings.beginGroup(setting_name)
-            q_path = '%s/%s' % (setting_type, setting_name)
+            q_path = '%s/%s' % (setting_class, setting_name)
             process_type = settings.value('process', type = str)
-            setting_dict = PrintSettings(process_type)
+            setting_type = settings.value('type', type = str)
+            
+            setting_dict = PrintSettings(process_type, setting_type)
             for param in settings.childGroups():
                 settings.beginGroup(param)
                 param_type = settings.value('type', type = str)
@@ -91,7 +95,7 @@ class Versa3dSettings(QObject):
                 settings.endGroup()
             settings.endGroup()
             ls_setting_dict[setting_name] = setting_dict
-            self.add_setting_signal.emit(setting_type, setting_name)
+            self.add_setting_signal.emit(setting_class, setting_name)
         settings.endGroup()
 
         return ls_setting_dict
