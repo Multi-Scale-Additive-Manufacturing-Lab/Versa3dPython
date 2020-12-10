@@ -30,6 +30,11 @@ class Versa3dSettings(QObject):
         
         self.init_default()
         
+        self._printer_list = {}
+        self._printhead_list = {}
+        self._param_preset_list = {}
+    
+    def load_all(self):
         self._printer_list = self.load_from_qsetting('preset_printer')
         self._printhead_list = self.load_from_qsetting('preset_printhead')
         self._param_preset_list = self.load_from_qsetting('preset_param')

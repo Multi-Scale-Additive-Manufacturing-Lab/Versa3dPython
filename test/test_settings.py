@@ -16,6 +16,7 @@ class SettingsTest(unittest.TestCase):
         settings.clear()
 
         self.singleton = Versa3dSettings()
+        self.singleton.load_all()
 
     def test_setting_init(self):
         with open(PRINTER_CONFIG) as f:
@@ -42,6 +43,7 @@ class SettingsTest(unittest.TestCase):
         self.singleton.save_printer('new_printer')
 
         singleton_2 = Versa3dSettings()
+        singleton_2.load_all()
         new_coord = singleton_2.get_printer('new_printer')['coord_offset'].value
 
         self.assertTrue(np.all(new_coord == modified_coord))

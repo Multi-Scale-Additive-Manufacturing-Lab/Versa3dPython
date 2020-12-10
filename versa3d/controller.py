@@ -28,7 +28,6 @@ class Versa3dController(QObject):
         return getattr(self.settings, setting_type)
     
     def load_settings(self):
-        self.settings.init_default()
         self.settings.load_all()
     
     def add_part(self, idx, obj):

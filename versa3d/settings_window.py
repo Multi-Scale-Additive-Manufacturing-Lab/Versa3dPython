@@ -3,8 +3,6 @@ from PyQt5.QtWidgets import QDialogButtonBox, QMainWindow
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, Qt
 
-from versa3d.settings import UI_PATH
-
 
 class SettingsWindow(QMainWindow):
 

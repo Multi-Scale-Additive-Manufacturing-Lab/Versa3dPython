@@ -53,13 +53,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
-        self.controller.settings.add_printer_signal.connect(self.populate_printer_drop_down)
-        self.controller.settings.add_printhead_signal.connect(self.populate_printhead_drop_down)
-        self.controller.settings.add_parameter_preset_signal.connect(self.populate_preset_drop_down)
+        self.controller.settings.add_setting_signal.connect(self.populate_printer_drop_down)
 
         self.controller.load_settings()
-
-        # self.initialize_tab()
 
     def import_object(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
@@ -87,17 +83,14 @@ class MainWindow(QtWidgets.QMainWindow):
         win = SettingsWindow(self.controller, type_string, self)
         win.show()
     
-    @pyqtSlot(str)
-    def populate_printer_drop_down(self, value):
-        self.printer_cmb_box.addItem(value)
-    
-    @pyqtSlot(str)
-    def populate_printhead_drop_down(self, value):
-        self.printhead_cmb_box.addItem(value)
-    
-    @pyqtSlot(str)
-    def populate_preset_drop_down(self, value):
-        self.print_settings_cmb_box.addItem(value)
+    @pyqtSlot(str, str)
+    def populate_printer_drop_down(self, setting_type, value):
+        if(setting_type == 'preset_printer'):
+            self.printer_cmb_box.addItem(value)
+        elif(setting_type == 'preset_printhead'):
+            self.printhead_cmb_box.addItem(value)
+        elif(setting_type == 'preset_param'):
+            self.print_settings_cmb_box.addItem(value)
     
     # TODO implement undo for list
     # @pyqtSlot(ppl.PrintObject)
