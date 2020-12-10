@@ -3,13 +3,17 @@ import numpy as np
 
 
 class SingleEntry(QObject):
-    def __init__(self, name, default_val = None, parent = None):
+    def __init__(self, name, ui_dict = None, default_val = None, parent = None):
         QObject.__init__(self, parent)
         self.parent = parent
         self.default_val = default_val
         self._value = default_val
         self.name = name
         self.modified = False
+        if ui_dict is None:
+            self.ui = {}
+        else:
+            self.ui = ui_dict
     
     @property
     def value(self):
@@ -27,6 +31,18 @@ class SingleEntry(QObject):
     def write_settings(self, q_path):
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value)
+        self.write_ui_settings(q_path)
+
+    def write_ui_settings(self, q_path):
+        settings = QSettings()
+        for ui_label, ui_val in self.ui.items():
+            settings.setValue("%s/%s/%s/%s" % (q_path, self.name, 'ui', ui_label), ui_val)
+    
+    def load_ui_settings(self, q_path):
+        settings = QSettings()
+        settings.beginGroup("%s/%s/%s" % (q_path, self.name, 'ui'))
+        for ui_label in settings.childKeys():
+            self.ui[ui_label] = settings.value(ui_label)
 
     def load_entry(self):
         raise NotImplementedError
@@ -48,9 +64,10 @@ class IntEntry(SingleEntry):
         settings = QSettings()
         self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
         self._value = self.default_val
+        self.load_ui_settings(q_path)
     
     def copy(self):
-        return IntEntry(self.name, self._value, self.parent)
+        return IntEntry(self.name, self.ui.copy(), self._value, self.parent)
 
 class FloatEntry(SingleEntry):
     @pyqtSlot(float)
@@ -66,15 +83,12 @@ class FloatEntry(SingleEntry):
         settings = QSettings()
         self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = float)
         self._value = self.default_val
+        self.load_ui_settings(q_path)
     
     def copy(self):
-        return FloatEntry(self.name, self._value, self.parent)
+        return FloatEntry(self.name, self.ui.copy(), self._value, self.parent)
 
 class EnumEntry(SingleEntry):
-    def __init__(self, name, default_val = None, enum_list = None, parent = None):
-        SingleEntry.__init__(self, name, default_val, parent)
-        self.enum_list = enum_list
-
     @pyqtSlot(int)
     def update_value(self, val):
         self.value = val
@@ -83,16 +97,15 @@ class EnumEntry(SingleEntry):
         SingleEntry.write_settings(self, q_path)
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'enum')
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'enum_list'), self.enum_list)
     
     def load_entry(self, q_path):
         settings = QSettings()
         self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
-        self.enum_list = settings.value("%s/%s/%s" % (q_path, self.name, 'enum_list'))
         self._value = self.default_val
+        self.load_ui_settings(q_path)
     
     def copy(self):
-        return EnumEntry(self.q_path, self.name, self._value, self.enum_list.copy(), self.parent)
+        return EnumEntry(self.name, self.ui.copy(), self._value, self.parent)
 
 class ArrayEntry(SingleEntry):
     def update_value(self, idx, val):
@@ -110,8 +123,8 @@ class ArrayEntry(SingleEntry):
             self._value = value
     
 class ArrayIntEntry(ArrayEntry):
-    def __init__(self, name, default_val = None, parent = None):
-        SingleEntry.__init__(self, name, default_val, parent)
+    def __init__(self, name, ui = None, default_val = None, parent = None):
+        SingleEntry.__init__(self, name, ui, default_val, parent)
         if isinstance(default_val, list):
             self.default_val = np.array(default_val, dtype = int)
             self._value = self.default_val
@@ -130,13 +143,14 @@ class ArrayIntEntry(ArrayEntry):
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
         self.default_val = np.array(val, dtype = int)
         self._value = self.default_val
+        self.load_ui_settings(q_path)
     
     def copy(self):
-        return ArrayIntEntry( self.name, self._value.copy(), self.parent)
+        return ArrayIntEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
 
 class ArrayFloatEntry(ArrayEntry):
-    def __init__(self, name, default_val = None, parent = None):
-        ArrayEntry.__init__(self, name, default_val, parent)
+    def __init__(self, name, ui = None, default_val = None, parent = None):
+        ArrayEntry.__init__(self, name, ui, default_val, parent)
         if isinstance(default_val, list):
             self.default_val = np.array(default_val, dtype = float)
             self._value = self.default_val
@@ -155,9 +169,10 @@ class ArrayFloatEntry(ArrayEntry):
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
         self.default_val = np.array(val, dtype = float)
         self._value = self.default_val
+        self.load_ui_settings(q_path)
     
     def copy(self):
-        return ArrayFloatEntry( self.name, self._value.copy(), self.parent)
+        return ArrayFloatEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
 
 MAP_TYPE = {
     'int': IntEntry,

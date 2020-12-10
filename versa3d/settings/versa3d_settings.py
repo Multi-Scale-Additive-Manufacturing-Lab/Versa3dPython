@@ -61,10 +61,7 @@ class Versa3dSettings(QObject):
             qsetting.setValue('%s/%s' % (q_path, 'type'), setting_name)
             for param, param_value in setting_val.items():
                 entry_obj = MAP_TYPE[param_value['type']]
-                if param_value['type'] == 'enum':
-                    entry_inst = entry_obj(param, param_value['value'], param_value['enum_list'])
-                else:
-                    entry_inst = entry_obj(param, param_value['value'])
+                entry_inst = entry_obj(param, param_value['ui'], param_value['value'])
                 entry_inst.write_settings(q_path)
 
     def init_default(self):

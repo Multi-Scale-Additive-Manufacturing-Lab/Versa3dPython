@@ -7,10 +7,12 @@
                 50,
                 50
             ],
-            "label": "bed size",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
+            "ui" : {
+                "label": "bed size",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm"
+            }
         },
         "coord_offset": {
             "type": "array<float>",
@@ -18,10 +20,12 @@
                 0,
                 0
             ],
-            "label": "XY coordinate offset",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
+            "ui" : {
+                "label": "XY coordinate offset",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm"
+            }
         }
     },
     "dlp_printer": {
@@ -32,10 +36,12 @@
                 50,
                 50
             ],
-            "label": "bed size",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
+            "ui": {
+                "label": "bed size",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm"
+            }
         },
         "coord_offset": {
             "type": "array<float>",
@@ -43,10 +49,12 @@
                 0,
                 0
             ],
-            "label": "XY coordinate offset",
-            "category": "general",
-            "section": "bed settings",
-            "unit": "mm"
+            "ui" : {
+                "label": "XY coordinate offset",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm"
+            }
         }
     }
 }

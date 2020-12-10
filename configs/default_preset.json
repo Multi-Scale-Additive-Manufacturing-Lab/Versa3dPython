@@ -1,126 +1,160 @@
 {
     "bj_parameter": {
-        "process" : "bjp",
+        "process": "bjp",
         "layer_thickness": {
             "type": "float",
             "value": 0.1,
-            "label": "layer thickness",
-            "category": "Layer Parameters",
-            "section": "Layer Height",
-            "unit": "mm"
+            "ui": {
+                "label": "layer thickness",
+                "category": "Layer Parameters",
+                "section": "Layer Height",
+                "unit": "mm"
+            }
         },
         "roller_rpm": {
             "type": "float",
             "value": 100,
-            "label": "Roller Rotational Speed",
-            "category": "Powder Spreading",
-            "section": "Roller Settings",
-            "unit": "rpm"
+            "ui": {
+                "label": "Roller Rotational Speed",
+                "category": "Powder Spreading",
+                "section": "Roller Settings",
+                "unit": "rpm"
+            }
         },
         "roller_linear_speed": {
             "type": "float",
             "value": 10,
-            "label": "Roller Translational Speed",
-            "category": "Powder Spreading",
-            "section": "Roller Settings",
-            "unit": "mm/s"
+            "ui": {
+                "label": "Roller Translational Speed",
+                "category": "Powder Spreading",
+                "section": "Roller Settings",
+                "unit": "mm/s"
+            }
         },
         "powder_loss_offset": {
             "type": "float",
             "value": 0.2,
-            "label": "Powder Loss Offset",
-            "category": "Powder Spreading",
-            "section": "Powder Flowability",
-            "unit": "mm"
+            "ui": {
+                "label": "Powder Loss Offset",
+                "category": "Powder Spreading",
+                "section": "Powder Flowability",
+                "unit": "mm"
+            }
         },
         "powder_height_offset": {
             "type": "float",
             "value": 0.2,
-            "label": "Powder Height Offset",
-            "category": "Layer Parameters",
-            "section": "Layer Height",
-            "unit": "mm"
+            "ui": {
+                "label": "Powder Height Offset",
+                "category": "Layer Parameters",
+                "section": "Layer Height",
+                "unit": "mm"
+            }
         },
         "roller_work_dist": {
             "type": "float",
             "value": 0.2,
-            "label": "Roller Work Distance",
-            "category": "Powder Spreading",
-            "section": "Roller Settings",
-            "unit": "mm"
+            "ui": {
+                "label": "Roller Work Distance",
+                "category": "Powder Spreading",
+                "section": "Roller Settings",
+                "unit": "mm"
+            }
         },
         "bed_select": {
             "type": "int",
             "value": 1,
-            "label": "Bed Selection",
-            "category": "Feedstock",
-            "section": "Powder"
+            "ui": {
+                "label": "Bed Selection",
+                "category": "Feedstock",
+                "section": "Powder"
+            }
         },
         "saturation": {
             "type": "float",
             "value": 100,
-            "label": "Saturation",
-            "category": "Layer Parameters",
-            "section": "Binder Deposition",
-            "unit": "%"
+            "ui": {
+                "label": "Saturation",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition",
+                "unit": "%"
+            }
         },
         "n_pass": {
             "type": "int",
             "value": 4,
-            "label": "Number of Pass",
-            "category": "Layer Parameters",
-            "section": "Binder Deposition"
+            "ui": {
+                "label": "Number of Pass",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition"
+            }
         },
         "print_speed": {
             "type": "float",
             "value": 20,
-            "label": "Print Speed",
-            "category": "Layer Parameters",
-            "section": "Binder Deposition",
-            "unit": "mm/s"
+            "ui": {
+                "label": "Print Speed",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition",
+                "unit": "mm/s"
+            }
         },
         "feed_bed_velocity": {
             "type": "float",
             "value": 10,
-            "label": "Feed Bed Velocity",
-            "category": "Powder Spreading",
-            "section": "Powder beds properties",
-            "unit": "mm/s"
+            "ui": {
+                "label": "Feed Bed Velocity",
+                "category": "Powder Spreading",
+                "section": "Powder beds properties",
+                "unit": "mm/s"
+            }
         },
         "build_ved_velocity": {
             "type": "float",
             "value": 10,
-            "label": "Build Bed Velocity",
-            "category": "Powder Spreading",
-            "section": "Powder beds properties",
-            "unit": "mm/s"
+            "ui": {
+                "label": "Build Bed Velocity",
+                "category": "Powder Spreading",
+                "section": "Powder beds properties",
+                "unit": "mm/s"
+            }
         },
-        "fill_pattern" : {
+        "fill_pattern": {
             "type": "enum",
-            "enum_list" : ["Full", "Grayscale", "Dithering"],
             "value": 1,
-            "label": "Fill Pattern",
-            "category": "Layer Parameters",
-            "section": "Binder Deposition"
+            "ui": {
+                "label": "Fill Pattern",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition",
+                "enum_list": [
+                    "Full",
+                    "Grayscale",
+                    "Dithering"
+                ]
+            }
         }
     },
     "dlp_parameter": {
-        "process" : "dlp",
+        "process": "dlp",
         "layer_thickness": {
             "type": "float",
             "value": 0.1,
-            "label": "layer thickness",
-            "category": "Layer Parameters",
-            "section": "Layer Height",
-            "unit": "mm"
+            "ui": {
+                "label": "layer thickness",
+                "category": "Layer Parameters",
+                "section": "Layer Height",
+                "unit": "mm"
+            }
         },
         "layer_offset": {
             "type": "float",
             "value": 0.2,
-            "label": "Layer Loss Offset",
-            "category": "Polymer Spreading",
-            "section": "Polymer Flowability",
-            "unit": "mm"
+            "ui": {
+                "label": "Layer Loss Offset",
+                "category": "Polymer Spreading",
+                "section": "Polymer Flowability",
+                "unit": "mm"
+            }
         }
     }
 }
