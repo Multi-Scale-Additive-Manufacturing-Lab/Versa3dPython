@@ -83,6 +83,9 @@ class IntEntry(SingleEntry):
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QSpinBox()
+        if 'range' in self.ui.keys():
+            input_widget.setMinimum(int(self.ui['range'][0]))
+            input_widget.setMaximum(int(self.ui['range'][1]))
         input_widget.setValue(self.value)
         widget.layout().insertWidget(1, input_widget)
         return widget
@@ -108,6 +111,10 @@ class FloatEntry(SingleEntry):
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QDoubleSpinBox()
+        if 'range' in self.ui.keys():
+            input_widget.setMinimum(float(self.ui['range'][0]))
+            input_widget.setMaximum(float(self.ui['range'][1]))
+        
         input_widget.setValue(self.value)
         widget.layout().insertWidget(1, input_widget)
         return widget
@@ -181,8 +188,12 @@ class ArrayIntEntry(ArrayEntry):
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
-        for val in self.value:
+        for idx, val in enumerate(self.value):
             i_input = QtWidgets.QSpinBox()
+            if 'range' in self.ui.keys():
+                i_input.setMinimum(int(self.ui['range'][idx][0]))
+                i_input.setMaximum(int(self.ui['range'][idx][1]))
+
             i_input.setValue(val)
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)
@@ -216,8 +227,11 @@ class ArrayFloatEntry(ArrayEntry):
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
-        for val in self.value:
-            i_input = QtWidgets.QDoubleSpinBox()
+        for idx, val in enumerate(self.value):
+            i_input = QtWidgets.QSpinBox()
+            if 'range' in self.ui.keys():
+                i_input.setMinimum(float(self.ui['range'][idx][0]))
+                i_input.setMaximum(float(self.ui['range'][idx][1]))
             i_input.setValue(val)
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)

@@ -11,20 +11,22 @@
                 "label": "bed size",
                 "category": "general",
                 "section": "bed settings",
-                "unit": "mm"
+                "unit": "mm",
+                "range" : [[1, 1000],[1, 1000]]
             }
         },
         "coord_offset": {
             "type": "array<float>",
             "value": [
-                0,
-                0
+                33,
+                50
             ],
             "ui" : {
                 "label": "XY coordinate offset",
                 "category": "general",
                 "section": "bed settings",
-                "unit": "mm"
+                "unit": "mm",
+                "range" : [[-1000, 1000],[-1000, 1000]]
             }
         }
     },
@@ -40,7 +42,8 @@
                 "label": "bed size",
                 "category": "general",
                 "section": "bed settings",
-                "unit": "mm"
+                "unit": "mm",
+                "range" : [[1, 1000],[1, 1000]]
             }
         },
         "coord_offset": {
@@ -53,7 +56,8 @@
                 "label": "XY coordinate offset",
                 "category": "general",
                 "section": "bed settings",
-                "unit": "mm"
+                "unit": "mm",
+                "range" : [[-1000, 1000],[-1000, 1000]]
             }
         }
     }

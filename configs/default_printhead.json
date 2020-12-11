@@ -11,7 +11,8 @@
                 "label": "Printhead DPI",
                 "category": "general",
                 "section": "Resolution",
-                "unit": "dpi"
+                "unit": "dpi",
+                "range" : [[1, 4000],[1, 4000]]
             }
         }
     },
@@ -20,14 +21,15 @@
         "dpi": {
             "type": "array<int>",
             "value": [
-                50,
-                50
+                500,
+                500
             ],
             "ui": {
                 "label": "Printhead DPI",
                 "category": "general",
                 "section": "Resolution",
-                "unit": "dpi"
+                "unit": "dpi",
+                "range" : [[1, 4000],[1, 4000]]
             }
         }
     }
