@@ -58,6 +58,7 @@ class SettingsWindow(QMainWindow):
         layout.addWidget(menu_widget)
 
         sub_stacked_page = QtWidgets.QStackedWidget()
+        menu_widget.currentRowChanged.connect(sub_stacked_page.setCurrentIndex)
         layout.addWidget(sub_stacked_page)
 
         cat_frame = {}
