@@ -7,7 +7,6 @@ class SingleEntry(QObject):
     def __init__(self, name, ui_dict = None, default_val = None, parent = None):
         QObject.__init__(self, parent)
         self.parent = parent
-        self.default_val = default_val
         self._value = default_val
         self.name = name
         self.modified = False
@@ -75,8 +74,7 @@ class IntEntry(SingleEntry):
     
     def load_entry(self, q_path):
         settings = QSettings()
-        self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
-        self._value = self.default_val
+        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -85,6 +83,7 @@ class IntEntry(SingleEntry):
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QSpinBox()
+        input_widget.setValue(self.value)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
@@ -100,8 +99,7 @@ class FloatEntry(SingleEntry):
     
     def load_entry(self, q_path):
         settings = QSettings()
-        self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = float)
-        self._value = self.default_val
+        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = float)
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -110,6 +108,7 @@ class FloatEntry(SingleEntry):
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QDoubleSpinBox()
+        input_widget.setValue(self.value)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
@@ -125,8 +124,7 @@ class EnumEntry(SingleEntry):
     
     def load_entry(self, q_path):
         settings = QSettings()
-        self.default_val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
-        self._value = self.default_val
+        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -136,6 +134,7 @@ class EnumEntry(SingleEntry):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QComboBox()
         input_widget.addItems(self.ui['enum_list'])
+        input_widget.setCurrentIndex(self.value)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
@@ -158,8 +157,7 @@ class ArrayIntEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
         ArrayEntry.__init__(self, name, ui, default_val, parent)
         if isinstance(default_val, list):
-            self.default_val = np.array(default_val, dtype = int)
-            self._value = self.default_val
+            self._value = np.array(default_val, dtype = int)
 
     @pyqtSlot(int, int)
     def update_value(self, idx, val):
@@ -174,8 +172,7 @@ class ArrayIntEntry(ArrayEntry):
     def load_entry(self, q_path):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
-        self.default_val = np.array(val, dtype = int)
-        self._value = self.default_val
+        self._value = np.array(val, dtype = int)
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -184,8 +181,9 @@ class ArrayIntEntry(ArrayEntry):
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
-        for _ in range(len(self._value)):
+        for val in self.value:
             i_input = QtWidgets.QSpinBox()
+            i_input.setValue(val)
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)
         return widget
@@ -194,8 +192,7 @@ class ArrayFloatEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
         ArrayEntry.__init__(self, name, ui, default_val, parent)
         if isinstance(default_val, list):
-            self.default_val = np.array(default_val, dtype = float)
-            self._value = self.default_val
+            self._value = np.array(default_val, dtype = float)
 
     @pyqtSlot(int, int)
     def update_value(self, idx, val):
@@ -210,8 +207,7 @@ class ArrayFloatEntry(ArrayEntry):
     def load_entry(self, q_path):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
-        self.default_val = np.array(val, dtype = float)
-        self._value = self.default_val
+        self._value = np.array(val, dtype = float)
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -220,8 +216,9 @@ class ArrayFloatEntry(ArrayEntry):
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
-        for _ in range(len(self._value)):
+        for val in self.value:
             i_input = QtWidgets.QDoubleSpinBox()
+            i_input.setValue(val)
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)
         return widget

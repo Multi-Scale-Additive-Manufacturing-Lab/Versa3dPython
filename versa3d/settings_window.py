@@ -30,6 +30,7 @@ class SettingsWindow(QMainWindow):
         ls_settings = self.controller.get_settings(self.window_type)
 
         stacked_widget = QtWidgets.QStackedWidget()
+        drop_down_list.currentIndexChanged.connect(stacked_widget.setCurrentIndex)
         for name, setting_dict in ls_settings.items():
             drop_down_list.addItem(name)
             widget = self.init_tab(name, setting_dict)
