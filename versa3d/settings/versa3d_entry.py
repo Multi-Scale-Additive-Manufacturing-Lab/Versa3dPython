@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QObject, QSettings, pyqtSlot
+from PyQt5 import QtWidgets
 import numpy as np
 
 
@@ -50,6 +51,18 @@ class SingleEntry(QObject):
     def copy(self):
         raise NotImplementedError
 
+    def create_ui_entry(self):
+        layout = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel(self.ui['label'])
+        layout.insertWidget(0, label)
+        if 'unit' in self.ui.keys():
+            unit_label = QtWidgets.QLabel(self.ui['unit'])
+            layout.insertWidget(2, unit_label)
+        layout.insertSpacing(-1, 20)
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        return widget
+
 class IntEntry(SingleEntry):
     @pyqtSlot(int)
     def update_value(self, val):
@@ -68,6 +81,12 @@ class IntEntry(SingleEntry):
     
     def copy(self):
         return IntEntry(self.name, self.ui.copy(), self._value, self.parent)
+    
+    def create_ui_entry(self):
+        widget = SingleEntry.create_ui_entry(self)
+        input_widget = QtWidgets.QSpinBox()
+        widget.layout().insertWidget(1, input_widget)
+        return widget
 
 class FloatEntry(SingleEntry):
     @pyqtSlot(float)
@@ -87,6 +106,12 @@ class FloatEntry(SingleEntry):
     
     def copy(self):
         return FloatEntry(self.name, self.ui.copy(), self._value, self.parent)
+    
+    def create_ui_entry(self):
+        widget = SingleEntry.create_ui_entry(self)
+        input_widget = QtWidgets.QDoubleSpinBox()
+        widget.layout().insertWidget(1, input_widget)
+        return widget
 
 class EnumEntry(SingleEntry):
     @pyqtSlot(int)
@@ -106,6 +131,13 @@ class EnumEntry(SingleEntry):
     
     def copy(self):
         return EnumEntry(self.name, self.ui.copy(), self._value, self.parent)
+    
+    def create_ui_entry(self):
+        widget = SingleEntry.create_ui_entry(self)
+        input_widget = QtWidgets.QComboBox()
+        input_widget.addItems(self.ui['enum_list'])
+        widget.layout().insertWidget(1, input_widget)
+        return widget
 
 class ArrayEntry(SingleEntry):
     def update_value(self, idx, val):
@@ -124,7 +156,7 @@ class ArrayEntry(SingleEntry):
     
 class ArrayIntEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
-        SingleEntry.__init__(self, name, ui, default_val, parent)
+        ArrayEntry.__init__(self, name, ui, default_val, parent)
         if isinstance(default_val, list):
             self.default_val = np.array(default_val, dtype = int)
             self._value = self.default_val
@@ -137,6 +169,7 @@ class ArrayIntEntry(ArrayEntry):
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value.tolist())
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'array<int>')
+        self.write_ui_settings(q_path)
     
     def load_entry(self, q_path):
         settings = QSettings()
@@ -147,6 +180,15 @@ class ArrayIntEntry(ArrayEntry):
     
     def copy(self):
         return ArrayIntEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
+    
+    def create_ui_entry(self):
+        widget = ArrayEntry.create_ui_entry(self)
+        row_layout = QtWidgets.QHBoxLayout()
+        for _ in range(len(self._value)):
+            i_input = QtWidgets.QSpinBox()
+            row_layout.addWidget(i_input)
+        widget.layout().insertLayout(1, row_layout)
+        return widget
 
 class ArrayFloatEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
@@ -163,6 +205,7 @@ class ArrayFloatEntry(ArrayEntry):
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value.tolist())
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'array<float>')
+        self.write_ui_settings(q_path)
     
     def load_entry(self, q_path):
         settings = QSettings()
@@ -173,6 +216,15 @@ class ArrayFloatEntry(ArrayEntry):
     
     def copy(self):
         return ArrayFloatEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
+    
+    def create_ui_entry(self):
+        widget = ArrayEntry.create_ui_entry(self)
+        row_layout = QtWidgets.QHBoxLayout()
+        for _ in range(len(self._value)):
+            i_input = QtWidgets.QDoubleSpinBox()
+            row_layout.addWidget(i_input)
+        widget.layout().insertLayout(1, row_layout)
+        return widget
 
 MAP_TYPE = {
     'int': IntEntry,

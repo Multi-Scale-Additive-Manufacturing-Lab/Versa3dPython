@@ -25,13 +25,15 @@ class SettingsWindow(QMainWindow):
         top_left_side.addWidget(save_file)
         top_left_side.addWidget(delete_file)
         top_left_side.addWidget(drop_down_list)
+        top_left_side.insertSpacing(-1, 20)
 
         ls_settings = self.controller.get_settings(self.window_type)
 
         stacked_widget = QtWidgets.QStackedWidget()
-        for name in ls_settings.keys():
+        for name, setting_dict in ls_settings.items():
             drop_down_list.addItem(name)
-            #widget = self.init_tab(name)
+            widget = self.init_tab(name, setting_dict)
+            stacked_widget.addWidget(widget)
 
         layout = QtWidgets.QVBoxLayout()
 
@@ -50,53 +52,38 @@ class SettingsWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
 
-    def init_tab(self, name):
-        param_setting = self.controller.get_settings(self.window_type)
-        setting = param_setting[name]
-        cls_name = type(setting).__name__
+    def init_tab(self, name, setting_dict):
         layout = QtWidgets.QHBoxLayout()
-        stacked_page = QtWidgets.QStackedWidget()
-
         menu_widget = QtWidgets.QListWidget()
         layout.addWidget(menu_widget)
 
-        setting = QSettings()
-        key = '%s/%s/%s' % format(UI_PATH, self.window_type, cls_name)
-        setting.beginGroup(key)
-        ls_category = setting.childGroups()
-        for cat in ls_category:
-            menu_widget.addItem(cat)
-            section_frame = QtWidgets.QWidget()
-            setting.beginGroup(cat)
-            ls_section = setting.childGroups()
-            for sec in ls_section:
-                box = QtWidgets.QGroupBox(sec)
-                box_layout = QtWidgets.QVBoxLayout()
-                ls_param = QtWidgets.childGroups()
-                for p in ls_param:
-                    line_layout = QtWidgets.QHBoxLayout()
-                    label = QtWidgets.QLabel(setting.value("%s/label" % (p)))
-                    unit = QtWidgets.QLabel(setting.value("%s/unit" % (p)))
-                    p_type = setting.value("%s/type" % (p))
+        sub_stacked_page = QtWidgets.QStackedWidget()
+        layout.addWidget(sub_stacked_page)
 
-    def create_entry_box(self, entry_type, value):
-        if entry_type == 'int':
-            widget = QtWidgets.QSpinBox()
-            widget.setValue(value)
-            return widget
-        elif entry_type == 'float' or entry_type == 'double':
-            widget = QtWidgets.QDoubleSpinBox()
-            widget.setValue(value)
-            return widget
-        elif entry_type == 'Array<int>':
-            widget = QtWidgets.QWidget()
-            layout = QtWidgets.QHBoxLayout()
-
-            for i in value:
-                s_widget = QtWidgets.QSpinBox()
-                s_widget.setValue(i)
-                layout.addWidget(s_widget)
+        cat_frame = {}
+        sec_frame = {}
+        for entry in setting_dict.values():
+            cat = entry.ui['category']
+            if not cat in cat_frame.keys():
+                single_frame = QtWidgets.QWidget()
+                single_frame.setLayout(QtWidgets.QVBoxLayout())
+                cat_frame[cat] = single_frame
+                menu_widget.addItem(cat)
+                sec_frame[cat] = {}
+                sub_stacked_page.addWidget(single_frame)
             
-            widget.setLayout(layout)
-            return widget
+            sec = entry.ui['section']
+            if not sec in sec_frame[cat].keys():
+                box_layout = QtWidgets.QVBoxLayout()
+                qbox = QtWidgets.QGroupBox(sec)
+                qbox.setLayout(box_layout)
+                sec_frame[cat][sec] = qbox
+                cat_frame[cat].layout().addWidget(qbox)
+            
+            q_entry = entry.create_ui_entry()
+            sec_frame[cat][sec].layout().addWidget(q_entry)
+        
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        return widget
         
