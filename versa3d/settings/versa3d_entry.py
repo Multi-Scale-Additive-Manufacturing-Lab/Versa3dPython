@@ -10,7 +10,6 @@ class SingleEntry(QObject):
         self._value = default_val
         self._temp_val = self._value
         self.name = name
-        self.modified = False
         if ui_dict is None:
             self.ui = {}
         else:
@@ -23,12 +22,15 @@ class SingleEntry(QObject):
     @value.setter
     def value(self, value):
         if self._value != value:
-            self.modified = True
             self._temp_val = value
             self._value = value
     
     def _update_temp(self, val):
         raise NotImplementedError
+
+    @pyqtSlot()
+    def commit_value(self):
+        self._value = self._temp_val
     
     def write_settings(self, q_path):
         settings = QSettings()
@@ -158,7 +160,6 @@ class ArrayEntry(SingleEntry):
         QObject.__init__(self, parent)
         self.parent = parent
         self.name = name
-        self.modified = False
         if ui_dict is None:
             self.ui = {}
         else:
@@ -171,7 +172,6 @@ class ArrayEntry(SingleEntry):
     @value.setter
     def value(self, value):
         if np.all(self._value != value):
-            self.modified = True
             self._value = value
             self._temp_val = value
     
