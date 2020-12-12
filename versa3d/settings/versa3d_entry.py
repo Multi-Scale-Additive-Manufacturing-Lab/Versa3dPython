@@ -8,6 +8,7 @@ class SingleEntry(QObject):
         QObject.__init__(self, parent)
         self.parent = parent
         self._value = default_val
+        self._temp_val = self._value
         self.name = name
         self.modified = False
         if ui_dict is None:
@@ -25,7 +26,7 @@ class SingleEntry(QObject):
             self.modified = True
             self._value = value
     
-    def update_value(self, val):
+    def _update_temp(self, val):
         raise NotImplementedError
     
     def write_settings(self, q_path):
@@ -64,8 +65,8 @@ class SingleEntry(QObject):
 
 class IntEntry(SingleEntry):
     @pyqtSlot(int)
-    def update_value(self, val):
-        self.value = val
+    def _update_temp(self, val):
+        self._temp_val = val
     
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
@@ -75,6 +76,7 @@ class IntEntry(SingleEntry):
     def load_entry(self, q_path):
         settings = QSettings()
         self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
+        self._temp_val = self._value
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -87,13 +89,14 @@ class IntEntry(SingleEntry):
             input_widget.setMinimum(int(self.ui['range'][0]))
             input_widget.setMaximum(int(self.ui['range'][1]))
         input_widget.setValue(self.value)
+        input_widget.valueChanged.connect(self._update_temp)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
 class FloatEntry(SingleEntry):
     @pyqtSlot(float)
-    def update_value(self, val):
-        self.value = val
+    def _update_temp(self, val):
+        self._temp_val = val
     
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
@@ -103,6 +106,7 @@ class FloatEntry(SingleEntry):
     def load_entry(self, q_path):
         settings = QSettings()
         self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = float)
+        self._temp_val = self._value
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -116,13 +120,14 @@ class FloatEntry(SingleEntry):
             input_widget.setMaximum(float(self.ui['range'][1]))
         
         input_widget.setValue(self.value)
+        input_widget.valueChanged.connect(self._update_temp)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
 class EnumEntry(SingleEntry):
     @pyqtSlot(int)
-    def update_value(self, val):
-        self.value = val
+    def _update_temp(self, val):
+        self._temp_val = val
     
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
@@ -132,6 +137,7 @@ class EnumEntry(SingleEntry):
     def load_entry(self, q_path):
         settings = QSettings()
         self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
+        self._temp_val = self._value
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -142,14 +148,21 @@ class EnumEntry(SingleEntry):
         input_widget = QtWidgets.QComboBox()
         input_widget.addItems(self.ui['enum_list'])
         input_widget.setCurrentIndex(self.value)
+        input_widget.currentIndexChanged.connect(self._update_temp)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
 class ArrayEntry(SingleEntry):
-    def update_value(self, idx, val):
-        if self._value[idx] != val:
-            self._value[idx] = val
-            self.modified = True
+    def __init__(self, name, ui_dict = None, parent = None):
+        QObject.__init__(self, parent)
+        self.parent = parent
+        self.name = name
+        self.modified = False
+        if ui_dict is None:
+            self.ui = {}
+        else:
+            self.ui = ui_dict
+
     @property
     def value(self):
         return self._value
@@ -162,13 +175,18 @@ class ArrayEntry(SingleEntry):
     
 class ArrayIntEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
-        ArrayEntry.__init__(self, name, ui, default_val, parent)
+        ArrayEntry.__init__(self, name, ui, parent)
         if isinstance(default_val, list):
             self._value = np.array(default_val, dtype = int)
+        else:
+            self._value = default_val
+        self._temp_val = self._value
 
-    @pyqtSlot(int, int)
-    def update_value(self, idx, val):
-        ArrayEntry.update_value(self, idx, val)
+    def _update_temp(self, idx):
+        @pyqtSlot(int)
+        def f(val):
+            self._temp_val[idx] = val
+        return f
 
     def write_settings(self, q_path):
         settings = QSettings()
@@ -180,6 +198,7 @@ class ArrayIntEntry(ArrayEntry):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
         self._value = np.array(val, dtype = int)
+        self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -193,21 +212,26 @@ class ArrayIntEntry(ArrayEntry):
             if 'range' in self.ui.keys():
                 i_input.setMinimum(int(self.ui['range'][idx][0]))
                 i_input.setMaximum(int(self.ui['range'][idx][1]))
-
             i_input.setValue(val)
+            i_input.valueChanged.connect(self._update_temp(idx))
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)
         return widget
 
 class ArrayFloatEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
-        ArrayEntry.__init__(self, name, ui, default_val, parent)
+        ArrayEntry.__init__(self, name, ui, parent)
         if isinstance(default_val, list):
-            self._value = np.array(default_val, dtype = float)
+            self._value = np.array(default_val, dtype = int)
+        else:
+            self._value = default_val
+        self._temp_val = self._value
 
-    @pyqtSlot(int, int)
-    def update_value(self, idx, val):
-        ArrayEntry.update_value(self, idx, val)
+    def _update_temp(self, idx):
+        @pyqtSlot(float)
+        def f(val):
+            self._temp_val[idx] = val
+        return f
     
     def write_settings(self, q_path):
         settings = QSettings()
@@ -219,6 +243,7 @@ class ArrayFloatEntry(ArrayEntry):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
         self._value = np.array(val, dtype = float)
+        self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
     
     def copy(self):
@@ -233,6 +258,7 @@ class ArrayFloatEntry(ArrayEntry):
                 i_input.setMinimum(float(self.ui['range'][idx][0]))
                 i_input.setMaximum(float(self.ui['range'][idx][1]))
             i_input.setValue(val)
+            i_input.valueChanged.connect(self._update_temp(idx))
             row_layout.addWidget(i_input)
         widget.layout().insertLayout(1, row_layout)
         return widget

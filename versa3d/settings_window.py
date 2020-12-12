@@ -41,17 +41,25 @@ class SettingsWindow(QMainWindow):
         layout.addLayout(top_left_side)
         layout.addWidget(stacked_widget)
 
-        button_dialog = QDialogButtonBox(Qt.Horizontal)
-        button_dialog.addButton(QDialogButtonBox.Apply)
-
-        button_dialog.addButton(QDialogButtonBox.Ok)
-        button_dialog.addButton(QDialogButtonBox.Cancel)
+        self.button_dialog = QDialogButtonBox(Qt.Horizontal)
+        self.button_dialog.addButton(QDialogButtonBox.Apply)
+        self.button_dialog.addButton(QDialogButtonBox.Ok)
+        self.button_dialog.addButton(QDialogButtonBox.Cancel)
+        self.button_dialog.rejected.connect(self.close)
         
-        layout.addWidget(button_dialog)
+        layout.addWidget(self.button_dialog)
 
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+    
+    def apply_setting(self):
+        pass
+
+    def button_clicked(self, button):
+        role = self.button_dialog.buttonRole(button)
+        if role == QDialogButtonBox.ApplyRole:
+            pass
 
     def init_tab(self, name, setting_dict):
         layout = QtWidgets.QHBoxLayout()
