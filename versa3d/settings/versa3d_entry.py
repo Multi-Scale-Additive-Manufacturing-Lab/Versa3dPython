@@ -24,6 +24,7 @@ class SingleEntry(QObject):
     def value(self, value):
         if self._value != value:
             self.modified = True
+            self._temp_val = value
             self._value = value
     
     def _update_temp(self, val):
@@ -172,6 +173,7 @@ class ArrayEntry(SingleEntry):
         if np.all(self._value != value):
             self.modified = True
             self._value = value
+            self._temp_val = value
     
 class ArrayIntEntry(ArrayEntry):
     def __init__(self, name, ui = None, default_val = None, parent = None):
