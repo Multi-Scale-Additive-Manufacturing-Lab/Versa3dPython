@@ -24,9 +24,6 @@ class Versa3dController(QObject):
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
     
-    def get_settings(self, setting_type):
-        return getattr(self.settings, setting_type)
-    
     def load_settings(self):
         self.settings.load_all()
     

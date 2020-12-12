@@ -27,8 +27,8 @@ class SettingsWindow(QMainWindow):
         top_left_side.addWidget(delete_file)
         top_left_side.addWidget(drop_down_list)
         top_left_side.insertSpacing(-1, 20)
-
-        ls_settings = self.controller.get_settings(self.window_type)
+        versa_settings = self.controller.settings
+        ls_settings = getattr(versa_settings, self.window_type)
 
         stacked_widget = QtWidgets.QStackedWidget()
         drop_down_list.currentIndexChanged.connect(stacked_widget.setCurrentIndex)
