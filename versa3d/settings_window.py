@@ -1,10 +1,11 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialogButtonBox, QMainWindow
+from PyQt5.QtWidgets import QDialogButtonBox, QMainWindow, QAbstractButton
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSettings, Qt
+from PyQt5.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 
 
 class SettingsWindow(QMainWindow):
+    apply_setting_signal = pyqtSignal()
 
     def __init__(self, controller, window_type, parent=None):
         super().__init__(parent=parent)
@@ -45,21 +46,23 @@ class SettingsWindow(QMainWindow):
         self.button_dialog.addButton(QDialogButtonBox.Apply)
         self.button_dialog.addButton(QDialogButtonBox.Ok)
         self.button_dialog.addButton(QDialogButtonBox.Cancel)
-        self.button_dialog.rejected.connect(self.close)
-        
+        self.button_dialog.clicked.connect(self.button_clicked)
         layout.addWidget(self.button_dialog)
 
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
-    
-    def apply_setting(self):
-        pass
 
+    @pyqtSlot(QAbstractButton)
     def button_clicked(self, button):
         role = self.button_dialog.buttonRole(button)
         if role == QDialogButtonBox.ApplyRole:
-            pass
+            self.apply_setting_signal.emit()
+        elif role == QDialogButtonBox.AcceptRole:
+            self.apply_setting_signal.emit()
+            self.close()
+        elif role == QDialogButtonBox.RejectRole:
+            self.close()
 
     def init_tab(self, name, setting_dict):
         layout = QtWidgets.QHBoxLayout()
@@ -91,6 +94,7 @@ class SettingsWindow(QMainWindow):
                 cat_frame[cat].layout().addWidget(qbox)
             
             q_entry = entry.create_ui_entry()
+            self.apply_setting_signal.connect(entry.commit_value)
             sec_frame[cat][sec].layout().addWidget(q_entry)
         
         widget = QtWidgets.QWidget()
