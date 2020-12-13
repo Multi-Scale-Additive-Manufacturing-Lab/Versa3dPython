@@ -20,27 +20,30 @@ class SettingsWindow(QMainWindow):
         delete_file = QtWidgets.QPushButton(delete_file_icon, '')
         save_file_icon = QIcon('designer_files/icon/save.svg')
         save_file = QtWidgets.QPushButton(save_file_icon, '')
-        drop_down_list = QtWidgets.QComboBox()
+        self.drop_down_list = QtWidgets.QComboBox()
+
+        new_file.clicked.connect(self.create_new_setting)
+        delete_file.clicked.connect(self.delete_setting)
 
         top_left_side.addWidget(new_file)
         top_left_side.addWidget(save_file)
         top_left_side.addWidget(delete_file)
-        top_left_side.addWidget(drop_down_list)
+        top_left_side.addWidget(self.drop_down_list)
         top_left_side.insertSpacing(-1, 20)
-        versa_settings = self.controller.settings
-        ls_settings = getattr(versa_settings, self.window_type)
+        self.versa_settings = self.controller.settings
+        ls_settings = getattr(self.versa_settings, self.window_type)
 
-        stacked_widget = QtWidgets.QStackedWidget()
-        drop_down_list.currentIndexChanged.connect(stacked_widget.setCurrentIndex)
+        self.stacked_widget = QtWidgets.QStackedWidget()
+        self.drop_down_list.currentIndexChanged.connect(self.stacked_widget.setCurrentIndex)
         for name, setting_dict in ls_settings.items():
-            drop_down_list.addItem(name)
+            self.drop_down_list.addItem(name)
             widget = self.init_tab(name, setting_dict)
-            stacked_widget.addWidget(widget)
+            self.stacked_widget.addWidget(widget)
 
         layout = QtWidgets.QVBoxLayout()
 
         layout.addLayout(top_left_side)
-        layout.addWidget(stacked_widget)
+        layout.addWidget(self.stacked_widget)
 
         self.button_dialog = QDialogButtonBox(Qt.Horizontal)
         self.button_dialog.addButton(QDialogButtonBox.Apply)
@@ -52,6 +55,23 @@ class SettingsWindow(QMainWindow):
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
+    
+    @pyqtSlot()
+    def create_new_setting(self):
+        new_setting_dialog = QDialogButtonBox(Qt.Horizontal, parent = self)
+        new_setting_dialog.addButton(QDialogButtonBox.Ok)
+        new_setting_dialog.addButton(QDialogButtonBox.Cancel)
+
+        new_setting_dialog.show()
+    
+    @pyqtSlot()
+    def delete_setting(self):
+        name = self.drop_down_list.currentText()
+        setting_idx = self.drop_down_list.currentIndex()
+        getattr(self.versa_settings, 'remove_%s' % self.window_type)(name)
+        self.drop_down_list.removeItem(setting_idx)
+        widget = self.stacked_widget.widget(setting_idx)
+        self.stacked_widget.removeWidget(widget)
 
     @pyqtSlot(QAbstractButton)
     def button_clicked(self, button):

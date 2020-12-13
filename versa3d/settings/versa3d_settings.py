@@ -164,7 +164,7 @@ class Versa3dSettings(QObject):
         self.remove_setting_signal.emit(str(SettingTypeKey.printhead), name)
         return self._printhead_list.pop(name)
     
-    def remove_preset(self, name):
+    def remove_parameter_preset(self, name):
         qsetting = QSettings()
         qsetting.beginGroup(str(SettingTypeKey.print_param))
         qsetting.remove(name)
