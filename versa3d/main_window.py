@@ -92,22 +92,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.printhead_cmb_box.addItem(value)
         elif(setting_type == str(SettingTypeKey.print_param)):
             self.print_settings_cmb_box.addItem(value)
-    
-    # TODO implement undo for list
-    # @pyqtSlot(ppl.PrintObject)
-    # def add_obj_to_list(self, obj):
-    #    table = self.table_stl
-    #    name = obj.name
-    #    table.insertRow(table.rowCount())
-
-    #    name_entry = QtWidgets.QTableWidgetItem(name)
-    #    scale_value = QtWidgets.QTableWidgetItem(str(1.0))
-    #    copies_value = QtWidgets.QTableWidgetItem(str(1.0))
-
-    #    current_row = table.rowCount() - 1
-    #    table.setItem(current_row, 0, name_entry)
-    #    table.setItem(current_row, 1, copies_value)
-    #    table.setItem(current_row, 2, scale_value)
 
     def setup_scene(self, size):
         """set grid scene
