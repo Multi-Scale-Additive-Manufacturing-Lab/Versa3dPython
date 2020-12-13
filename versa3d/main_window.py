@@ -82,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def show_settings_window(self, type_string):
         win = SettingsWindow(self.controller, type_string, self)
-        win.show()
+        win.exec()
     
     @pyqtSlot(str, str)
     def populate_printer_drop_down(self, setting_type, value):

@@ -1,10 +1,10 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialogButtonBox, QMainWindow, QAbstractButton
+from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QAbstractButton
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 
 
-class SettingsWindow(QMainWindow):
+class SettingsWindow(QDialog):
     apply_setting_signal = pyqtSignal()
 
     def __init__(self, controller, window_type, parent=None):
@@ -52,9 +52,7 @@ class SettingsWindow(QMainWindow):
         self.button_dialog.clicked.connect(self.button_clicked)
         layout.addWidget(self.button_dialog)
 
-        widget = QtWidgets.QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+        self.setLayout(layout)
     
     @pyqtSlot()
     def create_new_setting(self):
@@ -80,9 +78,9 @@ class SettingsWindow(QMainWindow):
             self.apply_setting_signal.emit()
         elif role == QDialogButtonBox.AcceptRole:
             self.apply_setting_signal.emit()
-            self.close()
+            self.accept()
         elif role == QDialogButtonBox.RejectRole:
-            self.close()
+            self.reject()
 
     def init_tab(self, name, setting_dict):
         layout = QtWidgets.QHBoxLayout()
