@@ -32,7 +32,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(self.singleton.get_printer('bj_printer').process_type ,'bjp')
 
         saved_value = preset_default_config['bj_parameter']['layer_thickness']['value']
-        stored_value = self.singleton.get_preset('bj_parameter')['layer_thickness'].value
+        stored_value = self.singleton.get_parameter_preset('bj_parameter')['layer_thickness'].value
         self.assertEqual(saved_value, stored_value)
 
     def test_set_settings(self):
