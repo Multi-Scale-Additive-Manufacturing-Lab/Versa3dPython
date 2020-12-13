@@ -24,6 +24,7 @@ class SettingsWindow(QDialog):
 
         new_file.clicked.connect(self.create_new_setting)
         delete_file.clicked.connect(self.delete_setting)
+        save_file.clicked.connect(self.save_setting)
 
         top_left_side.addWidget(new_file)
         top_left_side.addWidget(save_file)
@@ -64,8 +65,10 @@ class SettingsWindow(QDialog):
         if len(new_name) != 0 and ok and not is_duplicate:
             setting_dict = getattr(self.versa_settings, 'clone_%s' % self.window_type)(name, new_name)
             self.drop_down_list.addItem(new_name)
+            self.id_map.append(new_name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
+            self.drop_down_list.setCurrentIndex(len(self.id_map) - 1)
         elif len(new_name) == 0:
             msg_box = QMessageBox(self)
             msg_box.setText("Empty string, please specify name :")
@@ -73,7 +76,13 @@ class SettingsWindow(QDialog):
         elif is_duplicate:
             msg_box = QMessageBox(self)
             msg_box.setText("Deplicate string, please specify another name :")
-            msg_box.exec() 
+            msg_box.exec()
+        
+    @pyqtSlot()
+    def save_setting(self):
+        setting_idx = self.drop_down_list.currentIndex()
+        name = self.id_map[setting_idx]
+        getattr(self.versa_settings, 'save_%s' % self.window_type)(name)
     
     @pyqtSlot()
     def delete_setting(self):

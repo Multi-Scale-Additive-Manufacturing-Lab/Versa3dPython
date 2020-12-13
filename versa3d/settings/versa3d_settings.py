@@ -114,7 +114,7 @@ class Versa3dSettings(QObject):
     def get_printhead(self, name):
         return self._printhead_list[name]
 
-    def get_preset(self, name):
+    def get_parameter_preset(self, name):
         return self._param_preset_list[name]
 
     def clone_setting(self, setting_set):
@@ -148,7 +148,7 @@ class Versa3dSettings(QObject):
     def save_printhead(self, name):
         self.save_to_disk( '%s/%s' % (SettingTypeKey.printhead, name), self._printhead_list[name])
     
-    def save_preset(self, name):
+    def save_parameter_preset(self, name):
         self.save_to_disk('%s/%s' % (SettingTypeKey.print_param, name), self._param_preset_list[name])
     
     def remove_printer(self, name):
