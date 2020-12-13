@@ -4,15 +4,16 @@
         "build_bed_size": {
             "type": "array<float>",
             "value": [
-                50,
-                50
+                100,
+                100,
+                100
             ],
             "ui" : {
                 "label": "bed size",
                 "category": "general",
                 "section": "bed settings",
                 "unit": "mm",
-                "range" : [[1, 1000],[1, 1000]]
+                "range" : [[1, 1000],[1, 1000],[1, 1000]]
             }
         },
         "coord_offset": {
@@ -36,14 +37,15 @@
             "type": "array<float>",
             "value": [
                 50,
-                50
+                50,
+                80
             ],
             "ui": {
                 "label": "bed size",
                 "category": "general",
                 "section": "bed settings",
                 "unit": "mm",
-                "range" : [[1, 1000],[1, 1000]]
+                "range" : [[1, 1000],[1, 1000],[1, 1000]]
             }
         },
         "coord_offset": {
