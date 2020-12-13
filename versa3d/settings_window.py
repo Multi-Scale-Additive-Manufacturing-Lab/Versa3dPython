@@ -35,8 +35,10 @@ class SettingsWindow(QDialog):
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.drop_down_list.currentIndexChanged.connect(self.stacked_widget.setCurrentIndex)
+        self.id_map = []
         for name, setting_dict in ls_settings.items():
             self.drop_down_list.addItem(name)
+            self.id_map.append(name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
 
@@ -75,8 +77,8 @@ class SettingsWindow(QDialog):
     
     @pyqtSlot()
     def delete_setting(self):
-        name = self.drop_down_list.currentText()
         setting_idx = self.drop_down_list.currentIndex()
+        name = self.id_map[setting_idx]
         getattr(self.versa_settings, 'remove_%s' % self.window_type)(name)
         self.drop_down_list.removeItem(setting_idx)
         widget = self.stacked_widget.widget(setting_idx)
