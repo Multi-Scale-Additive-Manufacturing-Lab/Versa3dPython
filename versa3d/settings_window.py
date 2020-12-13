@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QAbstractButton
+from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QAbstractButton, QInputDialog, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 
@@ -37,7 +37,7 @@ class SettingsWindow(QDialog):
         self.drop_down_list.currentIndexChanged.connect(self.stacked_widget.setCurrentIndex)
         for name, setting_dict in ls_settings.items():
             self.drop_down_list.addItem(name)
-            widget = self.init_tab(name, setting_dict)
+            widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
 
         layout = QtWidgets.QVBoxLayout()
@@ -56,11 +56,22 @@ class SettingsWindow(QDialog):
     
     @pyqtSlot()
     def create_new_setting(self):
-        new_setting_dialog = QDialogButtonBox(Qt.Horizontal, parent = self)
-        new_setting_dialog.addButton(QDialogButtonBox.Ok)
-        new_setting_dialog.addButton(QDialogButtonBox.Cancel)
-
-        new_setting_dialog.show()
+        new_name, ok = QInputDialog.getText(self, 'New Setting', 'Enter new name:')
+        name = self.drop_down_list.currentText()
+        is_duplicate = self.drop_down_list.findText(new_name) != -1
+        if len(new_name) != 0 and ok and not is_duplicate:
+            setting_dict = getattr(self.versa_settings, 'clone_%s' % self.window_type)(name, new_name)
+            self.drop_down_list.addItem(new_name)
+            widget = self.init_tab(setting_dict)
+            self.stacked_widget.addWidget(widget)
+        elif len(new_name) == 0:
+            msg_box = QMessageBox(self)
+            msg_box.setText("Empty string, please specify name :")
+            msg_box.exec()
+        elif is_duplicate:
+            msg_box = QMessageBox(self)
+            msg_box.setText("Deplicate string, please specify another name :")
+            msg_box.exec() 
     
     @pyqtSlot()
     def delete_setting(self):
@@ -82,7 +93,7 @@ class SettingsWindow(QDialog):
         elif role == QDialogButtonBox.RejectRole:
             self.reject()
 
-    def init_tab(self, name, setting_dict):
+    def init_tab(self, setting_dict):
         layout = QtWidgets.QHBoxLayout()
         menu_widget = QtWidgets.QListWidget()
         layout.addWidget(menu_widget)

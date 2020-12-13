@@ -126,14 +126,17 @@ class Versa3dSettings(QObject):
     def clone_printer(self, name, new_name):
         self._printer_list[new_name] = self.clone_setting(self._printer_list[name])
         self.add_setting_signal.emit(str(SettingTypeKey.printer), new_name)
+        return self._printer_list[new_name]
 
     def clone_printhead(self, name, new_name):
         self._printhead_list[new_name] = self.clone_setting(self._printhead_list[name])
         self.add_setting_signal.emit(str(SettingTypeKey.printer), new_name)
+        return self._printhead_list[new_name]
     
-    def clone_preset(self, name, new_name):
+    def clone_parameter_preset(self, name, new_name):
         self._param_preset_list[new_name] = self.clone_setting(self._param_preset_list[name])
         self.add_setting_signal.emit(str(SettingTypeKey.print_param), new_name)
+        return self._param_preset_list[new_name]
     
     def save_to_disk(self, q_path, setting_dict):
         for entry in setting_dict.values():
