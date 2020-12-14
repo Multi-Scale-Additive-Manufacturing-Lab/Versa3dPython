@@ -56,7 +56,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.controller.settings.add_setting_signal.connect(self.populate_printer_drop_down)
 
+        self.printer_cmb_box.currentIndexChanged.connect(self.controller.change_printer)
+        self.printhead_cmb_box.currentIndexChanged.connect(self.controller.change_printhead)
+        self.print_settings_cmb_box.currentIndexChanged.connect(self.controller.change_preset)
         self.controller.load_settings()
+
 
     def import_object(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
