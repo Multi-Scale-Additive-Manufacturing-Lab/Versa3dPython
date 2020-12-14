@@ -7,10 +7,11 @@ from PyQt5.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 class SettingsWindow(QDialog):
     apply_setting_signal = pyqtSignal()
 
-    def __init__(self, controller, window_type, parent=None):
+    def __init__(self, slave_cmb, controller, window_type, parent=None):
         super().__init__(parent=parent)
         self.controller = controller
         self.window_type = window_type
+        init_idx = slave_cmb.currentIndex()
 
         top_left_side = QtWidgets.QHBoxLayout()
 
@@ -40,7 +41,8 @@ class SettingsWindow(QDialog):
             self.drop_down_list.addItem(name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
-
+        self.drop_down_list.setCurrentIndex(init_idx)
+        self.drop_down_list.currentIndexChanged.connect(slave_cmb.setCurrentIndex)
         layout = QtWidgets.QVBoxLayout()
 
         layout.addLayout(top_left_side)

@@ -72,16 +72,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller.translate(np.array([x, 0, 0]))
     
     def show_printer_window(self):
-        self.show_settings_window('printer')
+        self.show_settings_window(self.printer_cmb_box, 'printer')
     
     def show_param_window(self):
-        self.show_settings_window('parameter_preset')
+        self.show_settings_window(self.print_settings_cmb_box, 'parameter_preset')
     
     def show_printhead_window(self):
-        self.show_settings_window('printhead')
+        self.show_settings_window(self.printhead_cmb_box, 'printhead')
     
-    def show_settings_window(self, type_string):
-        win = SettingsWindow(self.controller, type_string, self)
+    def show_settings_window(self, slave_cmb, type_string):
+        win = SettingsWindow(slave_cmb, self.controller, type_string, self)
         win.exec()
     
     @pyqtSlot(str, str)
