@@ -108,14 +108,17 @@ class Versa3dSettings(QObject):
 
         return ls_setting_dict
 
-    def get_printer(self, name):
-        return self._printer_list[name]
+    def get_printer(self, idx):
+        key = list(self._printer_list.keys())[idx]
+        return self._printer_list[key]
 
-    def get_printhead(self, name):
-        return self._printhead_list[name]
+    def get_printhead(self, idx):
+        key = list(self._printhead_list.keys())[idx]
+        return self._printhead_list[key]
 
-    def get_parameter_preset(self, name):
-        return self._param_preset_list[name]
+    def get_parameter_preset(self, idx):
+        key = list(self._param_preset_list.keys())[idx]
+        return self._param_preset_list[key]
 
     def clone_setting(self, setting_set):
         new_setting = {}
@@ -123,18 +126,18 @@ class Versa3dSettings(QObject):
             new_setting[entry_name] = entry.copy()
         return new_setting
     
-    def clone_printer(self, name, new_name):
-        self._printer_list[new_name] = self.clone_setting(self._printer_list[name])
+    def clone_printer(self, idx, new_name):
+        self._printer_list[new_name] = self.clone_setting(self.get_printer(idx))
         self.add_setting_signal.emit(str(SettingTypeKey.printer), new_name)
         return self._printer_list[new_name]
 
-    def clone_printhead(self, name, new_name):
-        self._printhead_list[new_name] = self.clone_setting(self._printhead_list[name])
+    def clone_printhead(self, idx, new_name):
+        self._printhead_list[new_name] = self.clone_setting(self.get_printhead(idx))
         self.add_setting_signal.emit(str(SettingTypeKey.printer), new_name)
         return self._printhead_list[new_name]
     
-    def clone_parameter_preset(self, name, new_name):
-        self._param_preset_list[new_name] = self.clone_setting(self._param_preset_list[name])
+    def clone_parameter_preset(self, idx, new_name):
+        self._param_preset_list[new_name] = self.clone_setting(self.get_parameter_preset(idx))
         self.add_setting_signal.emit(str(SettingTypeKey.print_param), new_name)
         return self._param_preset_list[new_name]
     
@@ -142,16 +145,20 @@ class Versa3dSettings(QObject):
         for entry in setting_dict.values():
             entry.write_settings(q_path)
     
-    def save_printer(self, name):
-        self.save_to_disk( '%s/%s' % (SettingTypeKey.printer,name), self._printer_list[name])
+    def save_printer(self, idx):
+        name = list(self._printer_list.keys())[idx]
+        self.save_to_disk( '%s/%s' % (SettingTypeKey.printer, name), self._printer_list[name])
     
-    def save_printhead(self, name):
+    def save_printhead(self, idx):
+        name = list(self._printhead_list.keys())[idx]
         self.save_to_disk( '%s/%s' % (SettingTypeKey.printhead, name), self._printhead_list[name])
     
-    def save_parameter_preset(self, name):
+    def save_parameter_preset(self, idx):
+        name = list(self._param_preset_list.keys())[idx]
         self.save_to_disk('%s/%s' % (SettingTypeKey.print_param, name), self._param_preset_list[name])
     
-    def remove_printer(self, name):
+    def remove_printer(self, idx):
+        name = list(self._printer_list.keys())[idx]
         qsetting = QSettings()
         qsetting.beginGroup(str(SettingTypeKey.printer))
         qsetting.remove(name)
@@ -159,7 +166,8 @@ class Versa3dSettings(QObject):
         self.remove_setting_signal.emit(str(SettingTypeKey.printer), name)
         return self._printer_list.pop(name)
     
-    def remove_printhead(self, name):
+    def remove_printhead(self, idx):
+        name = list(self._printhead_list.keys())[idx]
         qsetting = QSettings()
         qsetting.beginGroup(str(SettingTypeKey.printhead))
         qsetting.remove(name)
@@ -167,7 +175,8 @@ class Versa3dSettings(QObject):
         self.remove_setting_signal.emit(str(SettingTypeKey.printhead), name)
         return self._printhead_list.pop(name)
     
-    def remove_parameter_preset(self, name):
+    def remove_parameter_preset(self, idx):
+        name = list(self._param_preset_list.keys())[idx]
         qsetting = QSettings()
         qsetting.beginGroup(str(SettingTypeKey.print_param))
         qsetting.remove(name)

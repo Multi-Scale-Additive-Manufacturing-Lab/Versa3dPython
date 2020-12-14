@@ -36,10 +36,8 @@ class SettingsWindow(QDialog):
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.drop_down_list.currentIndexChanged.connect(self.stacked_widget.setCurrentIndex)
-        self.id_map = []
         for name, setting_dict in ls_settings.items():
             self.drop_down_list.addItem(name)
-            self.id_map.append(name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
 
@@ -60,15 +58,14 @@ class SettingsWindow(QDialog):
     @pyqtSlot()
     def create_new_setting(self):
         new_name, ok = QInputDialog.getText(self, 'New Setting', 'Enter new name:')
-        name = self.drop_down_list.currentText()
+        idx = self.drop_down_list.currentIndex()
         is_duplicate = self.drop_down_list.findText(new_name) != -1
         if len(new_name) != 0 and ok and not is_duplicate:
-            setting_dict = getattr(self.versa_settings, 'clone_%s' % self.window_type)(name, new_name)
+            setting_dict = getattr(self.versa_settings, 'clone_%s' % self.window_type)(idx, new_name)
             self.drop_down_list.addItem(new_name)
-            self.id_map.append(new_name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
-            self.drop_down_list.setCurrentIndex(len(self.id_map) - 1)
+            self.drop_down_list.setCurrentIndex(self.drop_down_list.count() - 1)
         elif len(new_name) == 0:
             msg_box = QMessageBox(self)
             msg_box.setText("Empty string, please specify name :")
@@ -81,14 +78,12 @@ class SettingsWindow(QDialog):
     @pyqtSlot()
     def save_setting(self):
         setting_idx = self.drop_down_list.currentIndex()
-        name = self.id_map[setting_idx]
-        getattr(self.versa_settings, 'save_%s' % self.window_type)(name)
+        getattr(self.versa_settings, 'save_%s' % self.window_type)(setting_idx)
     
     @pyqtSlot()
     def delete_setting(self):
         setting_idx = self.drop_down_list.currentIndex()
-        name = self.id_map[setting_idx]
-        getattr(self.versa_settings, 'remove_%s' % self.window_type)(name)
+        getattr(self.versa_settings, 'remove_%s' % self.window_type)(setting_idx)
         self.drop_down_list.removeItem(setting_idx)
         widget = self.stacked_widget.widget(setting_idx)
         self.stacked_widget.removeWidget(widget)
