@@ -29,6 +29,18 @@
                 "unit": "mm",
                 "range" : [[-1000, 1000],[-1000, 1000]]
             }
+        },
+        "gcode_flavour" : {
+            "type": "enum",
+            "value": 0,
+            "ui": {
+                "label": "GCode Flavour",
+                "category": "IO",
+                "section": "Gcode",
+                "enum_list": [
+                    "BigMachine"
+                ]
+            }
         }
     },
     "dlp_printer": {
@@ -60,6 +72,18 @@
                 "section": "bed settings",
                 "unit": "mm",
                 "range" : [[-1000, 1000],[-1000, 1000]]
+            }
+        },
+        "gcode_flavour" : {
+            "type": "enum",
+            "value": 0,
+            "ui": {
+                "label": "GCode Flavour",
+                "category": "IO",
+                "section": "Gcode",
+                "enum_list": [
+                    "AnyCubic"
+                ]
             }
         }
     }
