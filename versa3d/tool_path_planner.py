@@ -6,26 +6,20 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 GCODE_FLAVOUR = {
-    'BigMachine': BigMachineGcode
+    0 : BigMachineGcode
 }
 
-
 class GenericToolPathPlanner(ABC):
-    def __init__(self):
-        self._printhead = None
-        self._printer = None
-        self._param = None
-
     @abstractmethod
-    def update_printhead(self, planner, printhead):
+    def update_printhead(self, setting):
         pass
 
     @abstractmethod
-    def update_printer(self, planner, printer):
+    def update_printer(self, setting):
         pass
 
     @abstractmethod
-    def update_param(self, planner, param):
+    def update_param(self, setting):
         pass
 
     @abstractmethod
@@ -36,42 +30,42 @@ class GenericToolPathPlanner(ABC):
 class BinderJettingPlanner(GenericToolPathPlanner):
     def __init__(self):
         super().__init__()
-        self._build_bed_size = None
-        self._coord_offset = None
+        self._build_bed_size = np.array([100,100,300], dtype = float)
+        self._coord_offset = np.array([100,100], dtype = float)
 
-        self._roller_rpm = None
-        self._print_speed = None
+        self._roller_rpm = 200.0
+        self._print_speed = 10.0
 
-    def update_printhead(self, planner, printhead):
-        self._printhead = printhead
+    def update_printhead(self, setting):
+        return False
+    
+    def update_param(self, setting):
+        if not ('roller_rpm' in setting and 'print_speed' in setting):
+            raise ValueError
+        modified = False
+        if self._roller_rpm != setting['roller_rpm'].value:
+            self._roller_rpm = setting['roller_rpm'].value
+            modified = True
+        
+        if self._print_speed != setting['print_speed'].value:
+            self._print_speed = setting['print_speed'].value
+            modified = True
+        
+        return modified
 
-    def update_param(self, planner, param):
-        if self._param is None and param:
-            planner.Modified()
-            self._param = param
-            self._roller_rpm = param.roller_rpm
-            self._print_speed = param.print_speed
-        elif self._param and param:
-            if self._roller_rpm != param.roller_rpm:
-                planner.Modified()
-                self._roller_rpm = param.roller_rpm
-            if self._print_speed != param.print_speed:
-                planner.Modified()
-                self._print_speed = param.print_speed
-
-    def update_printer(self, planner, printer):
-        if self._printer is None and printer:
-            planner.Modified()
-            self._printer = printer
-            self._build_bed_size = printer.build_bed_size
-            self._coord_offset = printer.coord_offset
-        elif self._printer and printer:
-            if np.any(self._build_bed_size != printer.build_bed_size):
-                planner.Modified()
-                self._build_bed_size = printer.build_bed_size
-            elif np.any(self._coord_offset != printer.coord_offset):
-                planner.Modified()
-                self._coord_offset = printer.coord_offset
+    def update_printer(self, setting):
+        if not ('build_bed_size' in setting and 'coord_offset' in setting):
+            raise ValueError
+        modified = False
+        if np.any(self._build_bed_size != setting['build_bed_size'].value):
+            self._build_bed_size = setting['build_bed_size'].value
+            modified = True
+        
+        if np.any(self._coord_offset != setting['coord_offset'].value):
+            self._coord_offset = setting['coord_offset'].value
+            modified = True
+        
+        return modified
 
     def generate_step(self, gcode_writer, image):
         z_spacing = image.GetSpacing()[2]
@@ -103,7 +97,7 @@ class BinderJettingPlanner(GenericToolPathPlanner):
 
 
 TOOL_PATH_NAME = {
-    'StandardBinderJetting': BinderJettingPlanner
+    0: BinderJettingPlanner
 }
 
 
@@ -123,58 +117,30 @@ class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
         self._printer = None
         self._printhead = None
         self._param = None
+    
+    def set_settings(self, printer, printhead, print_param):
+        self.set_printer(printer)
+        self.set_print_parameter(print_param)
+        self.set_printhead(printhead)
 
-    @property
-    def gcode_flavour(self):
-        return self._gcode_flavour
-
-    @gcode_flavour.setter
-    def gcode_flavour(self, val):
-        if val != self._gcode_flavour:
+    def set_printer(self, setting):
+        if setting['gcode_flavour'].value != self._gcode_flavour:
             self.Modified()
-            self._gcode_flavour = val
-            self.gcode_writer = GCODE_FLAVOUR[val]()
-
-    @property
-    def tool_path_pattern(self):
-        return self._tool_path_pattern
-
-    @tool_path_pattern.setter
-    def tool_path_pattern(self, val):
-        if val != self._tool_path_pattern:
+            self._gcode_flavour = setting['gcode_flavour'].value
+            self.gcode_writer = GCODE_FLAVOUR[self._gcode_flavour]()
+    
+    def set_printhead(self, setting):
+        if self.step_generator.update_printhead(setting):
             self.Modified()
-            self._tool_path_pattern = val
-            self.step_generator = TOOL_PATH_NAME[val]()
+    
+    def set_print_parameter(self, setting):
+        if setting['tool_path_pattern'].value != self._tool_path_pattern:
+            self.Modified()
+            self._tool_path_pattern = setting['tool_path_pattern'].value
+            self.step_generator = TOOL_PATH_NAME[self._tool_path_pattern]()
 
-    @property
-    def printer(self):
-        return self._printer
-
-    @printer.setter
-    def printer(self, val):
-        if val != self._printer:
-            self.step_generator.update_printer(self, val)
-            self._printer = val
-
-    @property
-    def printhead(self):
-        return self._printhead
-
-    @printhead.setter
-    def printhead(self, val):
-        if val != self._printhead:
-            self.step_generator.update_printhead(self, val)
-            self._printhead = val
-
-    @property
-    def param(self):
-        return self._param
-
-    @param.setter
-    def param(self, val):
-        if val != self.param:
-            self.step_generator.update_param(self, val)
-            self._param = val
+        if self.step_generator.update_param(setting):
+            self.Modified()
 
     def RequestData(self, request, inInfo, outInfo):
         img_stack = vtk.vtkImageData.GetData(inInfo[0])
@@ -182,5 +148,5 @@ class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
             self.gcode_writer, img_stack)
         return 1
 
-    def write(self, path):
-        self.gcode_writer.export_file(path, self._steps)
+    def write(self, file_path):
+        self.gcode_writer.export_file(file_path, self._steps)

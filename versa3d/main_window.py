@@ -54,18 +54,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
-        self.controller.settings.add_setting_signal.connect(self.populate_printer_drop_down)
-
         self.printer_cmb_box.currentIndexChanged.connect(self.controller.change_printer)
         self.printhead_cmb_box.currentIndexChanged.connect(self.controller.change_printhead)
         self.print_settings_cmb_box.currentIndexChanged.connect(self.controller.change_preset)
+
+        self.controller.settings.add_setting_signal.connect(self.populate_printer_drop_down)
+
+        self.ExportGCodeButton.clicked.connect(self.export_gcode)
         self.controller.load_settings()
+    
+    @pyqtSlot()
+    def export_gcode(self):
+        filename = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Save Gcode', "", "zip (*.zip)")
+        if len(filename) != 0 or not filename is None:
+            self.controller.export_gcode(filename)
 
-
+    @pyqtSlot()
     def import_object(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
-        self.controller.import_object(filename)
+        if len(filename) != 0 or not filename is None:
+            self.controller.import_object(filename)
 
     def move_object_y(self):
         y = self.y_delta.value()

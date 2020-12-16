@@ -132,7 +132,7 @@
         },
         "fill_pattern": {
             "type": "enum",
-            "value": 1,
+            "value": 0,
             "ui": {
                 "label": "Fill Pattern",
                 "category": "Layer Parameters",
@@ -141,6 +141,19 @@
                     "Full",
                     "Grayscale",
                     "Dithering"
+                ]
+            }
+        },
+        "tool_path_pattern": {
+            "type": "enum",
+            "value": 0,
+            "ui": {
+                "label": "Tool Path Pattern",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition",
+                "enum_list": [
+                    "Default",
+                    "Special"
                 ]
             }
         }
