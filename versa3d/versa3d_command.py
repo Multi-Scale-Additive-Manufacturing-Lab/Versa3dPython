@@ -4,10 +4,11 @@ from PyQt5.QtWidgets import QUndoCommand
 from PyQt5.QtCore import QUuid
 import vtk
 from versa3d.print_platter import PrintObject
+from typing import List, Callable
 
 
 class ImportCommand(QUndoCommand):
-    def __init__(self, path, renderer, controller, parent=None):
+    def __init__(self, path: str, add: Callable, remove: Callable, parent: QUndoCommand = None):
         """[summary]
 
         Arguments:
@@ -24,21 +25,18 @@ class ImportCommand(QUndoCommand):
         reader.SetFileName(path)
         reader.Update()
         self._obj = PrintObject(reader)
-        self._controller = controller
-        self.renderer = renderer
+        self._add = add
+        self._remove = remove
 
     def redo(self):
-        self._controller.add_part(self._obj.id, self._obj)
-        self.renderer.AddActor(self._obj.actor)
-        self.renderer.GetRenderWindow().Render()
+        self._add(self._obj.id, self._obj)
 
     def undo(self):
-        self._platter.remove_part(self._obj.id)
-        self.renderer.RemoveActor(self._obj.actor)
-        self.renderer.GetRenderWindow().Render()
+        self._remove(self._obj.id)
+
 
 class TranslationCommand(QUndoCommand):
-    def __init__(self, delta_pos, actor):
+    def __init__(self, delta_pos: List[float], idx: str, move: Callable, parent: QUndoCommand = None):
         """
         Translation command                
         Arguments:
@@ -46,12 +44,13 @@ class TranslationCommand(QUndoCommand):
             delta_pos {ndarray} -- numpy array of delta 
             actor {vtkactor} -- vtk actor class
         """
-        super().__init__()
+        super().__init__(parent)
         self._delta_pos = delta_pos
-        self._actor = actor
+        self._id = idx
+        self._move = move
 
     def redo(self):
-        self._actor.AddPosition(self._delta_pos)
+        self._move(self._id, self._delta_pos)
 
     def undo(self):
-        self._actor.AddPosition(-self._delta_pos)
+        self._move(self._id, -self._delta_pos)

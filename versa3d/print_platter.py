@@ -6,7 +6,7 @@ from vtk.util import keys
 from PyQt5.QtCore import QUuid
 
 class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self, poly_src):
+    def __init__(self, poly_src : vtk.vtkAbstractPolyDataReader):
         VTKPythonAlgorithmBase.__init__(self,
             nInputPorts=0,
             nOutputPorts=1, outputType='vtkPolyData')

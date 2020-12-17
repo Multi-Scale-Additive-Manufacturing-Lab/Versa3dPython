@@ -52,11 +52,20 @@ class Versa3dController(QObject):
     def add_part(self, idx, obj):
         self.print_objects[idx] = obj
         self.platter.AddInputData(obj.GetOutputDataObject(0))
+        self.renderer.AddActor(obj.actor)
+        self.renderer.GetRenderWindow().Render()
     
     def remove_part(self, idx):
         obj = self.print_objects.pop(idx)
         self.platter.RemoveInputData(obj.GetOutputDataObject(0))
+        self.renderer.RemoveActor(obj.actor)
+        self.renderer.GetRenderWindow().Render()
         return obj
+    
+    def move_part(self, idx, position):
+        actor = self.print_objects[idx].actor
+        actor.AddPosition(position)
+        self.renderer.GetRenderWindow().Render()
     
     def export_gcode(self, file_path):
         printer_setting = self.settings.get_printer(self._printer_idx)
@@ -80,16 +89,15 @@ class Versa3dController(QObject):
 
     def import_object(self, filename):
         if(filename[0] != ''):
-            com = vscom.ImportCommand(filename[0], self.renderer, self)
+            com = vscom.ImportCommand(filename[0], self.add_part, self.remove_part)
             self.undo_stack.push(com)
 
     def translate(self, delta_pos):
         parts = self.print_objects
-        for part in parts.values():
+        for idx, part in parts.items():
             if part.picked:
-                com = vscom.TranslationCommand(delta_pos, part.actor)
+                com = vscom.TranslationCommand(delta_pos, idx, self.move_part)
                 self.undo_stack.push(com)
-                self.renderer.GetRenderWindow().Render()
     
     @pyqtSlot()
     def slice_object(self):
