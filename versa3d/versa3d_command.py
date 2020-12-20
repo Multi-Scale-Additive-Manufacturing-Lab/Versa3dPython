@@ -24,6 +24,12 @@ class ImportCommand(QUndoCommand):
         reader = vtk.vtkSTLReader()
         reader.SetFileName(path)
         reader.Update()
+
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(reader.GetOutputPort())
+        self.actor = vtk.vtkActor()
+        self.actor.SetMapper(self._mapper)
+
         self._obj = PrintObject(reader)
         self._add = add
         self._remove = remove

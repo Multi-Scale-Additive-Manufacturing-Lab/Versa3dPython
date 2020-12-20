@@ -5,11 +5,12 @@ from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtk.util import keys
 from PyQt5.QtCore import QUuid
 
+
 class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self, poly_src : vtk.vtkAbstractPolyDataReader):
+    def __init__(self):
         VTKPythonAlgorithmBase.__init__(self,
-            nInputPorts=0,
-            nOutputPorts=1, outputType='vtkPolyData')
+                                        nInputPorts=1, inputType = 'vtkPolyData',
+                                        nOutputPorts=1, outputType='vtkPolyData')
         self._poly_src = poly_src
         self._mapper = vtk.vtkPolyDataMapper()
         self._mapper.SetInputConnection(self._poly_src.GetOutputPort())
@@ -23,13 +24,13 @@ class PrintObject(VTKPythonAlgorithmBase):
 
         self._saturation = None
         self._infill = None
-    
+
     @property
     def saturation(self):
         return self._saturation
-    
+
     @saturation.setter
-    def saturation(self, val):
+    def saturation(self, val: float):
         if val != self._saturation:
             self._saturation = val
             self.Modified()
@@ -37,7 +38,7 @@ class PrintObject(VTKPythonAlgorithmBase):
     @property
     def infill(self):
         return self._infill
-    
+
     @infill.setter
     def infill(self, val):
         if val != self.infill:
@@ -47,12 +48,12 @@ class PrintObject(VTKPythonAlgorithmBase):
     @staticmethod
     def saturation_key():
         return keys.MakeKey(keys.DoubleKey, "saturation", "PrintObject")
-    
+
     @staticmethod
     def infill_key():
         return keys.MakeKey(keys.StringKey, "infill", "PrintObject")
 
-    def pick(self, caller, ev):
+    def pick(self, caller: vtk.vtkRenderWindowInteractor, ev: str):
         """set pick status
 
         Args:
@@ -78,20 +79,20 @@ class PrintObject(VTKPythonAlgorithmBase):
             self.actor.ApplyProperties()
 
         self.picked = False
-    
-    def RequestInformation(self, request, inInfo, outInfo):
+
+    def RequestInformation(self, request, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
         outInfo.GetInformationObject(0).Set(
             self.saturation_key(),
             self._saturation)
-        
+
         outInfo.GetInformationObject(0).Set(
             self.infill_key(),
             self._infill
         )
-        
+
         return 1
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, request, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
         output = vtk.vtkPolyData.GetData(outInfo)
 
         transform = vtk.vtkTransform()
