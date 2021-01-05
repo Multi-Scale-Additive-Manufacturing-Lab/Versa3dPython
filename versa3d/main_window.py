@@ -68,22 +68,22 @@ class MainWindow(QtWidgets.QMainWindow):
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Save Gcode', "", "zip (*.zip)")
         if len(filename) != 0 or not filename is None:
-            self.controller.export_gcode(filename)
+            self.controller.export_gcode(filename[0])
 
     @pyqtSlot()
     def import_object(self):
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
         if len(filename) != 0 or not filename is None:
-            self.controller.import_object(filename)
+            self.controller.import_object(filename[0], filename[1])
 
     def move_object_y(self):
         y = self.y_delta.value()
-        self.controller.translate(np.array([0, y, 0]))
+        self.controller.translate(np.array([0, y, 0], dtype=float))
 
     def move_object_x(self):
         x = self.x_delta.value()
-        self.controller.translate(np.array([x, 0, 0]))
+        self.controller.translate(np.array([x, 0, 0], dtype=float))
     
     def show_printer_window(self):
         self.show_settings_window(self.printer_cmb_box, 'printer')

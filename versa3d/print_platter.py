@@ -1,59 +1,35 @@
 import vtk
 import numpy as np
-from vtk.numpy_interface import dataset_adapter as dsa
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtk.util import keys
 from PyQt5.QtCore import QUuid
 
 
 class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self):
-        VTKPythonAlgorithmBase.__init__(self,
-                                        nInputPorts=1, inputType = 'vtkPolyData',
-                                        nOutputPorts=1, outputType='vtkPolyData')
-        self._poly_src = poly_src
-        self._mapper = vtk.vtkPolyDataMapper()
-        self._mapper.SetInputConnection(self._poly_src.GetOutputPort())
-        self.actor = vtk.vtkActor()
-        self.actor.SetMapper(self._mapper)
+    def __init__(self) -> None:
+        VTKPythonAlgorithmBase.__init__(
+            self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
+
+        self._actor = vtk.vtkActor()
 
         self.picked = False
         self._backup_prop = None
         self.id = QUuid.createUuid().toString()
-        self.actor.AddObserver('PickEvent', self.pick)
-
-        self._saturation = None
-        self._infill = None
+        self._actor.AddObserver('PickEvent', self.pick)
+        self.initialised = False
 
     @property
-    def saturation(self):
-        return self._saturation
+    def actor(self) -> vtk.vtkActor:
+        return self._actor
 
-    @saturation.setter
-    def saturation(self, val: float):
-        if val != self._saturation:
-            self._saturation = val
-            self.Modified()
+    def render(self, ren: vtk.vtkRenderer) -> None:
+        ren.AddActor(self._actor)
+        ren.GetRenderWindow().Render()
 
-    @property
-    def infill(self):
-        return self._infill
+    def unrender(self, ren: vtk.vtkRenderer) -> None:
+        ren.RemoveActor(self._actor)
+        ren.GetRenderWindow().Render()
 
-    @infill.setter
-    def infill(self, val):
-        if val != self.infill:
-            self._infill = val
-            self.Modified()
-
-    @staticmethod
-    def saturation_key():
-        return keys.MakeKey(keys.DoubleKey, "saturation", "PrintObject")
-
-    @staticmethod
-    def infill_key():
-        return keys.MakeKey(keys.StringKey, "infill", "PrintObject")
-
-    def pick(self, caller: vtk.vtkRenderWindowInteractor, ev: str):
+    def pick(self, caller: vtk.vtkRenderWindowInteractor, ev: str) -> None:
         """set pick status
 
         Args:
@@ -69,38 +45,42 @@ class PrintObject(VTKPythonAlgorithmBase):
             actor_property.SetColor(colors.GetColor3d('Red'))
             actor_property.SetDiffuse(1.0)
             actor_property.SetSpecular(0.0)
-            self.actor.ApplyProperties()
+            self._actor.ApplyProperties()
 
             self.picked = True
 
-    def unpick(self):
+    def unpick(self) -> None:
         if(self.picked and (self._backup_prop is not None)):
-            self.actor.GetProperty().DeepCopy(self._backup_prop)
-            self.actor.ApplyProperties()
+            self._actor.GetProperty().DeepCopy(self._backup_prop)
+            self._actor.ApplyProperties()
 
         self.picked = False
 
-    def RequestInformation(self, request, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
-        outInfo.GetInformationObject(0).Set(
-            self.saturation_key(),
-            self._saturation)
+    def move(self, x: float, y: float, z: float) -> None:
+        self._actor.AddPosition(x, y, z)
+        self.Modified()
 
-        outInfo.GetInformationObject(0).Set(
-            self.infill_key(),
-            self._infill
-        )
+    def rotate(self, w: float, x: float, y: float, z: float) -> None:
+        self._actor.RotateWXYZ(w, x, y, z)
+        self.Modified()
 
-        return 1
+    def RequestData(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> bool:
+        input_poly = vtk.vtkPolyData.GetData(inInfo[0])
 
-    def RequestData(self, request, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation):
+        if not self.initialised:
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.AddInputDataObject(input_poly)
+            self._actor.SetMapper(mapper)
+            self.initialised = True
+
         output = vtk.vtkPolyData.GetData(outInfo)
 
         transform = vtk.vtkTransform()
-        transform.SetMatrix(self.actor.GetMatrix())
+        transform.SetMatrix(self._actor.GetMatrix())
 
         coord_converter = vtk.vtkTransformPolyDataFilter()
         coord_converter.SetTransform(transform)
-        coord_converter.SetInputConnection(self._poly_src.GetOutputPort())
+        coord_converter.AddInputData(input_poly)
         coord_converter.Update()
         output.ShallowCopy(coord_converter.GetOutput())
 
