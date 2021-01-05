@@ -2,6 +2,7 @@ import unittest
 import vtk
 from versa3d.print_platter import PrintObject
 
+
 class PlatterTest(unittest.TestCase):
 
     def setUp(self):
@@ -21,9 +22,8 @@ class PlatterTest(unittest.TestCase):
             source.SetPhiResolution(11)
             source.SetThetaResolution(21)
 
-            obj = PrintObject(source)
-            obj.saturation = 0.8
-            obj.infill = 'black'
+            obj = PrintObject()
+            obj.SetInputConnection(source.GetOutputPort())
             obj.Update()
 
             self.list_sphere.append(obj)
@@ -47,7 +47,7 @@ class PlatterTest(unittest.TestCase):
         platter = vtk.vtkAppendPolyData()
         for obj in self.list_sphere:
             platter.AddInputData(obj.GetOutputDataObject(0))
-            
+
         poly_data = platter.GetOutput()
 
         platter.Update()
