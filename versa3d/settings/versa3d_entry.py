@@ -2,9 +2,11 @@ from PyQt5.QtCore import QObject, QSettings, pyqtSlot
 from PyQt5 import QtWidgets
 import numpy as np
 
+from typing import Any
+
 
 class SingleEntry(QObject):
-    def __init__(self, name, ui_dict = None, default_val = None, parent = None):
+    def __init__(self, name: str, ui_dict=None, default_val: Any = None, parent: QObject = None):
         QObject.__init__(self, parent)
         self.parent = parent
         self._value = default_val
@@ -14,34 +16,36 @@ class SingleEntry(QObject):
             self.ui = {}
         else:
             self.ui = ui_dict
-    
+
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         if self._value != value:
             self._temp_val = value
             self._value = value
-    
+
     def _update_temp(self, val):
         raise NotImplementedError
 
     @pyqtSlot()
     def commit_value(self):
         self._value = self._temp_val
-    
+
     def write_settings(self, q_path):
         settings = QSettings()
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value)
+        settings.setValue("%s/%s/%s" %
+                          (q_path, self.name, 'value'), self.value)
         self.write_ui_settings(q_path)
 
     def write_ui_settings(self, q_path):
         settings = QSettings()
         for ui_label, ui_val in self.ui.items():
-            settings.setValue("%s/%s/%s/%s" % (q_path, self.name, 'ui', ui_label), ui_val)
-    
+            settings.setValue("%s/%s/%s/%s" %
+                              (q_path, self.name, 'ui', ui_label), ui_val)
+
     def load_ui_settings(self, q_path):
         settings = QSettings()
         settings.beginGroup("%s/%s/%s" % (q_path, self.name, 'ui'))
@@ -66,25 +70,27 @@ class SingleEntry(QObject):
         widget.setLayout(layout)
         return widget
 
+
 class IntEntry(SingleEntry):
     @pyqtSlot(int)
     def _update_temp(self, val):
         self._temp_val = val
-    
+
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'int')
-    
+
     def load_entry(self, q_path):
         settings = QSettings()
-        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
+        self._value = settings.value(
+            "%s/%s/%s" % (q_path, self.name, 'value'), type=int)
         self._temp_val = self._value
         self.load_ui_settings(q_path)
-    
+
     def copy(self):
         return IntEntry(self.name, self.ui.copy(), self._value, self.parent)
-    
+
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QSpinBox()
@@ -96,56 +102,60 @@ class IntEntry(SingleEntry):
         widget.layout().insertWidget(1, input_widget)
         return widget
 
+
 class FloatEntry(SingleEntry):
     @pyqtSlot(float)
     def _update_temp(self, val):
         self._temp_val = val
-    
+
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'float')
-    
+
     def load_entry(self, q_path):
         settings = QSettings()
-        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = float)
+        self._value = settings.value(
+            "%s/%s/%s" % (q_path, self.name, 'value'), type=float)
         self._temp_val = self._value
         self.load_ui_settings(q_path)
-    
+
     def copy(self):
         return FloatEntry(self.name, self.ui.copy(), self._value, self.parent)
-    
+
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QDoubleSpinBox()
         if 'range' in self.ui.keys():
             input_widget.setMinimum(float(self.ui['range'][0]))
             input_widget.setMaximum(float(self.ui['range'][1]))
-        
+
         input_widget.setValue(self.value)
         input_widget.valueChanged.connect(self._update_temp)
         widget.layout().insertWidget(1, input_widget)
         return widget
 
+
 class EnumEntry(SingleEntry):
     @pyqtSlot(int)
     def _update_temp(self, val):
         self._temp_val = val
-    
+
     def write_settings(self, q_path):
         SingleEntry.write_settings(self, q_path)
         settings = QSettings()
         settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'enum')
-    
+
     def load_entry(self, q_path):
         settings = QSettings()
-        self._value = settings.value("%s/%s/%s" % (q_path, self.name, 'value'), type = int)
+        self._value = settings.value(
+            "%s/%s/%s" % (q_path, self.name, 'value'), type=int)
         self._temp_val = self._value
         self.load_ui_settings(q_path)
-    
+
     def copy(self):
         return EnumEntry(self.name, self.ui.copy(), self._value, self.parent)
-    
+
     def create_ui_entry(self):
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QComboBox()
@@ -155,8 +165,9 @@ class EnumEntry(SingleEntry):
         widget.layout().insertWidget(1, input_widget)
         return widget
 
+
 class ArrayEntry(SingleEntry):
-    def __init__(self, name, ui_dict = None, parent = None):
+    def __init__(self, name, ui_dict=None, parent=None):
         QObject.__init__(self, parent)
         self.parent = parent
         self.name = name
@@ -168,18 +179,19 @@ class ArrayEntry(SingleEntry):
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         if np.all(self._value != value):
             self._value = value
             self._temp_val = value
-    
+
+
 class ArrayIntEntry(ArrayEntry):
-    def __init__(self, name, ui = None, default_val = None, parent = None):
+    def __init__(self, name, ui=None, default_val=None, parent=None):
         ArrayEntry.__init__(self, name, ui, parent)
         if isinstance(default_val, list):
-            self._value = np.array(default_val, dtype = int)
+            self._value = np.array(default_val, dtype=int)
         else:
             self._value = default_val
         self._temp_val = self._value
@@ -192,20 +204,22 @@ class ArrayIntEntry(ArrayEntry):
 
     def write_settings(self, q_path):
         settings = QSettings()
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value.tolist())
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'array<int>')
+        settings.setValue("%s/%s/%s" %
+                          (q_path, self.name, 'value'), self.value.tolist())
+        settings.setValue("%s/%s/%s" %
+                          (q_path, self.name, 'type'), 'array<int>')
         self.write_ui_settings(q_path)
-    
+
     def load_entry(self, q_path):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
-        self._value = np.array(val, dtype = int)
+        self._value = np.array(val, dtype=int)
         self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
-    
+
     def copy(self):
-        return ArrayIntEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
-    
+        return ArrayIntEntry(self.name, self.ui.copy(), self._value.copy(), self.parent)
+
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
@@ -220,11 +234,12 @@ class ArrayIntEntry(ArrayEntry):
         widget.layout().insertLayout(1, row_layout)
         return widget
 
+
 class ArrayFloatEntry(ArrayEntry):
-    def __init__(self, name, ui = None, default_val = None, parent = None):
+    def __init__(self, name, ui=None, default_val=None, parent=None):
         ArrayEntry.__init__(self, name, ui, parent)
         if isinstance(default_val, list):
-            self._value = np.array(default_val, dtype = int)
+            self._value = np.array(default_val, dtype=int)
         else:
             self._value = default_val
         self._temp_val = self._value
@@ -234,23 +249,25 @@ class ArrayFloatEntry(ArrayEntry):
         def f(val):
             self._temp_val[idx] = val
         return f
-    
+
     def write_settings(self, q_path):
         settings = QSettings()
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'value'), self.value.tolist())
-        settings.setValue("%s/%s/%s" % (q_path, self.name, 'type'), 'array<float>')
+        settings.setValue("%s/%s/%s" %
+                          (q_path, self.name, 'value'), self.value.tolist())
+        settings.setValue("%s/%s/%s" %
+                          (q_path, self.name, 'type'), 'array<float>')
         self.write_ui_settings(q_path)
-    
+
     def load_entry(self, q_path):
         settings = QSettings()
         val = settings.value("%s/%s/%s" % (q_path, self.name, 'value'))
-        self._value = np.array(val, dtype = float)
+        self._value = np.array(val, dtype=float)
         self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
-    
+
     def copy(self):
-        return ArrayFloatEntry( self.name, self.ui.copy(), self._value.copy(), self.parent)
-    
+        return ArrayFloatEntry(self.name, self.ui.copy(), self._value.copy(), self.parent)
+
     def create_ui_entry(self):
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
@@ -265,10 +282,11 @@ class ArrayFloatEntry(ArrayEntry):
         widget.layout().insertLayout(1, row_layout)
         return widget
 
+
 MAP_TYPE = {
     'int': IntEntry,
     'float': FloatEntry,
-    'enum' : EnumEntry,
+    'enum': EnumEntry,
     'array<int>': ArrayIntEntry,
     'array<float>': ArrayFloatEntry
 }
