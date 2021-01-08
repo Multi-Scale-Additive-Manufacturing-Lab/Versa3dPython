@@ -1,14 +1,12 @@
+from typing import Any, List, Callable, Dict
+
 from PyQt5.QtCore import QObject, QSettings, pyqtSlot
 from PyQt5 import QtWidgets
 import numpy as np
 
-from typing import Any, AnyStr, List, Callable, Dict
-
-
 class SingleEntry(QObject):
     def __init__(self, name: str, ui_dict: Dict[str, str] = None, default_val: Any = None, parent: QObject = None) -> None:
         QObject.__init__(self, parent)
-        self.parent = parent
         self._value = default_val
         self._temp_val = self._value
         self.name = name
@@ -16,6 +14,10 @@ class SingleEntry(QObject):
             self.ui = {}
         else:
             self.ui = ui_dict
+    
+    def copy(self):
+        cls = self.__class__
+        return cls(self.name, self.ui, self._value, self.parent())
 
     @property
     def value(self) -> Any:
@@ -55,9 +57,6 @@ class SingleEntry(QObject):
     def load_entry(self):
         raise NotImplementedError
 
-    def copy(self):
-        raise NotImplementedError
-
     def create_ui_entry(self) -> QtWidgets.QWidget:
         layout = QtWidgets.QHBoxLayout()
         label = QtWidgets.QLabel(self.ui['label'])
@@ -88,9 +87,6 @@ class IntEntry(SingleEntry):
         self._temp_val = self._value
         self.load_ui_settings(q_path)
 
-    def copy(self):
-        return IntEntry(self.name, self.ui.copy(), self._value, self.parent)
-
     def create_ui_entry(self) -> QtWidgets.QWidget:
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QSpinBox()
@@ -119,9 +115,6 @@ class FloatEntry(SingleEntry):
             "%s/%s/%s" % (q_path, self.name, 'value'), type=float)
         self._temp_val = self._value
         self.load_ui_settings(q_path)
-
-    def copy(self):
-        return FloatEntry(self.name, self.ui.copy(), self._value, self.parent)
 
     def create_ui_entry(self) -> QtWidgets.QWidget:
         widget = SingleEntry.create_ui_entry(self)
@@ -153,9 +146,6 @@ class EnumEntry(SingleEntry):
         self._temp_val = self._value
         self.load_ui_settings(q_path)
 
-    def copy(self):
-        return EnumEntry(self.name, self.ui.copy(), self._value, self.parent)
-
     def create_ui_entry(self) -> QtWidgets.QWidget:
         widget = SingleEntry.create_ui_entry(self)
         input_widget = QtWidgets.QComboBox()
@@ -169,7 +159,6 @@ class EnumEntry(SingleEntry):
 class ArrayEntry(SingleEntry):
     def __init__(self, name: str, ui_dict: Dict[str, str] = None, parent: QObject = None):
         QObject.__init__(self, parent)
-        self.parent = parent
         self.name = name
         if ui_dict is None:
             self.ui = {}
@@ -217,9 +206,6 @@ class ArrayIntEntry(ArrayEntry):
         self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
 
-    def copy(self):
-        return ArrayIntEntry(self.name, self.ui.copy(), self._value.copy(), self.parent)
-
     def create_ui_entry(self) -> QtWidgets.QWidget:
         widget = ArrayEntry.create_ui_entry(self)
         row_layout = QtWidgets.QHBoxLayout()
@@ -264,9 +250,6 @@ class ArrayFloatEntry(ArrayEntry):
         self._value = np.array(val, dtype=float)
         self._temp_val = self._value.copy()
         self.load_ui_settings(q_path)
-
-    def copy(self):
-        return ArrayFloatEntry(self.name, self.ui.copy(), self._value.copy(), self.parent)
 
     def create_ui_entry(self) -> QtWidgets.QWidget:
         widget = ArrayEntry.create_ui_entry(self)
