@@ -100,11 +100,11 @@ class MainWindow(QtWidgets.QMainWindow):
     
     @pyqtSlot(str, str)
     def populate_printer_drop_down(self, setting_type, value):
-        if(setting_type == str(SettingTypeKey.printer)):
+        if(setting_type == SettingTypeKey.printer.value):
             self.printer_cmb_box.addItem(value)
-        elif(setting_type == str(SettingTypeKey.printhead)):
+        elif(setting_type == SettingTypeKey.printhead.value):
             self.printhead_cmb_box.addItem(value)
-        elif(setting_type == str(SettingTypeKey.print_param)):
+        elif(setting_type == SettingTypeKey.print_param.value):
             self.print_settings_cmb_box.addItem(value)
 
     def setup_scene(self, size):
