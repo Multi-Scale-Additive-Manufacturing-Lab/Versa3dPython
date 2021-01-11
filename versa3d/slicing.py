@@ -1,74 +1,69 @@
 import vtk
 import numpy as np
-import math
-from vtk.util.numpy_support import vtk_to_numpy
-from collections import namedtuple
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 from abc import ABC, abstractmethod
 
-class GenericSlicer(ABC):        
+from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter
+
+
+class GenericSlicer(ABC):
     @abstractmethod
-    def update_printer(self, setting):
+    def update_printer(self, setting: PrintSetting):
         raise NotImplementedError
 
     @abstractmethod
-    def update_printhead(self, setting):
-        raise NotImplementedError
-    
-    @abstractmethod
-    def update_param(self, setting):
+    def update_printhead(self, setting: PrintSetting):
         raise NotImplementedError
 
     @abstractmethod
-    def slice_object(self, object):
+    def update_param(self, setting: PrintSetting):
+        raise NotImplementedError
+
+    @abstractmethod
+    def slice_object(self, input_src: vtk.vtkPolyData):
         pass
 
+
 class FullBlackSlicer(GenericSlicer):
-    def __init__(self):
+    def __init__(self) -> None:
         self._resolution = np.array([50, 50], dtype=int)
         self._layer_thickness = 0.1
-    
-    def update_printhead(self, setting):
-        if not 'dpi' in setting:
-            raise ValueError
 
-        if np.any(setting['dpi'].value != self._resolution):
-            self._resolution = setting['dpi']
+    def update_printhead(self, setting: PixelPrinthead) -> bool:
+        if np.any(setting.dpi.value != self._resolution):
+            self._resolution = setting.dpi.value
             return True
         return False
-    
-    def update_param(self, setting):
-        if not 'layer_thickness' in setting:
-            raise ValueError
 
-        if setting['layer_thickness'].value != self._layer_thickness:
-            self._resolution = setting['layer_thickness'].value
+    def update_param(self, setting: GenericPrintParameter) -> bool:
+        if setting.layer_thickness.value != self._layer_thickness:
+            self._resolution = setting.layer_thickness.value
             return True
         return False
-    
-    def update_printer(self, setting):
+
+    def update_printer(self, setting: PrintSetting) -> bool:
         return False
-    
+
     @staticmethod
-    def compute_spacing(layer_thickness, resolution):
+    def compute_spacing(layer_thickness: float, resolution: float) -> np.array:
         spacing = np.zeros(3, dtype=float)
         spacing[0:2] = 25.4/resolution
         spacing[2] = np.min(layer_thickness)
         return spacing
-    
+
     @staticmethod
-    def compute_dim(bounds, spacing):
-        return np.ceil(( bounds[1::2] - bounds[0::2] ) / spacing).astype(int)
-    
-    def update_info(self, input_src, outInfo):
+    def compute_dim(bounds: np.array, spacing: np.array) -> np.array:
+        return np.ceil((bounds[1::2] - bounds[0::2]) / spacing).astype(int)
+
+    def update_info(self, input_src: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> None:
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         bounds = np.array(input_src.GetBounds())
         img_dim = self.compute_dim(bounds, spacing)
         outInfo.Set(vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
-            (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
-    
-    def slice_object(self, input_src):
+                    (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
+
+    def slice_object(self, input_src: vtk.vtkPolyData) -> vtk.vtkImageData:
         bounds = np.array(input_src.GetBounds())
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         img_dim = self.compute_dim(bounds, spacing)
@@ -96,43 +91,46 @@ class FullBlackSlicer(GenericSlicer):
         stencil.Update()
         return stencil.GetOutput()
 
+
 class VoxelSlicer(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(self,
-            nInputPorts=1, inputType = 'vtkPolyData', 
-            nOutputPorts=1, outputType='vtkImageData')
-        
+                                        nInputPorts=1, inputType='vtkPolyData',
+                                        nOutputPorts=1, outputType='vtkImageData')
+
         self.slicer = None
-    
-    def set_settings(self, printer, printhead, print_param):
+
+    def set_settings(self, printer: PrintSetting,
+                     printhead: PixelPrinthead,
+                     print_param: GenericPrintParameter) -> None:
         self.set_print_parameter(print_param)
         self.set_printer(printer)
         self.set_printhead(printhead)
-    
-    def set_printer(self, setting):
+
+    def set_printer(self, setting: PrintSetting) -> None:
         if self.slicer.update_printer(setting):
             self.Modified()
-    
-    def set_printhead(self, setting):
+
+    def set_printhead(self, setting: PixelPrinthead) -> None:
         if self.slicer.update_printhead(setting):
             self.Modified()
-    
-    def set_print_parameter(self, setting):
-        if setting['fill_pattern'].value == 0:
+
+    def set_print_parameter(self, setting: GenericPrintParameter) -> None:
+        if setting.fill_pattern.value == 0:
             self.slicer = FullBlackSlicer()
         else:
             raise ValueError
-        
+
         if self.slicer.update_param(setting):
             self.Modified()
-    
-    def RequestInformation(self, request, inInfo, outInfo):
+
+    def RequestInformation(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> int:
         input_src = vtk.vtkPolyData.GetData(inInfo[0])
         info = outInfo.GetInformationObject(0)
         self.slicer.update_info(input_src, info)
         return 1
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> int:
         input_src = vtk.vtkPolyData.GetData(inInfo[0])
         output = vtk.vtkImageData.GetData(outInfo)
         output.ShallowCopy(self.slicer.slice_object(input_src))

@@ -1,12 +1,11 @@
 import unittest
+import os
 import numpy as np
 import vtk
-import os
+
+from unittest import mock
 
 from versa3d.slicing import VoxelSlicer
-from vtk.numpy_interface import dataset_adapter as dsa
-import matplotlib.pyplot as plt
-from test.util import render_image
 
 
 class SlicingTest(unittest.TestCase):
@@ -38,11 +37,28 @@ class SlicingTest(unittest.TestCase):
         self.out_dir = './test/test_output/slicing'
 
         os.makedirs(self.out_dir, exist_ok=True)
+        lt = mock.Mock()
+        lt.value = 0.1
+
+        res = mock.Mock()
+        res.value = np.array([50, 50], dtype=int)
+
+        ft = mock.Mock()
+        ft.value = 0
+
+        self.printer_setting = mock.Mock()
+        self.printer_setting.layer_thickness = lt
+
+        self.printhead_setting = mock.Mock()
+        self.printhead_setting.dpi = res
+
+        self.print_param = mock.Mock()
+        self.print_param.fill_pattern = ft
 
     def test_slice_boat(self):
         slicer = VoxelSlicer()
-        slicer.resolution = self.resolution
-        slicer.layer_thickness = self.layer_thickness
+        slicer.set_settings(self.printer_setting,
+                            self.printhead_setting, self.print_param)
         slicer.SetInputDataObject(self.part)
         slicer.Update()
 
