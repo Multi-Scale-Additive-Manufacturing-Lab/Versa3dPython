@@ -95,7 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_settings_window(self.printhead_cmb_box, 'printhead')
     
     def show_settings_window(self, slave_cmb, type_string):
-        win = SettingsWindow(slave_cmb, self.controller, type_string, self)
+        win = SettingsWindow(slave_cmb, self.controller.settings, type_string, self)
         win.exec()
     
     @pyqtSlot(str, str)
