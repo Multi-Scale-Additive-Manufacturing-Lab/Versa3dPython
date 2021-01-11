@@ -1,5 +1,5 @@
 import unittest
-from collections import namedtuple
+from unittest import mock
 import vtk
 import numpy as np
 
@@ -17,20 +17,22 @@ class GcodeTest(unittest.TestCase):
 
         self._output_path = './test/test_output/gcode_output'
 
-        self.PrinterObj = namedtuple(
-            'printer', ['build_bed_size', 'coord_offset'])
-        self.ParamObj = namedtuple(
-            'parameter_preset', ['roller_rpm', 'print_speed'])
+        self.printer_obj = mock.Mock()
+        self.printer_obj.build_bed_size.value = np.array(
+            [100, 100], dtype=float)
+        self.printer_obj.coord_offset.value = np.array([10, 10], dtype=float)
+        self.printer_obj.gcode_flavour.value = 0
+
+        self.print_param = mock.Mock()
+        self.print_param.roller_rpm.value = 1000
+        self.print_param.print_speed.value = 10.0
+        self.print_param.tool_path_pattern.value = 0
+
+        self.printhead = mock.Mock()
 
     def test_generate_gcode(self):
         slicer = ToolPathPlannerFilter()
-
-        slicer.gcode_flavour = 'BigMachine'
-        slicer.tool_path_pattern = 'StandardBinderJetting'
-
-        slicer.printer = self.PrinterObj(
-            np.array([100, 100], dtype=float), np.array([30, 30], dtype=int))
-        slicer.param = self.ParamObj(100, 20)
+        slicer.set_settings(self.printer_obj, self.printhead, self.print_param)
 
         slicer.SetInputDataObject(self.part)
         slicer.Update()

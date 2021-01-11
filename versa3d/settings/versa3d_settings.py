@@ -5,7 +5,7 @@ from collections import OrderedDict
 from PyQt5.QtCore import QSettings, QObject, pyqtSignal
 from enum import Enum
 
-from typing import Any, Dict, List, TypeVar
+from typing import Dict, List
 import attr
 import copy
 
