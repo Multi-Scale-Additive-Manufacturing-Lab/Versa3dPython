@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt5 import QtGui
+from PyQt5.QtCore import pyqtSlot
 import vtk
 from vtk.util import numpy_support
 import numpy as np
