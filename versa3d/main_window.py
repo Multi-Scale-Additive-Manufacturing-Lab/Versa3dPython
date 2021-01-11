@@ -11,6 +11,8 @@ from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.settings import SettingTypeKey
 
+from typing import Tuple
+
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main Window
@@ -19,7 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets (QMainWindow): main window
     """
 
-    def __init__(self, ui_file_path):
+    def __init__(self, ui_file_path: str) -> None:
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
@@ -45,61 +47,69 @@ class MainWindow(QtWidgets.QMainWindow):
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
 
-        self.push_button_mod_print_settings.clicked.connect(self.show_param_window)
+        self.push_button_mod_print_settings.clicked.connect(
+            self.show_param_window)
         self.push_button_mod_printer.clicked.connect(self.show_printer_window)
-        self.push_button_mod_printhead.clicked.connect(self.show_printhead_window)
+        self.push_button_mod_printhead.clicked.connect(
+            self.show_printhead_window)
 
         self.action_import_stl.triggered.connect(self.import_object)
 
         self.action_undo.triggered.connect(self.controller.undo_stack.undo)
         self.action_redo.triggered.connect(self.controller.undo_stack.redo)
 
-        self.printer_cmb_box.currentIndexChanged.connect(self.controller.change_printer)
-        self.printhead_cmb_box.currentIndexChanged.connect(self.controller.change_printhead)
-        self.print_settings_cmb_box.currentIndexChanged.connect(self.controller.change_preset)
+        self.printer_cmb_box.currentIndexChanged.connect(
+            self.controller.change_printer)
+        self.printhead_cmb_box.currentIndexChanged.connect(
+            self.controller.change_printhead)
+        self.print_settings_cmb_box.currentIndexChanged.connect(
+            self.controller.change_preset)
 
-        self.controller.settings.add_setting_signal.connect(self.populate_printer_drop_down)
+        self.controller.settings.add_setting_signal.connect(
+            self.populate_printer_drop_down)
 
         self.ExportGCodeButton.clicked.connect(self.export_gcode)
         self.controller.load_settings()
-    
+
     @pyqtSlot()
-    def export_gcode(self):
+    def export_gcode(self) -> None:
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Save Gcode', "", "zip (*.zip)")
         if len(filename) != 0 or not filename is None:
             self.controller.export_gcode(filename[0])
 
     @pyqtSlot()
-    def import_object(self):
+    def import_object(self) -> None:
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
         if len(filename) != 0 or not filename is None:
             self.controller.import_object(filename[0], filename[1])
 
-    def move_object_y(self):
+    def move_object_y(self) -> None:
         y = self.y_delta.value()
         self.controller.translate(np.array([0, y, 0], dtype=float))
 
-    def move_object_x(self):
+    def move_object_x(self) -> None:
         x = self.x_delta.value()
         self.controller.translate(np.array([x, 0, 0], dtype=float))
-    
-    def show_printer_window(self):
+
+    def show_printer_window(self) -> None:
         self.show_settings_window(self.printer_cmb_box, 'printer')
-    
-    def show_param_window(self):
-        self.show_settings_window(self.print_settings_cmb_box, 'parameter_preset')
-    
-    def show_printhead_window(self):
+
+    def show_param_window(self) -> None:
+        self.show_settings_window(
+            self.print_settings_cmb_box, 'parameter_preset')
+
+    def show_printhead_window(self) -> None:
         self.show_settings_window(self.printhead_cmb_box, 'printhead')
-    
-    def show_settings_window(self, slave_cmb, type_string):
-        win = SettingsWindow(slave_cmb, self.controller.settings, type_string, self)
+
+    def show_settings_window(self, slave_cmb: QtWidgets.QComboBox, type_string: str) -> None:
+        win = SettingsWindow(
+            slave_cmb, self.controller.settings, type_string, self)
         win.exec()
-    
+
     @pyqtSlot(str, str)
-    def populate_printer_drop_down(self, setting_type, value):
+    def populate_printer_drop_down(self, setting_type: str, value: str) -> None:
         if(setting_type == SettingTypeKey.printer.value):
             self.printer_cmb_box.addItem(value)
         elif(setting_type == SettingTypeKey.printhead.value):
@@ -107,7 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif(setting_type == SettingTypeKey.print_param.value):
             self.print_settings_cmb_box.addItem(value)
 
-    def setup_scene(self, size):
+    def setup_scene(self, size: Tuple[float, float, float]) -> None:
         """set grid scene
 
         Args:
