@@ -10,8 +10,6 @@ from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.settings import SettingTypeKey
 
-from typing import Tuple
-
 
 class MainWindow(QtWidgets.QMainWindow):
     """Main Window
@@ -172,7 +170,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         camera = vtk.vtkCamera()
         camera.SetPosition(size)
-        camera.SetFocalPoint(0,0,0)
+        camera.SetFocalPoint(0, 0, 0)
         camera.Roll(-110)
         self.stl_renderer.SetActiveCamera(camera)
 
