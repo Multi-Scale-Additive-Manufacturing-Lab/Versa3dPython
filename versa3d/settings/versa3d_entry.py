@@ -54,7 +54,7 @@ class SingleEntry(QObject):
         for ui_label in settings.childKeys():
             self.ui[ui_label] = settings.value(ui_label)
 
-    def load_entry(self):
+    def load_entry(self, q_path: str):
         raise NotImplementedError
 
     def create_ui_entry(self) -> QtWidgets.QWidget:
