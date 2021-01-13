@@ -140,20 +140,20 @@ class MainWindow(QtWidgets.QMainWindow):
         Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
 
         # set up grid
-        grid = vtk.vtkRectilinearGrid()
-        grid.SetDimensions(number_grid, number_grid, number_grid)
-        grid.SetXCoordinates(X)
-        grid.SetYCoordinates(Y)
-        grid.SetZCoordinates(Z)
+        self._grid = vtk.vtkRectilinearGrid()
+        self._grid.SetDimensions(number_grid, number_grid, number_grid)
+        self._grid.SetXCoordinates(X)
+        self._grid.SetYCoordinates(Y)
+        self._grid.SetZCoordinates(Z)
 
-        geometry_filter = vtk.vtkRectilinearGridGeometryFilter()
-        geometry_filter.SetInputData(grid)
-        geometry_filter.SetExtent(
+        self._geometry_filter = vtk.vtkRectilinearGridGeometryFilter()
+        self._geometry_filter.SetInputData(self._grid)
+        self._geometry_filter.SetExtent(
             0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
-        geometry_filter.Update()
+        self._geometry_filter.Update()
 
         grid_mapper = vtk.vtkPolyDataMapper()
-        grid_mapper.SetInputConnection(geometry_filter.GetOutputPort())
+        grid_mapper.SetInputConnection(self._geometry_filter.GetOutputPort())
 
         grid_actor = vtk.vtkActor()
         grid_actor.SetMapper(grid_mapper)
@@ -166,3 +166,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_renderer.AddActor(axes_actor)
         self.stl_renderer.AddActor(grid_actor)
         self.stl_renderer.ResetCamera()
+    
+    def resize_scene(self, size: Tuple[float, float, float]) -> None:
+        number_grid = 50
+
+        X = numpy_support.numpy_to_vtk(np.linspace(0, size[0], number_grid))
+        Y = numpy_support.numpy_to_vtk(np.linspace(0, size[1], number_grid))
+        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
+
+        self._grid.SetDimensions(number_grid, number_grid, number_grid)
+        self._grid.SetXCoordinates(X)
+        self._grid.SetYCoordinates(Y)
+        self._grid.SetZCoordinates(Z)
+
+        self._geometry_filter.SetExtent(
+            0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
+        self._geometry_filter.Update()

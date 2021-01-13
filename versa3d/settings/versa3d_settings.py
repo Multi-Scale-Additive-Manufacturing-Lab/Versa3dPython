@@ -2,7 +2,7 @@
 import json
 from collections import OrderedDict
 
-from PyQt5.QtCore import QSettings, QObject, pyqtSignal
+from PyQt5.QtCore import QSettings, QObject, pyqtSignal, pyqtSlot
 from enum import Enum
 
 from typing import Dict, List
@@ -127,14 +127,19 @@ class Versa3dSettings(QObject):
     add_setting_signal = pyqtSignal(str, str)
     remove_setting_signal = pyqtSignal(str, str)
 
+    update_printhead_signal = pyqtSignal(int, str)
+    update_printer_signal = pyqtSignal(int, str)
+    update_print_param_signal = pyqtSignal(int, str)
+    
+
     def __init__(self) -> None:
         super().__init__()
 
         self.init_default()
 
-        self._printer_list = {}
-        self._printhead_list = {}
-        self._param_preset_list = {}
+        self._printer_list = OrderedDict()
+        self._printhead_list = OrderedDict()
+        self._param_preset_list = OrderedDict()
 
     def load_all(self) -> None:
         self._printer_list = self.load_from_qsetting(
@@ -155,6 +160,21 @@ class Versa3dSettings(QObject):
     @property
     def parameter_preset(self) -> Dict[str, PrintSetting]:
         return self._param_preset_list
+
+    @pyqtSlot(str, str)
+    def printer_update_cb(self, name : str, parent : str):
+        idx = list(self.printer.keys()).index(parent)
+        self.update_printer_signal.emit(idx, name)
+    
+    @pyqtSlot(str, str)
+    def printhead_update_cb(self, name : str, parent : str):
+        idx = list(self.printhead.keys()).index(parent)
+        self.update_printhead_signal.emit(idx, name)
+    
+    @pyqtSlot(str, str)
+    def print_param_update_cb(self, name : str, parent : str):
+        idx = list(self.parameter_preset.keys()).index(parent)
+        self.update_print_param_signal.emit(idx, name)
 
     def is_empty(self) -> bool:
         qsetting = QSettings()
@@ -195,7 +215,17 @@ class Versa3dSettings(QObject):
                 settings.beginGroup(param)
                 param_type = settings.value('type', type=str)
                 entry_obj = MAP_TYPE[param_type]
-                entry_inst = entry_obj(param)
+                entry_inst = entry_obj(param, parent_key = setting_name)
+                
+                if setting_class == SettingTypeKey.printer.value:
+                    entry_inst.update_val.connect(self.printer_update_cb)
+                elif setting_class == SettingTypeKey.printhead.value:
+                    entry_inst.update_val.connect(self.printhead_update_cb)
+                elif setting_class == SettingTypeKey.print_param.value:
+                    entry_inst.update_val.connect(self.print_param_update_cb)
+                else:
+                    raise ValueError('unknown setting class {%s}' % (setting_class))
+
                 entry_inst.load_entry(q_path)
                 setting_dict[param] = entry_inst
                 settings.endGroup()
