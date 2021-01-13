@@ -39,8 +39,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
 
-        self.setup_scene((50, 50, 100))
-
         self.stl_interactor.Initialize()
 
         self.push_button_x.clicked.connect(self.move_object_x)
@@ -69,6 +67,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.ExportGCodeButton.clicked.connect(self.export_gcode)
         self.controller.load_settings()
+
+        printer_setting = self.controller.settings.get_printer(0)
+        build_bed_size = printer_setting.build_bed_size.value
+        self.setup_scene(build_bed_size)
+
+        self.controller.update_scene.connect(self.resize_scene)
 
     @pyqtSlot()
     def export_gcode(self) -> None:
@@ -116,7 +120,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif(setting_type == SettingTypeKey.print_param.value):
             self.print_settings_cmb_box.addItem(value)
 
-    def setup_scene(self, size: Tuple[float, float, float]) -> None:
+    def setup_scene(self, size: np.array) -> None:
         """set grid scene
 
         Args:
@@ -127,11 +131,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_renderer.SetBackground(colors.GetColor3d("lightslategray"))
 
         # add coordinate axis
-        axes_actor = vtk.vtkAxesActor()
-        axes_actor.SetShaftTypeToLine()
-        axes_actor.SetTipTypeToCone()
+        self.axes_actor = vtk.vtkAxesActor()
+        self.axes_actor.SetShaftTypeToLine()
+        self.axes_actor.SetTipTypeToCone()
 
-        axes_actor.SetTotalLength(*size)
+        self.axes_actor.SetTotalLength(size[0], size[1], size[2])
 
         number_grid = 50
 
@@ -163,15 +167,19 @@ class MainWindow(QtWidgets.QMainWindow):
         grid_actor.SetPickable(False)
         grid_actor.SetDragable(False)
 
-        self.stl_renderer.AddActor(axes_actor)
+        self.stl_renderer.AddActor(self.axes_actor)
         self.stl_renderer.AddActor(grid_actor)
         self.stl_renderer.ResetCamera()
-    
-    def resize_scene(self, size: Tuple[float, float, float]) -> None:
+
+    @pyqtSlot(float, float, float)
+    def resize_scene(self, n_x: float, n_y: float, n_z: float) -> None:
+
+        self.axes_actor.SetTotalLength(n_x, n_y, n_z)
+
         number_grid = 50
 
-        X = numpy_support.numpy_to_vtk(np.linspace(0, size[0], number_grid))
-        Y = numpy_support.numpy_to_vtk(np.linspace(0, size[1], number_grid))
+        X = numpy_support.numpy_to_vtk(np.linspace(0, n_x, number_grid))
+        Y = numpy_support.numpy_to_vtk(np.linspace(0, n_y, number_grid))
         Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
 
         self._grid.SetDimensions(number_grid, number_grid, number_grid)
@@ -182,3 +190,5 @@ class MainWindow(QtWidgets.QMainWindow):
         self._geometry_filter.SetExtent(
             0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
         self._geometry_filter.Update()
+
+        self.stl_renderer.GetRenderWindow().Render()

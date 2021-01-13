@@ -32,7 +32,7 @@ class SingleEntry(QObject):
         if self._value != value:
             self._temp_val = value
             self._value = value
-            self.update_val(self.name, self.parent_key)
+            self.update_val.emit(self.name, self.parent_key)
 
     def _update_temp(self, val: Any):
         raise NotImplementedError
@@ -40,6 +40,7 @@ class SingleEntry(QObject):
     @pyqtSlot()
     def commit_value(self) -> None:
         self._value = self._temp_val
+        self.update_val.emit(self.name, self.parent_key)
 
     def write_settings(self, q_path: str) -> None:
         settings = QSettings()

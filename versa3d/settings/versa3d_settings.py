@@ -130,7 +130,6 @@ class Versa3dSettings(QObject):
     update_printhead_signal = pyqtSignal(int, str)
     update_printer_signal = pyqtSignal(int, str)
     update_print_param_signal = pyqtSignal(int, str)
-    
 
     def __init__(self) -> None:
         super().__init__()
@@ -162,17 +161,17 @@ class Versa3dSettings(QObject):
         return self._param_preset_list
 
     @pyqtSlot(str, str)
-    def printer_update_cb(self, name : str, parent : str):
+    def printer_update_cb(self, name: str, parent: str):
         idx = list(self.printer.keys()).index(parent)
         self.update_printer_signal.emit(idx, name)
-    
+
     @pyqtSlot(str, str)
-    def printhead_update_cb(self, name : str, parent : str):
+    def printhead_update_cb(self, name: str, parent: str):
         idx = list(self.printhead.keys()).index(parent)
         self.update_printhead_signal.emit(idx, name)
-    
+
     @pyqtSlot(str, str)
-    def print_param_update_cb(self, name : str, parent : str):
+    def print_param_update_cb(self, name: str, parent: str):
         idx = list(self.parameter_preset.keys()).index(parent)
         self.update_print_param_signal.emit(idx, name)
 
@@ -215,8 +214,8 @@ class Versa3dSettings(QObject):
                 settings.beginGroup(param)
                 param_type = settings.value('type', type=str)
                 entry_obj = MAP_TYPE[param_type]
-                entry_inst = entry_obj(param, parent_key = setting_name)
-                
+                entry_inst = entry_obj(param, parent_key=setting_name)
+
                 if setting_class == SettingTypeKey.printer.value:
                     entry_inst.update_val.connect(self.printer_update_cb)
                 elif setting_class == SettingTypeKey.printhead.value:
@@ -224,7 +223,8 @@ class Versa3dSettings(QObject):
                 elif setting_class == SettingTypeKey.print_param.value:
                     entry_inst.update_val.connect(self.print_param_update_cb)
                 else:
-                    raise ValueError('unknown setting class {%s}' % (setting_class))
+                    raise ValueError(
+                        'unknown setting class {%s}' % (setting_class))
 
                 entry_inst.load_entry(q_path)
                 setting_dict[param] = entry_inst
@@ -261,7 +261,8 @@ class Versa3dSettings(QObject):
         return self._printhead_list[new_name]
 
     def clone_parameter_preset(self, idx: int, new_name: str) -> PrintSetting:
-        self._param_preset_list[new_name] = self.get_parameter_preset(idx).clone()
+        self._param_preset_list[new_name] = self.get_parameter_preset(
+            idx).clone()
         self.add_setting_signal.emit(
             SettingTypeKey.print_param.value, new_name)
         return self._param_preset_list[new_name]

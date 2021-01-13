@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import QObject, pyqtSlot
+from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
 import vtk
 import versa3d.print_platter as ppl
@@ -24,6 +24,7 @@ def reader_factory(f_path: str, ext: str) -> vtk.vtkAbstractPolyDataReader:
 
 
 class Versa3dController(QObject):
+    update_scene = pyqtSignal(float, float, float)
 
     def __init__(self, renderer: vtk.vtkRenderer, parent: QObject = None) -> None:
         super().__init__(parent=parent)
@@ -44,20 +45,35 @@ class Versa3dController(QObject):
 
         self.setup_pipeline()
 
+        self._settings.update_printer_signal.connect(
+            self.update_scene_listener)
+
+    @pyqtSlot(int, str)
+    def update_scene_listener(self, idx: int, attr_key: str):
+        if self._printer_idx == idx:
+            setting_dict = self._settings.get_printer(idx)
+            if attr_key == 'build_bed_size':
+                new_size = setting_dict.build_bed_size.value
+                self.update_scene.emit(new_size[0], new_size[1], new_size[2])
+
     @property
     def settings(self) -> None:
         return self._settings
 
     @pyqtSlot(int)
-    def change_printer(self, idx: str) -> None:
-        self._printer_idx = idx
+    def change_printer(self, idx: int) -> None:
+        if self._printer_idx != idx:
+            self._printer_idx = idx
+            printer_setting = self._settings.get_printer(idx)
+            new_size = printer_setting.build_bed_size.value
+            self.update_scene.emit(new_size[0], new_size[1], new_size[2])
 
     @pyqtSlot(int)
-    def change_printhead(self, idx: str) -> None:
+    def change_printhead(self, idx: int) -> None:
         self._printhead_idx = idx
 
     @pyqtSlot(int)
-    def change_preset(self, idx: str) -> None:
+    def change_preset(self, idx: int) -> None:
         self._parameter_preset_idx = idx
 
     def load_settings(self) -> None:
