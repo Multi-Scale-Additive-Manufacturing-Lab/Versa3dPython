@@ -169,12 +169,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.stl_renderer.AddActor(self.axes_actor)
         self.stl_renderer.AddActor(grid_actor)
-        self.stl_renderer.ResetCamera()
 
-        camera = self.stl_renderer.GetActiveCamera()
+        camera = vtk.vtkCamera()
         camera.SetPosition(size)
         camera.SetFocalPoint(0,0,0)
         camera.Roll(-110)
+        self.stl_renderer.SetActiveCamera(camera)
 
     @pyqtSlot(float, float, float)
     def resize_scene(self, n_x: float, n_y: float, n_z: float) -> None:
