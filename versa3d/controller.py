@@ -117,11 +117,6 @@ class Versa3dController(QObject):
         self.tool_path_gen = ToolPathPlannerFilter()
         self.tool_path_gen.SetInputConnection(self.voxelizer.GetOutputPort())
 
-    def reset_picked(self) -> None:
-        for part in self.print_objects.values():
-            if(part.picked):
-                part.unpick()
-
     def import_object(self, filename: str, ext: str) -> None:
         if(filename != ''):
             obj_src = reader_factory(filename, ext)

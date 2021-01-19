@@ -3,9 +3,11 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot
 import vtk
-from vtk.util import numpy_support
+
+from vtkmodules.util import numpy_support
+from vtkmodules import vtkInteractionStyle as vtkIntStyle
 import numpy as np
-from versa3d.mouse_interaction import ActorHighlight
+from versa3d.mouse_interaction import RubberBandHighlight
 from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.settings import SettingTypeKey
@@ -29,13 +31,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.controller = Versa3dController(self.stl_renderer, self)
 
-        style = vtk.vtkInteractorStyleRubberBand3D()
-        self.stl_interactor.SetInteractorStyle(style)
+        self.rubber_style = RubberBandHighlight()
+        self.actor_movement = vtkIntStyle.vtkInteractorStyleTrackballActor()
 
-        actor_highlight_obs = ActorHighlight(
-            self.stl_renderer, self.controller)
-
-        style.AddObserver('SelectionChangedEvent', actor_highlight_obs)
+        self.stl_interactor.SetInteractorStyle(self.rubber_style)
 
         self.stl_interactor.Initialize()
 

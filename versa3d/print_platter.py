@@ -15,6 +15,7 @@ class PrintObject(VTKPythonAlgorithmBase):
         self._backup_prop = None
         self.id = QUuid.createUuid().toString()
         self._actor.AddObserver('PickEvent', self.pick)
+        self._actor.AddObserver('UnPickEvent', self.unpick)
         self.initialised = False
 
     @property
@@ -49,7 +50,7 @@ class PrintObject(VTKPythonAlgorithmBase):
 
             self.picked = True
 
-    def unpick(self) -> None:
+    def unpick(self, caller: vtk.vtkRenderWindowInteractor, ev: str) -> None:
         if(self.picked and (self._backup_prop is not None)):
             self._actor.GetProperty().DeepCopy(self._backup_prop)
             self._actor.ApplyProperties()
