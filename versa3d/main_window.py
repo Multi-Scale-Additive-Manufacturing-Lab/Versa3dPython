@@ -32,8 +32,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller = Versa3dController(self.stl_renderer, self)
 
         self.rubber_style = RubberBandHighlight()
-        self.actor_movement = vtkIntStyle.vtkInteractorStyleTrackballActor()
-
         self.stl_interactor.SetInteractorStyle(self.rubber_style)
 
         self.stl_interactor.Initialize()
