@@ -1,9 +1,11 @@
 import vtk
 from PyQt5.QtWidgets import QUndoCommand
 
+from versa3d.controller import Versa3dController
+
 
 class ActorHighlight(QUndoCommand):
-    def __init__(self, renderer, ppl, parent = None):
+    def __init__(self, renderer: vtk.vtkRenderer, ppl: Versa3dController, parent: QUndoCommand = None) -> None:
         """ highlight interactor observer. Called when SelectionChangedEvent
         is emitted by vtkInteractorStyleRubberBand3D
 
@@ -18,7 +20,7 @@ class ActorHighlight(QUndoCommand):
         self.platter = ppl
         self.list_picked = []
 
-    def __call__(self, caller, ev):
+    def __call__(self, caller : vtk.vtkRenderWindowInteractor, ev : str) -> None:
         """ event callback
 
         Args:
@@ -47,10 +49,18 @@ class ActorHighlight(QUndoCommand):
                 self.list_picked.append(actor)
 
             self.renderer.GetRenderWindow().Render()
-    
-    def redo(self):
+
+    def redo(self) -> None:
         for actor in self.list_picked:
             actor.Pick()
-    
-    def undo(self):
+
+    def undo(self) -> None:
         self.platter.reset_picked()
+
+
+class ActorMovement(QUndoCommand):
+    def __init__(self, renderer: vtk.vtkRenderer, ppl: Versa3dController, parent: QUndoCommand = None) -> None:
+        pass
+
+    def __call__(self, caller : vtk.vtkRenderWindowInteractor, ev : str) -> None:
+        pass
