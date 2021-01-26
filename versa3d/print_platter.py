@@ -1,6 +1,7 @@
 import vtk
 import numpy as np
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
+from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
 from PyQt5.QtCore import QUuid
 
 
@@ -14,8 +15,8 @@ class PrintObject(VTKPythonAlgorithmBase):
         self.picked = False
         self._backup_prop = None
         self.id = QUuid.createUuid().toString()
-        self._actor.AddObserver('PickEvent', self.pick)
-        self._actor.AddObserver('UnPickEvent', self.unpick)
+        #self._actor.AddObserver('PickEvent', self.pick)
+        #self._actor.AddObserver('UnPickEvent', self.unpick)
         self.initialised = False
 
     @property
@@ -25,7 +26,7 @@ class PrintObject(VTKPythonAlgorithmBase):
     def render(self, ren: vtk.vtkRenderer) -> None:
         ren.AddActor(self._actor)
         ren.GetRenderWindow().Render()
-
+    
     def unrender(self, ren: vtk.vtkRenderer) -> None:
         ren.RemoveActor(self._actor)
         ren.GetRenderWindow().Render()
@@ -49,6 +50,8 @@ class PrintObject(VTKPythonAlgorithmBase):
             self._actor.ApplyProperties()
 
             self.picked = True
+        else:
+            self.unpick(caller, ev)
 
     def unpick(self, caller: vtk.vtkRenderWindowInteractor, ev: str) -> None:
         if(self.picked and (self._backup_prop is not None)):

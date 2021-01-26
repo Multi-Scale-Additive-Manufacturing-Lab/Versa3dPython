@@ -88,6 +88,8 @@ class Versa3dController(QObject):
             obj = self.print_objects.pop(obj.id)
             self.platter.RemoveInputData(obj.GetOutputDataObject(0))
             obj.unrender(self.renderer)
+        
+        self.platter.Update()
 
     def translate_callback(self, obj: PrintObject, vec: ndarray) -> None:
         if vec.ndim != 1:

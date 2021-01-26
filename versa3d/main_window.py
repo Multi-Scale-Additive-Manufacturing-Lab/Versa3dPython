@@ -7,10 +7,10 @@ import vtk
 from vtkmodules.util import numpy_support
 from vtkmodules import vtkInteractionStyle as vtkIntStyle
 import numpy as np
-from versa3d.mouse_interaction import RubberBandHighlight
 from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.settings import SettingTypeKey
+from versa3d.mouse_interaction import RubberBandHighlight
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -32,9 +32,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller = Versa3dController(self.stl_renderer, self)
 
         self.rubber_style = RubberBandHighlight()
+        
         self.stl_interactor.SetInteractorStyle(self.rubber_style)
 
+        self.stl_interactor.GetPickingManager().EnabledOn()
         self.stl_interactor.Initialize()
+        self.stl_interactor.Start()
 
         self.push_button_x.clicked.connect(self.move_object_x)
         self.push_button_y.clicked.connect(self.move_object_y)
@@ -129,6 +132,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.axes_actor = vtk.vtkAxesActor()
         self.axes_actor.SetShaftTypeToLine()
         self.axes_actor.SetTipTypeToCone()
+        self.axes_actor.SetPickable(False)
+        self.axes_actor.SetDragable(False)
 
         self.axes_actor.SetTotalLength(size[0], size[1], size[2])
 
