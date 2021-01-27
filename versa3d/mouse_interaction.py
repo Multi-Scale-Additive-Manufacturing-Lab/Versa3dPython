@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QUndoCommand
 
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
 from vtkmodules.vtkRenderingCore import vtkCellPicker, vtkAssembly, vtkInteractorStyle
-from vtkmodules.vtkInteractionWidgets import vtkBoxWidget2, vtkBoxRepresentation
+from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
 from versa3d.controller import Versa3dController
 from enum import IntEnum
 
@@ -18,20 +18,19 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         self.selected_actor = vtkAssembly()
         self.AddObserver('SelectionChangedEvent', self.highlight)
 
-        self.box_widget = vtkBoxWidget2()
+        self.box_widget = vtkBoxWidget()
         self.box_widget.TranslationEnabledOn()
         self.box_widget.RotationEnabledOn()
         self.box_widget.ScalingEnabledOff()
-        self.box_widget.SetInteractor(self.GetInteractor())
         self.box_widget.AddObserver('InteractionEvent', self.box_cb)
+        self.box_widget.SetPlaceFactor(1.25)
         self.PickingManagedOn()
-        self.box_widget.Off()
 
     def reset(self) -> None:
         actor_it = self.selected_actor.GetParts()
         if actor_it.GetNumberOfItems() > 0:
             self.selected_actor = vtkAssembly()
-        self.box_widget.Off()
+            self.box_widget.Off()
     
     def find_poked_actor(self, style : vtkInteractorStyle):
         interactor = style.GetInteractor()
@@ -53,29 +52,20 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
     
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
         interactor = obj.GetInteractor()
+        self.box_widget.SetInteractor(interactor)
         if not interactor.GetShiftKey():
             self.reset()
         prop = self.find_poked_actor(obj)
         if not prop is None:
             self.selected_actor.AddPart(prop)
-
-            box_rep = vtk.vtkBoxRepresentation()
-            box_rep.SetPlaceFactor(0.75)
-            box_rep.PlaceWidget(self.selected_actor.GetBounds())
-            self.box_widget.SetInteractor(interactor)
-            self.box_widget.SetRepresentation(box_rep)
+            self.box_widget.SetProp3D(prop)
+            self.box_widget.PlaceWidget(prop.GetBounds())
             self.box_widget.On()
+        
+        self.update_render()
     
-    def box_cb(self, obj : vtkBoxWidget2, event : str):
-        box_rep = obj.GetRepresentation()
+    def box_cb(self, obj : vtkBoxWidget, event : str):
         t = vtk.vtkTransform()
-        box_rep.GetTransform(t)
-
-        actor_it = self.selected_actor.GetParts()
-        actor_it.InitTraversal()
-
-        if actor_it.GetNumberOfItems() > 0:
-            actor = actor_it.GetNextProp3D()
-            while actor:
-                actor.SetUserTransform(t)
-                actor = actor_it.GetNextProp3D()
+        obj.GetTransform(t)
+        obj.GetProp3D().SetUserTransform(t)
+        self.update_render()
