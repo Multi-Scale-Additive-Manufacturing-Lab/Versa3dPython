@@ -37,6 +37,7 @@ class PrintObject(VTKPythonAlgorithmBase):
         t = vtkTransform()
         caller.GetTransform(t)
         self._actor.SetUserTransform(t)
+        self.Modified()
 
     @property
     def actor(self) -> vtkActor:
