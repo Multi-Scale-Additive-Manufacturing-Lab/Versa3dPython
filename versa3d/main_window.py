@@ -39,9 +39,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_interactor.Initialize()
         self.stl_interactor.Start()
 
-        self.push_button_x.clicked.connect(self.move_object_x)
-        self.push_button_y.clicked.connect(self.move_object_y)
-
         self.push_button_mod_print_settings.clicked.connect(
             self.show_param_window)
         self.push_button_mod_printer.clicked.connect(self.show_printer_window)
@@ -85,14 +82,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self, 'Open stl', "", "stl (*.stl)")
         if len(filename) != 0 or not filename is None:
             self.controller.import_object(filename[0], filename[1])
-
-    def move_object_y(self) -> None:
-        y = self.y_delta.value()
-        self.controller.translate(np.array([0, y, 0], dtype=float))
-
-    def move_object_x(self) -> None:
-        x = self.x_delta.value()
-        self.controller.translate(np.array([x, 0, 0], dtype=float))
 
     def show_printer_window(self) -> None:
         self.show_settings_window(self.printer_cmb_box, 'printer')
