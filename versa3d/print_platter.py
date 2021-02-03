@@ -10,6 +10,31 @@ from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData
 from vtkmodules.util.misc import calldata_type
 from PyQt5.QtCore import QUuid
+from PyQt5.QtWidgets import QUndoStack, QUndoCommand
+
+from typing import Callable
+from time import time
+
+class TransformCommand(QUndoCommand):
+    def __init__(self, current: vtkTransform, prev : vtkTransform, cb: Callable[[vtkTransform], None], parent: QUndoCommand = None) -> None:
+        """[summary]
+
+        Args:
+            transform_matrix (vtkTransform): transformation matrix
+            cb (Callable[[vtkTransform], None]): call back to apply transform
+            parent (QUndoCommand, optional): parent undo command. Defaults to None.
+        """
+        super().__init__(parent)
+        self._current = current
+        self._prev = prev
+        self._cb = cb
+        self._exec_first = True
+
+    def redo(self):
+        self._cb(self._current)
+
+    def undo(self):
+        self._cb(self._prev)
 
 class PrintPlatter(VTKPythonAlgorithmBase):
     def __init__(self) -> None:
@@ -42,7 +67,7 @@ class PrintPlatter(VTKPythonAlgorithmBase):
         return 1
 
 class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self) -> None:
+    def __init__(self, undo_stack : QUndoStack) -> None:
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
 
@@ -58,16 +83,39 @@ class PrintObject(VTKPythonAlgorithmBase):
         self._box_widget.PickingManagedOn()
         self._box_widget.SetPlaceFactor(1.50)
         self._box_widget.AddObserver('InteractionEvent', self.box_sync)
+        self._box_widget.AddObserver('StartInteractionEvent', self.save_state)
+        self._box_widget.AddObserver('EndInteractionEvent', self.commit_state)
 
         self.picked = False
         self._backup_prop = None
         self.id = QUuid.createUuid().toString()
         self.initialised = False
 
+        self.import_command = None
+        self.undo_stack = undo_stack
+        
+        self.prev_state = vtkTransform()
+        self._box_widget.GetTransform(self.prev_state)
+    
+    def save_state(self, caller : vtkBoxWidget, ev : str):
+        new_state = vtkTransform()
+        caller.GetTransform(new_state)
+        self.prev_state = new_state
+
+    def commit_state(self, caller : vtkBoxWidget, ev : str):
+        new_state = vtkTransform()
+        caller.GetTransform(new_state)
+        com = TransformCommand(new_state, self.prev_state, self.set_state, self.import_command)
+        self.undo_stack.push(com)
+    
+    def set_state(self, trs : vtkTransform):
+        self._actor.SetUserTransform(trs)
+        self._box_widget.SetTransform(trs)
+
     def box_sync(self, caller : vtkBoxWidget, ev : str) -> None:
-        t = vtkTransform()
-        caller.GetTransform(t)
-        self._actor.SetUserTransform(t)
+        cur = vtkTransform()
+        caller.GetTransform(cur)
+        self._actor.SetUserTransform(cur)
         self.Modified()
 
     @property

@@ -38,7 +38,6 @@ class Versa3dController(QObject):
         self.platter = PrintPlatter()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
-        self.undo_stack.setUndoLimit(10)
 
         self._printer_idx = 0
         self._printhead_idx = 0
@@ -113,13 +112,14 @@ class Versa3dController(QObject):
         if(filename != ''):
             obj_src = reader_factory(filename, ext)
 
-            obj = PrintObject()
+            obj = PrintObject(self.undo_stack)
             obj.SetInputConnection(obj_src.GetOutputPort())
             obj.Update()
 
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
-    
+            obj.import_command = com
+
     @pyqtSlot(int)
     def transform(self):
         pass
