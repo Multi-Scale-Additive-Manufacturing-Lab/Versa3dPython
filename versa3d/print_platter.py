@@ -15,8 +15,9 @@ from PyQt5.QtWidgets import QUndoStack, QUndoCommand
 from typing import Callable
 from time import time
 
+
 class TransformCommand(QUndoCommand):
-    def __init__(self, current: vtkTransform, prev : vtkTransform, cb: Callable[[vtkTransform], None], parent: QUndoCommand = None) -> None:
+    def __init__(self, current: vtkTransform, prev: vtkTransform, cb: Callable[[vtkTransform], None], parent: QUndoCommand = None) -> None:
         """[summary]
 
         Args:
@@ -36,21 +37,22 @@ class TransformCommand(QUndoCommand):
     def undo(self):
         self._cb(self._prev)
 
+
 class PrintPlatter(VTKPythonAlgorithmBase):
     def __init__(self) -> None:
         VTKPythonAlgorithmBase.__init__(
-            self, nInputPorts = 1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
-    
-    def FillInputPortInformation(self, port : int, info: vtkInformation) -> None:
+            self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
+
+    def FillInputPortInformation(self, port: int, info: vtkInformation) -> None:
         if port == 0:
             info.Set(vtkAlgorithm.INPUT_IS_REPEATABLE(), 1)
             info.Set(vtkAlgorithm.INPUT_IS_OPTIONAL(), 1)
         return 1
-    
+
     def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> bool:
 
         n_object = inInfo[0].GetNumberOfInformationObjects()
-        
+
         if n_object > 0:
             append_f = vtkAppendPolyData()
             append_f.UserManagedInputsOff()
@@ -58,7 +60,7 @@ class PrintPlatter(VTKPythonAlgorithmBase):
                 i_info = inInfo[0].GetInformationObject(i)
                 input_poly = vtkPolyData.GetData(i_info)
                 append_f.AddInputData(input_poly)
-            
+
             append_f.Update()
 
             output = vtkPolyData.GetData(outInfo)
@@ -66,8 +68,9 @@ class PrintPlatter(VTKPythonAlgorithmBase):
 
         return 1
 
+
 class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self, undo_stack : QUndoStack) -> None:
+    def __init__(self, undo_stack: QUndoStack) -> None:
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
 
@@ -93,26 +96,27 @@ class PrintObject(VTKPythonAlgorithmBase):
 
         self.import_command = None
         self.undo_stack = undo_stack
-        
+
         self.prev_state = vtkTransform()
         self._box_widget.GetTransform(self.prev_state)
-    
-    def save_state(self, caller : vtkBoxWidget, ev : str):
+
+    def save_state(self, caller: vtkBoxWidget, ev: str):
         new_state = vtkTransform()
         caller.GetTransform(new_state)
         self.prev_state = new_state
 
-    def commit_state(self, caller : vtkBoxWidget, ev : str):
+    def commit_state(self, caller: vtkBoxWidget, ev: str):
         new_state = vtkTransform()
         caller.GetTransform(new_state)
-        com = TransformCommand(new_state, self.prev_state, self.set_state, self.import_command)
+        com = TransformCommand(new_state, self.prev_state,
+                               self.set_state, self.import_command)
         self.undo_stack.push(com)
-    
-    def set_state(self, trs : vtkTransform):
+
+    def set_state(self, trs: vtkTransform):
         self._actor.SetUserTransform(trs)
         self._box_widget.SetTransform(trs)
 
-    def box_sync(self, caller : vtkBoxWidget, ev : str) -> None:
+    def box_sync(self, caller: vtkBoxWidget, ev: str) -> None:
         cur = vtkTransform()
         caller.GetTransform(cur)
         self._actor.SetUserTransform(cur)
@@ -125,13 +129,13 @@ class PrintObject(VTKPythonAlgorithmBase):
     def render(self, ren: vtkRenderer) -> None:
         ren.AddActor(self._actor)
         ren.GetRenderWindow().Render()
-    
+
     def unrender(self, ren: vtkRenderer) -> None:
         ren.RemoveActor(self._actor)
         ren.GetRenderWindow().Render()
 
     @calldata_type(VTK_OBJECT)
-    def pick(self, caller: vtkActor, ev: str, interactor : vtkRenderWindowInteractor = None) -> None:
+    def pick(self, caller: vtkActor, ev: str, interactor: vtkRenderWindowInteractor = None) -> None:
         """set pick status
 
         Args:
@@ -140,11 +144,11 @@ class PrintObject(VTKPythonAlgorithmBase):
         """
         if not interactor is None:
             self._box_widget.SetInteractor(interactor)
-            if not self.picked :
+            if not self.picked:
                 self._box_widget.On()
-    
+
     @calldata_type(VTK_OBJECT)
-    def unpick(self, caller: vtkActor, ev: str, interactor : vtkRenderWindowInteractor = None) -> None:
+    def unpick(self, caller: vtkActor, ev: str, interactor: vtkRenderWindowInteractor = None) -> None:
         """set pick status
 
         Args:
@@ -153,7 +157,7 @@ class PrintObject(VTKPythonAlgorithmBase):
         """
         if not interactor is None:
             self._box_widget.SetInteractor(interactor)
-            if not self.picked :
+            if not self.picked:
                 self._box_widget.Off()
 
     def move(self, x: float, y: float, z: float) -> None:
@@ -172,7 +176,7 @@ class PrintObject(VTKPythonAlgorithmBase):
             mapper.AddInputDataObject(input_poly)
             self._actor.SetMapper(mapper)
             self.initialised = True
-        
+
         self._box_widget.PlaceWidget(self._actor.GetBounds())
 
         output = vtkPolyData.GetData(outInfo)
