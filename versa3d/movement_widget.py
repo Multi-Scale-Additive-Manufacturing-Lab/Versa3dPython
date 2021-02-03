@@ -8,9 +8,7 @@ class MovementPanel(QWidget):
         grid_layout = QtWidgets.QGridLayout()
 
         translate_label = QtWidgets.QLabel('Translate')
-        rotate_label = QtWidgets.QLabel('Rotate')
-        axis_label = QtWidgets.QLabel('Axis')
-        angle_label = QtWidgets.QLabel('Angle')
+        angle_label = QtWidgets.QLabel('Rotate')
         scale_label = QtWidgets.QLabel('Scale')
 
         lock_aspect_ratio = QtWidgets.QLabel('Lock aspect ratio')
@@ -23,11 +21,9 @@ class MovementPanel(QWidget):
         grid_layout.addWidget(z_label, 0, 3)
 
         grid_layout.addWidget(translate_label, 1, 0)
-        grid_layout.addWidget(rotate_label, 2, 0)
         ls_translate_spin_box = self._create_entry_row(translate_label, grid_layout, 1)
-        ls_rotate_spin_box = self._create_entry_row(angle_label, grid_layout, 3)
-        ls_axis_spin_box = self._create_entry_row(axis_label, grid_layout, 4)
-        ls_scaling_spin_box = self._create_entry_row(scale_label, grid_layout, 5)
+        ls_rotate_spin_box = self._create_entry_row(angle_label, grid_layout, 2)
+        ls_scaling_spin_box = self._create_entry_row(scale_label, grid_layout, 3)
 
         self.setLayout(grid_layout)
     
