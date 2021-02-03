@@ -91,17 +91,6 @@ class Versa3dController(QObject):
         
         self.platter.Update()
 
-    def translate_callback(self, obj: PrintObject, vec: ndarray) -> None:
-        if vec.ndim != 1:
-            raise ValueError('Invalid dimension : {%d}' % (vec.ndim))
-
-        if len(vec) != 3:
-            raise ValueError('Invalid length : {%d}' % (len(vec)))
-
-        obj.move(vec[0], vec[1], vec[2])
-        obj.Update()
-        obj.render(self.renderer)
-
     def export_gcode(self, file_path: str) -> None:
         printer_setting = self.settings.get_printer(self._printer_idx)
         printhead_setting = self.settings.get_printhead(self._printhead_idx)
@@ -129,15 +118,6 @@ class Versa3dController(QObject):
 
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
-
-    def translate(self, delta_pos: ndarray) -> None:
-        parts = self.print_objects
-        for part in parts.values():
-            if part.picked:
-                com = vscom.TranslationCommand(
-                    part, delta_pos, self.translate_callback)
-                self.undo_stack.push(com)
-
     @pyqtSlot()
     def slice_object(self) -> None:
         printer_setting = self.settings.get_printer(self._printer_idx)
