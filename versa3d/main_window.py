@@ -9,6 +9,7 @@ from vtkmodules import vtkInteractionStyle as vtkIntStyle
 import numpy as np
 from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
+from versa3d.movement_widget import MovementPanel
 from versa3d.settings import SettingTypeKey
 from versa3d.mouse_interaction import RubberBandHighlight
 
@@ -66,6 +67,12 @@ class MainWindow(QtWidgets.QMainWindow):
         printer_setting = self.controller.settings.get_printer(0)
         build_bed_size = printer_setting.build_bed_size.value
         self.setup_scene(build_bed_size)
+
+        self.movement_panel = MovementPanel(self)
+        object_interaction_layout = QtWidgets.QVBoxLayout()
+        object_interaction_layout.addWidget(self.movement_panel)
+        object_interaction_layout.addStretch(1)
+        self.object_interaction.setLayout(object_interaction_layout)
 
         self.controller.update_scene.connect(self.resize_scene)
 
