@@ -1,5 +1,5 @@
 import numpy as np
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
+from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase, vtkAlgorithm
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonDataModel import vtkPolyData
@@ -7,8 +7,39 @@ from vtkmodules.util.vtkConstants import VTK_OBJECT
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor, vtkActor, vtkRenderer, vtkPolyDataMapper
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
+from vtkmodules.vtkFiltersCore import vtkAppendPolyData
 from vtkmodules.util.misc import calldata_type
 from PyQt5.QtCore import QUuid
+
+class PrintPlatter(VTKPythonAlgorithmBase):
+    def __init__(self) -> None:
+        VTKPythonAlgorithmBase.__init__(
+            self, nInputPorts = 1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
+    
+    def FillInputPortInformation(self, port : int, info: vtkInformation) -> None:
+        if port == 0:
+            info.Set(vtkAlgorithm.INPUT_IS_REPEATABLE(), 1)
+            info.Set(vtkAlgorithm.INPUT_IS_OPTIONAL(), 1)
+        return 1
+    
+    def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> bool:
+
+        n_object = inInfo[0].GetNumberOfInformationObjects()
+        
+        if n_object > 0:
+            append_f = vtkAppendPolyData()
+            append_f.UserManagedInputsOff()
+            for i in range(n_object):
+                i_info = inInfo[0].GetInformationObject(i)
+                input_poly = vtkPolyData.GetData(i_info)
+                append_f.AddInputData(input_poly)
+            
+            append_f.Update()
+
+            output = vtkPolyData.GetData(outInfo)
+            output.ShallowCopy(append_f.GetOutput())
+
+        return 1
 
 class PrintObject(VTKPythonAlgorithmBase):
     def __init__(self) -> None:

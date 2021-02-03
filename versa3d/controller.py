@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
@@ -8,10 +9,10 @@ import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings
 from versa3d.slicing import VoxelSlicer
 from versa3d.tool_path_planner import ToolPathPlannerFilter
-from versa3d.print_platter import PrintObject
+from versa3d.print_platter import PrintObject, PrintPlatter
 
 from numpy import ndarray
-
+from typing import Tuple
 
 def reader_factory(f_path: str, ext: str) -> vtk.vtkAbstractPolyDataReader:
     if ext.lower() == 'stl (*.stl)':
@@ -25,6 +26,7 @@ def reader_factory(f_path: str, ext: str) -> vtk.vtkAbstractPolyDataReader:
 
 class Versa3dController(QObject):
     update_scene = pyqtSignal(float, float, float)
+    selection_obj = pyqtSignal(bool, tuple)
 
     def __init__(self, renderer: vtk.vtkRenderer, parent: QObject = None) -> None:
         super().__init__(parent=parent)
@@ -33,8 +35,7 @@ class Versa3dController(QObject):
         self._settings = Versa3dSettings()
 
         self.print_objects = {}
-        self.platter = vtk.vtkAppendPolyData()
-        self.platter.UserManagedInputsOff()
+        self.platter = PrintPlatter()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
         self.undo_stack.setUndoLimit(10)
@@ -82,11 +83,11 @@ class Versa3dController(QObject):
     def import_callback(self, obj: PrintObject, mode=True) -> None:
         if mode:
             self.print_objects[obj.id] = obj
-            self.platter.AddInputData(obj.GetOutputDataObject(0))
+            self.platter.SetInputConnection(0, obj.GetOutputPort())
             obj.render(self.renderer)
         else:
             obj = self.print_objects.pop(obj.id)
-            self.platter.RemoveInputData(obj.GetOutputDataObject(0))
+            self.platter.RemoveInputConnection(0, obj.GetOutputPort())
             obj.unrender(self.renderer)
         
         self.platter.Update()
@@ -118,6 +119,19 @@ class Versa3dController(QObject):
 
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
+    
+    @pyqtSlot(int)
+    def transform(self):
+        pass
+    
+    @pyqtSlot(int, tuple)
+    def translate(self, idx : int, vec : Tuple[float,float,float]):
+        pass
+
+    @pyqtSlot(int, tuple)
+    def rotate(self, idx : int, angle : Tuple[float,float,float]):
+        pass
+
     @pyqtSlot()
     def slice_object(self) -> None:
         printer_setting = self.settings.get_printer(self._printer_idx)
