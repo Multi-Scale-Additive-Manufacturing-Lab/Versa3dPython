@@ -80,14 +80,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def export_gcode(self) -> None:
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Save Gcode', "", "zip (*.zip)")
-        if len(filename) != 0 or not filename is None:
+        if len(filename[0]) != 0 and not filename[0] is None:
             self.controller.export_gcode(filename[0])
 
     @pyqtSlot()
     def import_object(self) -> None:
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
-        if len(filename) != 0 or not filename is None:
+        if len(filename[0]) != 0 and not filename is None:
             self.controller.import_object(filename[0], filename[1])
 
     def show_printer_window(self) -> None:
