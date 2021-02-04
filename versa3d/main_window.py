@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
 import vtk
+from vtkmodules.util.misc import calldata_type
+from vtkmodules.util.vtkConstants import VTK_OBJECT
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
+from vtkmodules.vtkRenderingCore import vtkProp3DCollection
 
 from vtkmodules.util import numpy_support
 from vtkmodules import vtkInteractionStyle as vtkIntStyle
@@ -21,6 +25,10 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets (QMainWindow): main window
     """
 
+    translate_sig = pyqtSignal(float, float, float)
+    rotate_sig = pyqtSignal(float, float, float)
+    scale_sig = pyqtSignal(float, float, float)
+
     def __init__(self, ui_file_path: str) -> None:
         super().__init__()
         uic.loadUi(ui_file_path, self)
@@ -33,6 +41,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.controller = Versa3dController(self.stl_renderer, self)
 
         self.rubber_style = RubberBandHighlight()
+        self.rubber_style.AddObserver('StartPickEvent', self.spawn_movement_win)
+        self.rubber_style.AddObserver('EndPickEvent', self.remove_movement_win)
         
         self.stl_interactor.SetInteractorStyle(self.rubber_style)
 
@@ -69,12 +79,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setup_scene(build_bed_size)
 
         self.movement_panel = MovementPanel(self)
-        object_interaction_layout = QtWidgets.QVBoxLayout()
-        object_interaction_layout.addWidget(self.movement_panel)
-        object_interaction_layout.addStretch(1)
-        self.object_interaction.setLayout(object_interaction_layout)
+        self.object_interaction.insertWidget(1, self.movement_panel)
+        self.object_interaction.setCurrentIndex(0)
+
+        self.movement_panel.translate_sig.connect(self.translate_sig)
+        self.movement_panel.rotate_sig.connect(self.rotate_sig)
+        self.movement_panel.scale_sig.connect(self.scale_sig)
+
+        self.translate_sig.connect(self.controller.translate)
+        self.rotate_sig.connect(self.controller.rotate)
+        self.scale_sig.connect(self.controller.scale)
 
         self.controller.update_scene.connect(self.resize_scene)
+    
+    @calldata_type(VTK_OBJECT)
+    def spawn_movement_win(self, caller: vtkInteractorStyleRubberBand3D, ev: str, calldata: vtkProp3DCollection = None) -> None:
+        if calldata.GetNumberOfItems() > 0:
+            self.object_interaction.setCurrentIndex(1)
+    
+    @calldata_type(VTK_OBJECT)
+    def remove_movement_win(self, caller: vtkInteractorStyleRubberBand3D, ev: str, calldata: vtkProp3DCollection = None) -> None:
+        self.object_interaction.setCurrentIndex(0)
 
     @pyqtSlot()
     def export_gcode(self) -> None:

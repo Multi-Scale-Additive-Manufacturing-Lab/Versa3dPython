@@ -141,13 +141,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QWidget" name="object_interaction" native="true">
+           <widget class="QStackedWidget" name="object_interaction">
             <property name="minimumSize">
              <size>
               <width>300</width>
               <height>600</height>
              </size>
             </property>
+            <widget class="QWidget" name="object_interactionPage1" native="true"/>
            </widget>
           </item>
          </layout>

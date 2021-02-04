@@ -39,10 +39,12 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             while not prop is None:
                 self.selected_actor.append(prop)
                 prop.InvokeEvent('StartPickEvent', interactor)
+                self.InvokeEvent('StartPickEvent', prop_collection)
                 prop = prop_collection.GetNextProp()
         else:
             for prop in self.selected_actor:
                 prop.InvokeEvent('EndPickEvent', interactor)
+                self.InvokeEvent('EndPickEvent', prop_collection)
             self.selected_actor = []
 
         self.update_render()

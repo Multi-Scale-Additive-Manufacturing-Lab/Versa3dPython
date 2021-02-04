@@ -119,17 +119,17 @@ class Versa3dController(QObject):
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
             obj.import_command = com
-
-    @pyqtSlot(int)
-    def transform(self):
-        pass
     
-    @pyqtSlot(int, tuple)
-    def translate(self, idx : int, vec : Tuple[float,float,float]):
+    @pyqtSlot(float, float, float)
+    def translate(self, x : float, y : float, z : float):
         pass
 
-    @pyqtSlot(int, tuple)
-    def rotate(self, idx : int, angle : Tuple[float,float,float]):
+    @pyqtSlot(float, float, float)
+    def rotate(self, x : float, y : float, z : float):
+        pass
+
+    @pyqtSlot(float, float, float)
+    def scale(self, x : float, y : float, z : float):
         pass
 
     @pyqtSlot()
