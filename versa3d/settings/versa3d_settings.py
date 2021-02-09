@@ -5,7 +5,7 @@ from collections import OrderedDict
 from PyQt5.QtCore import QSettings, QObject, pyqtSignal, pyqtSlot
 from enum import Enum
 
-from typing import Dict, List
+from typing import Dict, List, Callable
 import attr
 import copy
 
@@ -20,7 +20,6 @@ class SettingTypeKey(Enum):
     printer = 'preset_printer'
     printhead = 'preset_printhead'
     print_param = 'preset_param'
-
 
 @attr.s(auto_attribs=True)
 class PrintSetting:
@@ -44,6 +43,12 @@ class PrintSetting:
                 setting_dict[attr_n] = copy.deepcopy(val)
         return cls(**setting_dict)
 
+@attr.s(auto_attribs=True)
+class SettingWrapper:
+    setting : Dict[str, PrintSetting]
+    clone : Callable[[int, str], None]
+    remove : Callable[[int], None]
+    save : Callable[[int], None]
 
 @attr.s(auto_attribs=True)
 class GenericPrinter(PrintSetting):

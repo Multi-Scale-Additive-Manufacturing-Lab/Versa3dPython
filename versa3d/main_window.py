@@ -29,6 +29,20 @@ class MainWindow(QtWidgets.QMainWindow):
     rotate_sig = pyqtSignal(float, float, float)
     scale_sig = pyqtSignal(float, float, float)
 
+    undo_sig = pyqtSignal()
+    redo_sig = pyqtSignal()
+
+    import_signal = pyqtSignal(str, str)
+    export_gcode_signal = pyqtSignal(str)
+
+    change_printer_signal = pyqtSignal(int)
+    change_printhead_signal = pyqtSignal(int)
+    change_preset_signal = pyqtSignal(int)
+
+    show_parameter_win = pyqtSignal(int)
+    show_printer_win = pyqtSignal(int)
+    show_preset_win = pyqtSignal(int)
+
     def __init__(self, ui_file_path: str) -> None:
         super().__init__()
         uic.loadUi(ui_file_path, self)
@@ -37,9 +51,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
-
-        self.controller = Versa3dController(self.stl_renderer, self)
-
+        
         self.rubber_style = RubberBandHighlight()
         self.rubber_style.AddObserver('StartPickEvent', self.spawn_movement_win)
         self.rubber_style.AddObserver('EndPickEvent', self.remove_movement_win)
@@ -58,25 +70,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.action_import_stl.triggered.connect(self.import_object)
 
-        self.action_undo.triggered.connect(self.controller.undo_stack.undo)
-        self.action_redo.triggered.connect(self.controller.undo_stack.redo)
+        self.action_undo.triggered.connect(self.undo_sig)
+        self.action_redo.triggered.connect(self.redo_sig)
 
         self.printer_cmb_box.currentIndexChanged.connect(
-            self.controller.change_printer)
+            self.change_printer_signal)
         self.printhead_cmb_box.currentIndexChanged.connect(
-            self.controller.change_printhead)
+            self.change_printer_signal)
         self.print_settings_cmb_box.currentIndexChanged.connect(
-            self.controller.change_preset)
-
-        self.controller.settings.add_setting_signal.connect(
-            self.populate_printer_drop_down)
+            self.change_printer_signal)
 
         self.ExportGCodeButton.clicked.connect(self.export_gcode)
-        self.controller.load_settings()
-
-        printer_setting = self.controller.settings.get_printer(0)
-        build_bed_size = printer_setting.build_bed_size.value
-        self.setup_scene(build_bed_size)
 
         self.movement_panel = MovementPanel(self)
         self.object_interaction.insertWidget(1, self.movement_panel)
@@ -85,12 +89,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.movement_panel.translate_sig.connect(self.translate_sig)
         self.movement_panel.rotate_sig.connect(self.rotate_sig)
         self.movement_panel.scale_sig.connect(self.scale_sig)
-
-        self.translate_sig.connect(self.controller.translate)
-        self.rotate_sig.connect(self.controller.rotate)
-        self.scale_sig.connect(self.controller.scale)
-
-        self.controller.update_scene.connect(self.resize_scene)
     
     @calldata_type(VTK_OBJECT)
     def spawn_movement_win(self, caller: vtkInteractorStyleRubberBand3D, ev: str, calldata: vtkProp3DCollection = None) -> None:
@@ -106,29 +104,23 @@ class MainWindow(QtWidgets.QMainWindow):
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Save Gcode', "", "zip (*.zip)")
         if len(filename[0]) != 0 and not filename[0] is None:
-            self.controller.export_gcode(filename[0])
+            self.export_gcode_signal.emit(filename[0])
 
     @pyqtSlot()
     def import_object(self) -> None:
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Open stl', "", "stl (*.stl)")
         if len(filename[0]) != 0 and not filename is None:
-            self.controller.import_object(filename[0], filename[1])
+            self.import_obj_signal.emit(filename[0], filename[1])
 
     def show_printer_window(self) -> None:
-        self.show_settings_window(self.printer_cmb_box, 'printer')
+        self.show_printer_win.emit(self.printer_cmb_box.currentIndex())
 
     def show_param_window(self) -> None:
-        self.show_settings_window(
-            self.print_settings_cmb_box, 'parameter_preset')
+        self.show_parameter_win.emit(self.print_settings_cmb_box.currentIndex())
 
     def show_printhead_window(self) -> None:
-        self.show_settings_window(self.printhead_cmb_box, 'printhead')
-
-    def show_settings_window(self, slave_cmb: QtWidgets.QComboBox, type_string: str) -> None:
-        win = SettingsWindow(
-            slave_cmb, self.controller.settings, type_string, self)
-        win.exec()
+        self.show_printhead_win.emit(self.printhead_cmb_box.currentIndex())
 
     @pyqtSlot(str, str)
     def populate_printer_drop_down(self, setting_type: str, value: str) -> None:

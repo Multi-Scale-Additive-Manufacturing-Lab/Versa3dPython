@@ -4,9 +4,10 @@ from typing import Tuple
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
 import vtk
+from vtkmodules.vtkRenderingCore import vtkActor
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
-from versa3d.settings import Versa3dSettings
+from versa3d.settings import Versa3dSettings, SettingWrapper
 from versa3d.slicing import VoxelSlicer
 from versa3d.tool_path_planner import ToolPathPlannerFilter
 from versa3d.print_platter import PrintObject, PrintPlatter
@@ -28,9 +29,15 @@ class Versa3dController(QObject):
     update_scene = pyqtSignal(float, float, float)
     selection_obj = pyqtSignal(bool, tuple)
 
-    def __init__(self, renderer: vtk.vtkRenderer, parent: QObject = None) -> None:
+    render_signal = pyqtSignal(PrintObject)
+    unrender_signal = pyqtSignal(PrintObject)
+
+    spawn_preset_win_signal = pyqtSignal(SettingWrapper)
+    spawn_printer_win_signal = pyqtSignal(SettingWrapper)
+    spawn_printhead_win_signal = pyqtSignal(SettingWrapper)
+
+    def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent=parent)
-        self.renderer = renderer
 
         self._settings = Versa3dSettings()
 
@@ -59,14 +66,22 @@ class Versa3dController(QObject):
     @property
     def settings(self) -> None:
         return self._settings
-
-    @pyqtSlot(int)
-    def change_printer(self, idx: int) -> None:
+    
+    @property
+    def printer_idx(self) -> int:
+        return self._printer_idx
+    
+    @printer_idx.setter
+    def printer_idx(self, idx : int):
         if self._printer_idx != idx:
             self._printer_idx = idx
             printer_setting = self._settings.get_printer(idx)
             new_size = printer_setting.build_bed_size.value
             self.update_scene.emit(new_size[0], new_size[1], new_size[2])
+        
+    @pyqtSlot(int)
+    def change_printer(self, idx: int) -> None:
+        self.printer_idx = idx
 
     @pyqtSlot(int)
     def change_printhead(self, idx: int) -> None:
@@ -75,6 +90,36 @@ class Versa3dController(QObject):
     @pyqtSlot(int)
     def change_preset(self, idx: int) -> None:
         self._parameter_preset_idx = idx
+    
+    @pyqtSlot(int)
+    def edit_printer(self, idx: int) -> None:
+        self.printer_idx = idx
+        printer_setting = self._settings.get_printer(idx)
+        cb_obj = SettingWrapper(printer_setting, 
+                        self._settings.clone_printer,
+                        self._settings.remove_printer,
+                        self._settings.save_printer)
+        self.spawn_printer_win_signal(cb_obj)
+    
+    @pyqtSlot(int)
+    def edit_printhead(self, idx: int) -> None:
+        self._printhead_idx = idx
+        printhead_setting = self._settings.get_printhead_setting(idx)
+        cb_obj = SettingWrapper(printhead_setting, 
+                        self._settings.clone_printhead,
+                        self._settings.remove_printhead,
+                        self._settings.save_printhead)
+        self.spawn_printhead_win_signal(cb_obj)
+    
+    @pyqtSlot(int)
+    def edit_preset(self, idx: int) -> None:
+        self._parameter_preset_idx = idx
+        param_setting = self._settings.get_parameter_preset(idx)
+        cb_obj = SettingWrapper(param_setting, 
+                        self._settings.clone_parameter_preset,
+                        self._settings.remove_parameter_preset,
+                        self._settings.save_parameter_preset)
+        self.spawn_preset_win_signal(cb_obj)
 
     def load_settings(self) -> None:
         self.settings.load_all()
@@ -83,11 +128,11 @@ class Versa3dController(QObject):
         if mode:
             self.print_objects[obj.id] = obj
             self.platter.SetInputConnection(0, obj.GetOutputPort())
-            obj.render(self.renderer)
+            self.render_signal.emit(obj)
         else:
             obj = self.print_objects.pop(obj.id)
             self.platter.RemoveInputConnection(0, obj.GetOutputPort())
-            obj.unrender(self.renderer)
+            self.unrender_signal.emit(obj)
         
         self.platter.Update()
 

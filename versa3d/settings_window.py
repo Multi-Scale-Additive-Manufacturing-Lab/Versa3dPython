@@ -2,17 +2,20 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QAbstractButton, QInputDialog, QMessageBox, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QObject
-from versa3d.settings import Versa3dSettings, SingleEntry, PrintSetting
+from versa3d.settings import Versa3dSettings, SingleEntry, PrintSetting, SettingWrapper
 
 import attr
-
+from typing import Callable, Dict
 
 class SettingsWindow(QDialog):
     apply_setting_signal = pyqtSignal()
 
-    def __init__(self, slave_cmb: QComboBox, versa_settings: Versa3dSettings, window_type: str, parent: QObject = None):
+    def __init__(self, slave_cmb: QComboBox,
+                setting_obj : SettingWrapper, 
+                parent: QObject = None):
         super().__init__(parent=parent)
-        self.window_type = window_type
+        self.setting_obj =setting_obj
+
         init_idx = slave_cmb.currentIndex()
 
         top_left_side = QtWidgets.QHBoxLayout()
@@ -34,8 +37,7 @@ class SettingsWindow(QDialog):
         top_left_side.addWidget(delete_file)
         top_left_side.addWidget(self.drop_down_list)
         top_left_side.insertSpacing(-1, 20)
-        self.versa_settings = versa_settings
-        ls_settings = getattr(self.versa_settings, self.window_type)
+        ls_settings = setting_obj.setting
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.drop_down_list.currentIndexChanged.connect(
@@ -68,8 +70,7 @@ class SettingsWindow(QDialog):
         idx = self.drop_down_list.currentIndex()
         is_duplicate = self.drop_down_list.findText(new_name) != -1
         if len(new_name) != 0 and ok and not is_duplicate:
-            setting_dict = getattr(
-                self.versa_settings, 'clone_%s' % self.window_type)(idx, new_name)
+            setting_dict = self.setting_obj.clone(idx, new_name)
             self.drop_down_list.addItem(new_name)
             widget = self.init_tab(setting_dict)
             self.stacked_widget.addWidget(widget)
@@ -87,13 +88,12 @@ class SettingsWindow(QDialog):
     @pyqtSlot()
     def save_setting(self) -> None:
         setting_idx = self.drop_down_list.currentIndex()
-        getattr(self.versa_settings, 'save_%s' % self.window_type)(setting_idx)
+        self.setting_obj.save(setting_idx)
 
     @pyqtSlot()
     def delete_setting(self) -> None:
         setting_idx = self.drop_down_list.currentIndex()
-        getattr(self.versa_settings, 'remove_%s' %
-                self.window_type)(setting_idx)
+        self.setting_obj.remove(setting_idx)
         self.drop_down_list.removeItem(setting_idx)
         widget = self.stacked_widget.widget(setting_idx)
         self.stacked_widget.removeWidget(widget)
@@ -109,7 +109,7 @@ class SettingsWindow(QDialog):
         elif role == QDialogButtonBox.RejectRole:
             self.reject()
 
-    def init_tab(self, setting_dict: PrintSetting):
+    def init_tab(self, setting_dict: PrintSetting) -> QtWidgets.QWidget:
         layout = QtWidgets.QHBoxLayout()
         menu_widget = QtWidgets.QListWidget()
         layout.addWidget(menu_widget)

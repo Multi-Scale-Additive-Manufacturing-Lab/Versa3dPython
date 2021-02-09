@@ -9,6 +9,13 @@ import sys
 import os
 from PyQt5 import QtWidgets
 from versa3d.main_window import MainWindow
+from versa3d.controller import Versa3dController
+
+def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
+    CONTROLLER.settings.add_setting_signal.connect(
+        main_win.populate_printer_drop_down
+    )
+    CONTROLLER.load_settings()
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)
@@ -27,6 +34,8 @@ if __name__ == "__main__":
     APP.setApplicationName("Versa3d")
 
     WINDOW = MainWindow(UI_PATH)
+    CONTROLLER = Versa3dController(parent = WINDOW)
+    set_up_app(WINDOW, CONTROLLER)
     WINDOW.show()
 
     sys.exit(APP.exec_())
