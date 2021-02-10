@@ -91,35 +91,32 @@ class Versa3dController(QObject):
     def change_preset(self, idx: int) -> None:
         self._parameter_preset_idx = idx
     
-    @pyqtSlot(int)
-    def edit_printer(self, idx: int) -> None:
-        self.printer_idx = idx
-        printer_setting = self._settings.get_printer(idx)
+    @pyqtSlot()
+    def edit_printer(self) -> None:
+        printer_setting = self._settings.printer
         cb_obj = SettingWrapper(printer_setting, 
                         self._settings.clone_printer,
                         self._settings.remove_printer,
                         self._settings.save_printer)
-        self.spawn_printer_win_signal(cb_obj)
+        self.spawn_printer_win_signal.emit(cb_obj)
     
-    @pyqtSlot(int)
-    def edit_printhead(self, idx: int) -> None:
-        self._printhead_idx = idx
-        printhead_setting = self._settings.get_printhead_setting(idx)
+    @pyqtSlot()
+    def edit_printhead(self) -> None:
+        printhead_setting = self._settings.printhead
         cb_obj = SettingWrapper(printhead_setting, 
                         self._settings.clone_printhead,
                         self._settings.remove_printhead,
                         self._settings.save_printhead)
-        self.spawn_printhead_win_signal(cb_obj)
+        self.spawn_printhead_win_signal.emit(cb_obj)
     
-    @pyqtSlot(int)
-    def edit_preset(self, idx: int) -> None:
-        self._parameter_preset_idx = idx
-        param_setting = self._settings.get_parameter_preset(idx)
+    @pyqtSlot()
+    def edit_preset(self) -> None:
+        param_setting = self._settings.parameter_preset
         cb_obj = SettingWrapper(param_setting, 
                         self._settings.clone_parameter_preset,
                         self._settings.remove_parameter_preset,
                         self._settings.save_parameter_preset)
-        self.spawn_preset_win_signal(cb_obj)
+        self.spawn_preset_win_signal.emit(cb_obj)
 
     def load_settings(self) -> None:
         self.settings.load_all()

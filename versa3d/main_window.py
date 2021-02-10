@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 
+from typing import Set
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 import vtk
@@ -14,7 +15,7 @@ import numpy as np
 from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.movement_widget import MovementPanel
-from versa3d.settings import SettingTypeKey
+from versa3d.settings import SettingTypeKey, SettingWrapper
 from versa3d.mouse_interaction import RubberBandHighlight
 
 
@@ -39,9 +40,9 @@ class MainWindow(QtWidgets.QMainWindow):
     change_printhead_signal = pyqtSignal(int)
     change_preset_signal = pyqtSignal(int)
 
-    show_parameter_win = pyqtSignal(int)
-    show_printer_win = pyqtSignal(int)
-    show_preset_win = pyqtSignal(int)
+    show_parameter_win = pyqtSignal()
+    show_printer_win = pyqtSignal()
+    show_printhead_win = pyqtSignal()
 
     def __init__(self, ui_file_path: str) -> None:
         super().__init__()
@@ -51,7 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
 
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
-        
+
         self.rubber_style = RubberBandHighlight()
         self.rubber_style.AddObserver('StartPickEvent', self.spawn_movement_win)
         self.rubber_style.AddObserver('EndPickEvent', self.remove_movement_win)
@@ -113,14 +114,32 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(filename[0]) != 0 and not filename is None:
             self.import_obj_signal.emit(filename[0], filename[1])
 
+    @pyqtSlot()
     def show_printer_window(self) -> None:
-        self.show_printer_win.emit(self.printer_cmb_box.currentIndex())
+        self.show_printer_win.emit()
 
+    @pyqtSlot()
     def show_param_window(self) -> None:
-        self.show_parameter_win.emit(self.print_settings_cmb_box.currentIndex())
+        self.show_parameter_win.emit()
 
+    @pyqtSlot()
     def show_printhead_window(self) -> None:
-        self.show_printhead_win.emit(self.printhead_cmb_box.currentIndex())
+        self.show_printhead_win.emit()
+
+    @pyqtSlot(SettingWrapper)
+    def spawn_setting_window(self, val : SettingWrapper) -> None:
+        win = SettingsWindow(self.print_settings_cmb_box, val, self)
+        win.exec()
+    
+    @pyqtSlot(SettingWrapper)
+    def spawn_printer_window(self, val : SettingWrapper) -> None:
+        win = SettingsWindow(self.printer_cmb_box, val, self)
+        win.exec()
+    
+    @pyqtSlot(SettingWrapper)
+    def spawn_printhead_window(self, val : SettingWrapper) -> None:
+        win = SettingsWindow(self.printhead_cmb_box, val, self)
+        win.exec()
 
     @pyqtSlot(str, str)
     def populate_printer_drop_down(self, setting_type: str, value: str) -> None:
