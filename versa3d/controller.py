@@ -133,6 +133,7 @@ class Versa3dController(QObject):
         
         self.platter.Update()
 
+    @pyqtSlot(str)
     def export_gcode(self, file_path: str) -> None:
         printer_setting = self.settings.get_printer(self._printer_idx)
         printhead_setting = self.settings.get_printhead(self._printhead_idx)

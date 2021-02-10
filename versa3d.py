@@ -44,6 +44,8 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     main_win.undo_sig.connect(control.undo_stack.undo)
     main_win.redo_sig.connect(control.undo_stack.redo)
 
+    main_win.export_gcode_signal.connect(control.export_gcode)
+
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)
 
