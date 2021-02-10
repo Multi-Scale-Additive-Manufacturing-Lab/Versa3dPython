@@ -126,14 +126,6 @@ class PrintObject(VTKPythonAlgorithmBase):
     def actor(self) -> vtkActor:
         return self._actor
 
-    def render(self, ren: vtkRenderer) -> None:
-        ren.AddActor(self._actor)
-        ren.GetRenderWindow().Render()
-
-    def unrender(self, ren: vtkRenderer) -> None:
-        ren.RemoveActor(self._actor)
-        ren.GetRenderWindow().Render()
-
     @calldata_type(VTK_OBJECT)
     def pick(self, caller: vtkActor, ev: str, interactor: vtkRenderWindowInteractor = None) -> None:
         """set pick status

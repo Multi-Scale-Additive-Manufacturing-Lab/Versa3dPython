@@ -29,8 +29,8 @@ class Versa3dController(QObject):
     update_scene = pyqtSignal(float, float, float)
     selection_obj = pyqtSignal(bool, tuple)
 
-    render_signal = pyqtSignal(PrintObject)
-    unrender_signal = pyqtSignal(PrintObject)
+    render_signal = pyqtSignal(vtkActor)
+    unrender_signal = pyqtSignal(vtkActor)
 
     spawn_preset_win_signal = pyqtSignal(SettingWrapper)
     spawn_printer_win_signal = pyqtSignal(SettingWrapper)
@@ -125,11 +125,11 @@ class Versa3dController(QObject):
         if mode:
             self.print_objects[obj.id] = obj
             self.platter.SetInputConnection(0, obj.GetOutputPort())
-            self.render_signal.emit(obj)
+            self.render_signal.emit(obj.actor)
         else:
             obj = self.print_objects.pop(obj.id)
             self.platter.RemoveInputConnection(0, obj.GetOutputPort())
-            self.unrender_signal.emit(obj)
+            self.unrender_signal.emit(obj.actor)
         
         self.platter.Update()
 
@@ -150,6 +150,7 @@ class Versa3dController(QObject):
         self.tool_path_gen = ToolPathPlannerFilter()
         self.tool_path_gen.SetInputConnection(self.voxelizer.GetOutputPort())
 
+    @pyqtSlot(str, str)
     def import_object(self, filename: str, ext: str) -> None:
         if(filename != ''):
             obj_src = reader_factory(filename, ext)

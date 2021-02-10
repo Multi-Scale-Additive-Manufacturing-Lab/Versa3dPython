@@ -37,6 +37,9 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     main_win.show_printhead_win.connect(control.edit_printhead)
     control.spawn_printhead_win_signal.connect(main_win.spawn_printhead_window)
 
+    main_win.import_obj_signal.connect(control.import_object)
+    control.render_signal.connect(main_win.render)
+    control.unrender_signal.connect(main_win.unrender)
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)

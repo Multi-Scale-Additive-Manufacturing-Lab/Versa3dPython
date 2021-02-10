@@ -33,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
     undo_sig = pyqtSignal()
     redo_sig = pyqtSignal()
 
-    import_signal = pyqtSignal(str, str)
+    import_obj_signal = pyqtSignal(str, str)
     export_gcode_signal = pyqtSignal(str)
 
     change_printer_signal = pyqtSignal(int)
@@ -149,6 +149,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.printhead_cmb_box.addItem(value)
         elif(setting_type == SettingTypeKey.print_param.value):
             self.print_settings_cmb_box.addItem(value)
+    
+    @pyqtSlot(vtk.vtkActor)
+    def render(self, actor : vtk.vtkActor):
+        self.stl_renderer.AddActor(actor)
+        self.stl_renderer.GetRenderWindow().Render()
+    
+    @pyqtSlot(vtk.vtkActor)
+    def unrender(self, actor : vtk.vtkActor):
+        self.stl_renderer.RemoveActor(actor)
+        self.stl_renderer.GetRenderWindow().Render()
 
     def setup_scene(self, size: np.array) -> None:
         """set grid scene
