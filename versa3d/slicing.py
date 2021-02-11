@@ -184,17 +184,10 @@ class Dithering(GenericSlicer):
         mask.SetMaskedOutputValue(1)
         mask.Update()
 
-        convert_result = vtk.vtkImageShiftScale()
-        convert_result.SetOutputScalarTypeToUnsignedChar()
-        convert_result.SetScale(255)
-        convert_result.SetInputConnection(mask.GetOutputPort())
-        convert_result.Update()
-
-
         char_skin = vtk.vtkImageShiftScale()
         char_skin.SetOutputScalarTypeToUnsignedChar()
         char_skin.SetScale(255)
-        char_skin.SetInputConnection(skin_img.GetOutputPort())
+        char_skin.SetInputConnection(mask.GetOutputPort())
         char_skin.Update()
 
         return char_skin.GetOutput()
