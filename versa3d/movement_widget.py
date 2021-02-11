@@ -7,6 +7,8 @@ class MovementPanel(QWidget):
     translate_sig = pyqtSignal(float, float, float)
     rotate_sig = pyqtSignal(float, float, float)
     scale_sig = pyqtSignal(float, float, float)
+    
+    reset_sig = pyqtSignal(float)
 
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent=parent)
@@ -45,6 +47,9 @@ class MovementPanel(QWidget):
 
         self.setLayout(grid_layout)
     
+    def reset(self):
+        self.reset_sig.emit(0)
+    
     @pyqtSlot()
     def _emit_translate_sig(self):
         x = self.ls_translate_spin_box[0].value()
@@ -73,4 +78,5 @@ class MovementPanel(QWidget):
             spin_box = QtWidgets.QDoubleSpinBox()
             grid.addWidget(spin_box, row, i+1)
             ls_spin.append(spin_box)
+            self.reset_sig.connect(spin_box.setValue)
         return ls_spin

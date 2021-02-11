@@ -14,6 +14,8 @@ from versa3d.print_platter import ID_KEY
 
 class MouseSignalEmitter(QObject):
     commit_move = pyqtSignal(vtkTransform, vtkTransform, vtkActor, str)
+    interaction_start = pyqtSignal(np.ndarray, vtkProp3DCollection)
+    interaction_end = pyqtSignal()
 
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent=parent)
@@ -119,13 +121,14 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             box_rep.PlaceWidget(bds)
             self.widget.SetRepresentation(box_rep)
             self.widget.SetEnabled(1)
+            self.emitter.interaction_start.emit(bds, props)
         else:
             if not self.selected_actor is None:
                 self.selected_actor.InitTraversal()
                 prop = self.selected_actor.GetNextProp()
 
                 c = 0
-                while not prop is None:
+                while not prop is None and len(self._init_t) > 0:
                     p_t = prop.GetUserTransform()
                     o_t = self._init_t[c]
                     actor_property = prop.GetProperty()
@@ -140,4 +143,5 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
                 self.selected_actor = None
             self.widget.SetRepresentation(None)
             self.widget.SetEnabled(0)
+            self.emitter.interaction_end.emit()
         self.update_render()

@@ -54,8 +54,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
 
         self.rubber_style = RubberBandHighlight()
-        self.rubber_style.AddObserver('StartPickEvent', self.spawn_movement_win)
-        self.rubber_style.AddObserver('EndPickEvent', self.remove_movement_win)
+        self.rubber_style.emitter.interaction_start.connect(self.spawn_movement_win)
+        self.rubber_style.emitter.interaction_end.connect(self.remove_movement_win)
         
         self.stl_interactor.SetInteractorStyle(self.rubber_style)
 
@@ -91,14 +91,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.movement_panel.rotate_sig.connect(self.rotate_sig)
         self.movement_panel.scale_sig.connect(self.scale_sig)
     
-    @calldata_type(VTK_OBJECT)
-    def spawn_movement_win(self, caller: vtkInteractorStyleRubberBand3D, ev: str, calldata: vtkProp3DCollection = None) -> None:
+    @pyqtSlot(np.ndarray, vtkProp3DCollection)
+    def spawn_movement_win(self, bds : np.ndarray, calldata : vtkProp3DCollection) -> None:
+        # TODO do absolute movement
         if calldata.GetNumberOfItems() > 0:
             self.object_interaction.setCurrentIndex(1)
     
-    @calldata_type(VTK_OBJECT)
-    def remove_movement_win(self, caller: vtkInteractorStyleRubberBand3D, ev: str, calldata: vtkProp3DCollection = None) -> None:
+    @pyqtSlot()
+    def remove_movement_win(self) -> None:
         self.object_interaction.setCurrentIndex(0)
+        self.movement_panel.reset()
 
     @pyqtSlot()
     def export_gcode(self) -> None:
