@@ -40,9 +40,6 @@ class SlicingTest(unittest.TestCase):
         res = mock.Mock()
         res.value = np.array([600, 600], dtype=int)
 
-        ft = mock.Mock()
-        ft.value = 0
-
         self.printer_setting = mock.Mock()
         self.printer_setting.layer_thickness = lt
 
@@ -50,9 +47,10 @@ class SlicingTest(unittest.TestCase):
         self.printhead_setting.dpi = res
 
         self.print_param = mock.Mock()
-        self.print_param.fill_pattern = ft
 
     def test_slice_boat(self):
+        self.print_param.fill_pattern.value = 0
+
         slicer = VoxelSlicer()
         slicer.set_settings(self.printer_setting,
                             self.printhead_setting, self.print_param)
@@ -79,6 +77,40 @@ class SlicingTest(unittest.TestCase):
 
         writer_3d = vtk.vtkXMLImageDataWriter()
         writer_3d.SetFileName(os.path.join(self.out_dir, 'test.vti'))
+        writer_3d.SetInputData(slice_stack)
+        writer_3d.Update()
+        writer_3d.Write()
+    
+    def test_dither_boat(self):
+        self.print_param.fill_pattern.value = 1
+        self.print_param.skin_offset.value = 0.1
+
+        slicer = VoxelSlicer()
+        slicer.set_settings(self.printer_setting,
+                            self.printhead_setting, self.print_param)
+        slicer.SetInputDataObject(self.part)
+        slicer.Update()
+
+        slice_stack = slicer.GetOutputDataObject(0)
+        img_dim = slice_stack.GetDimensions()
+        self.assertTrue(img_dim[2] > 0)
+        (x_min, x_max, y_min, y_max, _, _) = slice_stack.GetExtent()
+
+        mid_point = int(img_dim[2]/2)
+        single_im = vtk.vtkExtractVOI()
+        single_im.SetVOI(x_min, x_max, y_min, y_max, mid_point, mid_point)
+        single_im.SetSampleRate(1, 1, 1)
+        single_im.SetInputData(slice_stack)
+        single_im.Update()
+
+        writer = vtk.vtkBMPWriter()
+        writer.SetInputData(single_im.GetOutput())
+        writer.SetFileName(os.path.join(self.out_dir, 'test_d.bmp'))
+        writer.Update()
+        writer.Write()
+
+        writer_3d = vtk.vtkXMLImageDataWriter()
+        writer_3d.SetFileName(os.path.join(self.out_dir, 'test_d.vti'))
         writer_3d.SetInputData(slice_stack)
         writer_3d.Update()
         writer_3d.Write()
