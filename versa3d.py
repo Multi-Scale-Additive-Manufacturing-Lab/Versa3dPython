@@ -46,6 +46,7 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
 
     main_win.export_gcode_signal.connect(control.export_gcode)
     main_win.rubber_style.emitter.commit_move.connect(control.transform)
+    main_win.transform_sig.connect(control.transform)
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)

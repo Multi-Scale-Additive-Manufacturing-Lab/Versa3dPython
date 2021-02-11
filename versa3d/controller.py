@@ -170,18 +170,6 @@ class Versa3dController(QObject):
         # TODO add import command as parent
         com = vscom.TransformCommand(current_t, old_t, actor)
         self.undo_stack.push(com)
-    
-    @pyqtSlot(float, float, float)
-    def translate(self, x : float, y : float, z : float):
-        pass
-
-    @pyqtSlot(float, float, float)
-    def rotate(self, x : float, y : float, z : float):
-        pass
-
-    @pyqtSlot(float, float, float)
-    def scale(self, x : float, y : float, z : float):
-        pass
 
     @pyqtSlot()
     def slice_object(self) -> None:

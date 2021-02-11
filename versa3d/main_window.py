@@ -7,7 +7,8 @@ import vtk
 from vtkmodules.util.misc import calldata_type
 from vtkmodules.util.vtkConstants import VTK_OBJECT
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
-from vtkmodules.vtkRenderingCore import vtkProp3DCollection
+from vtkmodules.vtkRenderingCore import vtkProp3DCollection, vtkActor
+from vtkmodules.vtkCommonTransforms import vtkTransform
 
 from vtkmodules.util import numpy_support
 from vtkmodules import vtkInteractionStyle as vtkIntStyle
@@ -25,10 +26,8 @@ class MainWindow(QtWidgets.QMainWindow):
     Args:
         QtWidgets (QMainWindow): main window
     """
-
-    translate_sig = pyqtSignal(float, float, float)
-    rotate_sig = pyqtSignal(float, float, float)
-    scale_sig = pyqtSignal(float, float, float)
+    
+    transform_sig = pyqtSignal(vtkTransform, vtkTransform, vtkActor, str)
 
     undo_sig = pyqtSignal()
     redo_sig = pyqtSignal()
@@ -87,20 +86,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.object_interaction.insertWidget(1, self.movement_panel)
         self.object_interaction.setCurrentIndex(0)
 
-        self.movement_panel.translate_sig.connect(self.translate_sig)
-        self.movement_panel.rotate_sig.connect(self.rotate_sig)
-        self.movement_panel.scale_sig.connect(self.scale_sig)
+        self.movement_panel.translate_sig.connect(self.translate_obj)
+        #self.movement_panel.rotate_sig.connect(self.rotate_obj)
+        #self.movement_panel.scale_sig.connect(self.scale_obj)
+
+        self.selected_obj = None
+    
+    @pyqtSlot(float, float, float)
+    def translate_obj(self, x : float, y : float, z : float):
+        current = vtkTransform()
+        current.Identity()
+        current.Translate(x, y, z)
+        self.rubber_style.apply_transform(current)
     
     @pyqtSlot(np.ndarray, vtkProp3DCollection)
     def spawn_movement_win(self, bds : np.ndarray, calldata : vtkProp3DCollection) -> None:
         # TODO do absolute movement
         if calldata.GetNumberOfItems() > 0:
             self.object_interaction.setCurrentIndex(1)
+            self.selected_obj = calldata
     
     @pyqtSlot()
     def remove_movement_win(self) -> None:
         self.object_interaction.setCurrentIndex(0)
         self.movement_panel.reset()
+        self.selected_obj = None
 
     @pyqtSlot()
     def export_gcode(self) -> None:

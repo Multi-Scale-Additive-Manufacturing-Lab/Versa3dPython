@@ -68,6 +68,33 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
         if local_trigger:
             self._first = False
+    
+    def apply_transform(self, trs: vtkTransform):
+        self.selected_actor.InitTraversal()
+        prop = self.selected_actor.GetNextProp()
+
+        box_trs = vtkTransform()
+        box_rep = self.widget.GetRepresentation()
+        box_rep.GetTransform(box_trs)
+        box_trs.Concatenate(trs)
+
+        while not prop is None:
+            if prop.GetUserTransform() is None:
+                o_t = vtkTransform()
+                o_t.Identity()
+                prop.SetUserTransform(o_t)
+            else:
+                o_t = vtkTransform()
+                o_t.DeepCopy(prop.GetUserTransform())
+
+            i_t = vtkTransform()
+            i_t.DeepCopy(prop.GetUserTransform())
+
+            i_t.Concatenate(trs)
+
+            #TODO add id
+            self.emitter.commit_move.emit(i_t, o_t, prop, "")
+            prop = self.selected_actor.GetNextProp()
 
     def find_poked_actor(self, style: vtkInteractorStyleRubberBand3D) -> vtkProp3DCollection:
         interactor = style.GetInteractor()
