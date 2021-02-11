@@ -156,7 +156,7 @@ class Versa3dController(QObject):
         if(filename != ''):
             obj_src = reader_factory(filename, ext)
 
-            obj = PrintObject(self.undo_stack)
+            obj = PrintObject()
             obj.SetInputConnection(obj_src.GetOutputPort())
             obj.Update()
 
