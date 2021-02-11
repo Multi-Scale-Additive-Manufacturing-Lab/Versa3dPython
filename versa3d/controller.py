@@ -5,6 +5,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
 import vtk
 from vtkmodules.vtkRenderingCore import vtkActor
+from vtkmodules.vtkCommonTransforms import vtkTransform
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings, SettingWrapper
@@ -163,6 +164,11 @@ class Versa3dController(QObject):
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
             obj.import_command = com
+    
+    @pyqtSlot(vtkTransform, vtkTransform, vtkActor, str)
+    def transform(self, current_t : vtkTransform, old_t : vtkTransform, actor : vtkActor, id : str):
+        com = vscom.TransformCommand(current_t, old_t, actor)
+        self.undo_stack.push(com)
     
     @pyqtSlot(float, float, float)
     def translate(self, x : float, y : float, z : float):

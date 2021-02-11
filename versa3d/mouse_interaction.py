@@ -10,6 +10,8 @@ from typing import Tuple
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject
 from PyQt5.QtWidgets import QUndoCommand
 
+from versa3d.print_platter import ID_KEY
+
 class MouseSignalEmitter(QObject):
     commit_move = pyqtSignal(vtkTransform, vtkTransform, vtkActor, str)
 
@@ -126,7 +128,10 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
                 while not prop is None:
                     p_t = prop.GetUserTransform()
                     o_t = self._init_t[c]
-                    self.emitter.commit_move.emit(p_t, o_t, prop, 'NA')
+                    actor_property = prop.GetProperty()
+                    info = actor_property.GetInformation()
+                    id = info.Get(ID_KEY)
+                    self.emitter.commit_move.emit(p_t, o_t, prop, id)
                     c += 1
                     prop = self.selected_actor.GetNextProp()
 

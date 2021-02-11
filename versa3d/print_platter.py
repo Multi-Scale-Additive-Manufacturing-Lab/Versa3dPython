@@ -1,7 +1,7 @@
 import numpy as np
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase, vtkAlgorithm
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
+from vtkmodules.vtkCommonCore import vtkInformation
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.util.vtkConstants import VTK_OBJECT
 from vtkmodules.vtkCommonTransforms import vtkTransform
@@ -9,10 +9,13 @@ from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor, vtkActor, vtk
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData
 from vtkmodules.util.misc import calldata_type
+from vtkmodules.util import keys
 from PyQt5.QtCore import QUuid
 
 from typing import Callable
 from time import time
+
+ID_KEY = keys.MakeKey(keys.StringKey, 'id', "vtkActor")
 
 class PrintPlatter(VTKPythonAlgorithmBase):
     def __init__(self) -> None:
@@ -52,12 +55,12 @@ class PrintObject(VTKPythonAlgorithmBase):
 
         self._actor = vtkActor()
 
-        self.picked = False
-        self._backup_prop = None
         self.id = QUuid.createUuid().toString()
         self.initialised = False
 
-        self.import_command = None
+        info = vtkInformation()
+        info.Set(ID_KEY, self.id)
+        self._actor.GetProperty().SetInformation(info)
 
     @property
     def actor(self) -> vtkActor:
