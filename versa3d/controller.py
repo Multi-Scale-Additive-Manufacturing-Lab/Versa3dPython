@@ -167,6 +167,7 @@ class Versa3dController(QObject):
     
     @pyqtSlot(vtkTransform, vtkTransform, vtkActor, str)
     def transform(self, current_t : vtkTransform, old_t : vtkTransform, actor : vtkActor, id : str):
+        # TODO add import command as parent
         com = vscom.TransformCommand(current_t, old_t, actor)
         self.undo_stack.push(com)
     
