@@ -15,9 +15,6 @@ class SlicingTest(unittest.TestCase):
         reader.SetFileName('./test/test_file/3DBenchySmall.stl')
         reader.Update()
 
-        self.resolution = np.array([600, 600])
-        self.layer_thickness = 0.1
-
         bounds = reader.GetOutput().GetBounds()
         transform = vtk.vtkTransform()
         translate_vec = np.zeros(3)
@@ -41,7 +38,7 @@ class SlicingTest(unittest.TestCase):
         lt.value = 0.1
 
         res = mock.Mock()
-        res.value = np.array([50, 50], dtype=int)
+        res.value = np.array([600, 600], dtype=int)
 
         ft = mock.Mock()
         ft.value = 0
