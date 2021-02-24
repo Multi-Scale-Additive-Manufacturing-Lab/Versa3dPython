@@ -89,6 +89,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.movement_panel.translate_sig.connect(self.translate_obj)
         #self.movement_panel.rotate_sig.connect(self.rotate_obj)
         #self.movement_panel.scale_sig.connect(self.scale_obj)
+        self.rubber_style.emitter.object_position.connect(self.movement_panel.update_current_position)
 
         self.selected_obj = None
     

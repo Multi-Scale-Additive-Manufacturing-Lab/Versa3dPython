@@ -12,13 +12,16 @@ from PyQt5.QtWidgets import QUndoCommand
 
 from versa3d.print_platter import ID_KEY
 
+
 class MouseSignalEmitter(QObject):
     commit_move = pyqtSignal(vtkTransform, vtkTransform, vtkActor, str)
     interaction_start = pyqtSignal(np.ndarray, vtkProp3DCollection)
     interaction_end = pyqtSignal()
+    object_position = pyqtSignal(float, float, float)
 
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent=parent)
+
 
 class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
     def __init__(self) -> None:
@@ -39,7 +42,8 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         box_rep.GetTransform(trs)
         self.selected_actor.InitTraversal()
         prop = self.selected_actor.GetNextProp()
-
+        bds = box_rep.GetBounds()
+        self.emitter.object_position.emit(bds[0], bds[2], bds[4])
         c = 0
         local_trigger = False
         while not prop is None:
@@ -68,7 +72,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
         if local_trigger:
             self._first = False
-    
+
     def apply_transform(self, trs: vtkTransform):
         self.selected_actor.InitTraversal()
         prop = self.selected_actor.GetNextProp()
@@ -92,7 +96,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
             i_t.Concatenate(trs)
 
-            #TODO add id
+            # TODO add id
             self.emitter.commit_move.emit(i_t, o_t, prop, "")
             prop = self.selected_actor.GetNextProp()
 
@@ -149,6 +153,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self.widget.SetRepresentation(box_rep)
             self.widget.SetEnabled(1)
             self.emitter.interaction_start.emit(bds, props)
+            self.emitter.object_position.emit(bds[0], bds[2], bds[4])
         else:
             if not self.selected_actor is None:
                 self.selected_actor.InitTraversal()
