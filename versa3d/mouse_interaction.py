@@ -90,10 +90,12 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             path = self.selected_actor.GetNextPath()
     
     def set_position(self, x, y, z):
-        self.selected_actor.SetPosition(x,y,z)
         bds = np.array(self.selected_actor.GetBounds())
+        diff = np.array([x,y,z]) - bds[0::2]
+        self.selected_actor.AddPosition(diff)
+        n_bds = self.selected_actor.GetBounds()
         box_rep = self.widget.GetRepresentation()
-        box_rep.PlaceWidget(bds)
+        box_rep.PlaceWidget(n_bds)
         self.update_ren()
 
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
