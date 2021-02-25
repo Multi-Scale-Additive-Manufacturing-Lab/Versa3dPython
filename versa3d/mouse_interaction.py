@@ -76,19 +76,18 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             ren.RemoveActor(prop)
             prop = prop_ls.GetNextProp()
 
-    def remove_actor_from_assem(self, prop_ls: vtkProp3DCollection, ren: vtkRenderer) -> None:
-        prop_ls.InitTraversal()
-        prop = prop_ls.GetNextProp()
-        trs = self.selected_actor.GetUserTransform()
-        while not prop is None:
-            self.selected_actor.RemovePart(prop)
-            if prop.GetUserTransform() is None:
-                prop.SetUserTransform(trs)
-            else:
-                prop.GetUserTransform().Concatenate(trs)
-                
+    def remove_actor_from_assem(self, ren: vtkRenderer) -> None:
+        self.selected_actor.InitPathTraversal()
+        path = self.selected_actor.GetNextPath()
+        while not path is None:
+            node = path.GetLastNode()
+            mat = node.GetMatrix()
+            prop = node.GetViewProp()
+            prop.PokeMatrix(mat)
+            prop.ComputeMatrix()
             ren.AddActor(prop)
-            prop = prop_ls.GetNextProp()
+            
+            path = self.selected_actor.GetNextPath()
     
     def set_position(self, x, y, z):
         self.selected_actor.SetPosition(x,y,z)
@@ -118,9 +117,8 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self.emitter.object_position.emit(bds[0], bds[2], bds[4])
         else:
             if not self.selected_actor is None:
-                prop_collection = vtkProp3DCollection()
-                self.selected_actor.GetActors(prop_collection)
-                self.remove_actor_from_assem(prop_collection, ren)
+                ren.RemoveActor(self.selected_actor)
+                self.remove_actor_from_assem(ren)
                 self.widget.SetRepresentation(None)
                 self.widget.SetEnabled(0)
                 self.selected_actor = None
