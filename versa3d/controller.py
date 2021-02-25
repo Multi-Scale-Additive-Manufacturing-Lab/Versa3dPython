@@ -126,6 +126,9 @@ class Versa3dController(QObject):
         if mode:
             self.print_objects[obj.id] = obj
             self.platter.SetInputConnection(0, obj.GetOutputPort())
+            setting_dict = self._settings.get_printer(self._printer_idx)
+            bbs = setting_dict.build_bed_size.value
+            obj.actor.SetPosition(bbs[0]/2, bbs[1]/2, 0)
             self.render_signal.emit(obj.actor)
         else:
             obj = self.print_objects.pop(obj.id)
