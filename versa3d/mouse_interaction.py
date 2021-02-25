@@ -33,6 +33,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         self.widget.AddObserver('InteractionEvent', self.move_cb)
 
         self.emitter = MouseSignalEmitter()
+        self._poked_ren = None
 
     def move_cb(self, caller: vtkBoxWidget2, ev: str) -> None:
         trs = vtkTransform()
@@ -62,6 +63,10 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         y = interactor.GetEventPosition()[1]
         ren = interactor.FindPokedRenderer(x, y)
         return ren
+    
+    def update_ren(self):
+        if not self._poked_ren is None:
+            self._poked_ren.GetRenderWindow().Render()
 
     def add_actor_to_assem(self, prop_ls: vtkProp3DCollection, ren: vtkRenderer) -> None:
         prop_ls.InitTraversal()
@@ -77,26 +82,27 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         trs = self.selected_actor.GetUserTransform()
         while not prop is None:
             self.selected_actor.RemovePart(prop)
-            if not trs is None:
-                p_t = prop.GetUserTransform()
-                if p_t is None:
-                    p_t = vtkTransform()
-                    p_t.Identity()
-                    prop.SetUserTransform(p_t)
-
+            if prop.GetUserTransform() is None:
+                prop.SetUserTransform(trs)
+            else:
                 prop.GetUserTransform().Concatenate(trs)
+                
             ren.AddActor(prop)
             prop = prop_ls.GetNextProp()
     
     def set_position(self, x, y, z):
         self.selected_actor.SetPosition(x,y,z)
+        bds = np.array(self.selected_actor.GetBounds())
+        box_rep = self.widget.GetRepresentation()
+        box_rep.PlaceWidget(bds)
+        self.update_ren()
 
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
         interactor = obj.GetInteractor()
         self.widget.SetInteractor(interactor)
         props = self.find_poked_actor(obj)
         ren = self.find_poked_renderer(obj)
-
+        self._poked_ren = ren
         if props.GetNumberOfItems() > 0:
             self.selected_actor = vtkAssembly()
             ren.AddActor(self.selected_actor)
@@ -119,5 +125,6 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
                 self.widget.SetEnabled(0)
                 self.selected_actor = None
             self.emitter.interaction_end.emit()
+            self._poked_ren = None
 
-        ren.GetRenderWindow().Render()
+        self.update_ren()
