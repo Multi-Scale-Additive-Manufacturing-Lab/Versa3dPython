@@ -95,10 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     @pyqtSlot(float, float, float)
     def translate_obj(self, x : float, y : float, z : float):
-        current = vtkTransform()
-        current.Identity()
-        current.Translate(x, y, z)
-        self.rubber_style.apply_transform(current)
+        self.rubber_style.set_position(x,y,z)
     
     @pyqtSlot(np.ndarray, vtkProp3DCollection)
     def spawn_movement_win(self, bds : np.ndarray, calldata : vtkProp3DCollection) -> None:

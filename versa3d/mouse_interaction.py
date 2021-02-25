@@ -1,5 +1,6 @@
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
-from vtkmodules.vtkRenderingCore import vtkCellPicker, vtkAssembly, vtkInteractorStyle, vtkProp3DCollection, vtkRenderedAreaPicker, vtkAssemblyPath, vtkActor
+from vtkmodules.vtkRenderingCore import vtkCellPicker, vtkAssembly, vtkInteractorStyle, vtkProp3DCollection
+from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker, vtkAssemblyPath, vtkActor, vtkRenderer
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget2, vtkBoxRepresentation
 from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonTransforms import vtkTransform
@@ -33,72 +34,19 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
         self.emitter = MouseSignalEmitter()
 
-        self._init_t = []
-        self._first = True
+        self._init_t = vtkTransform()
+        self._init_t.Identity()
+        self._init_t.PostMultiply()
 
     def move_cb(self, caller: vtkBoxWidget2, ev: str) -> None:
         trs = vtkTransform()
         box_rep = caller.GetRepresentation()
         box_rep.GetTransform(trs)
-        self.selected_actor.InitTraversal()
-        prop = self.selected_actor.GetNextProp()
+
         bds = box_rep.GetBounds()
         self.emitter.object_position.emit(bds[0], bds[2], bds[4])
-        c = 0
-        local_trigger = False
-        while not prop is None:
-            p_t = prop.GetUserTransform()
-            if p_t is None:
-                p_t = vtkTransform()
-                p_t.PostMultiply()
-                p_t.Identity()
-                prop.SetUserTransform(p_t)
 
-            if self._first:
-                old_t = vtkTransform()
-                old_t.DeepCopy(p_t)
-                self._init_t.append(old_t)
-                p_t.Concatenate(trs)
-                local_trigger = True
-            else:
-                old_t = self._init_t[c]
-
-                copy_t = vtkTransform()
-                copy_t.DeepCopy(old_t)
-                copy_t.Concatenate(trs)
-                prop.SetUserTransform(copy_t)
-            c += 1
-            prop = self.selected_actor.GetNextProp()
-
-        if local_trigger:
-            self._first = False
-
-    def apply_transform(self, trs: vtkTransform):
-        self.selected_actor.InitTraversal()
-        prop = self.selected_actor.GetNextProp()
-
-        box_trs = vtkTransform()
-        box_rep = self.widget.GetRepresentation()
-        box_rep.GetTransform(box_trs)
-        box_trs.Concatenate(trs)
-
-        while not prop is None:
-            if prop.GetUserTransform() is None:
-                o_t = vtkTransform()
-                o_t.Identity()
-                prop.SetUserTransform(o_t)
-            else:
-                o_t = vtkTransform()
-                o_t.DeepCopy(prop.GetUserTransform())
-
-            i_t = vtkTransform()
-            i_t.DeepCopy(prop.GetUserTransform())
-
-            i_t.Concatenate(trs)
-
-            # TODO add id
-            self.emitter.commit_move.emit(i_t, o_t, prop, "")
-            prop = self.selected_actor.GetNextProp()
+        self.selected_actor.SetUserTransform(trs)
 
     def find_poked_actor(self, style: vtkInteractorStyleRubberBand3D) -> vtkProp3DCollection:
         interactor = style.GetInteractor()
@@ -112,68 +60,71 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         props = picker.GetProp3Ds()
         return props
 
-    def update_render(self) -> None:
-        interactor = self.GetInteractor()
+    def find_poked_renderer(self, style: vtkInteractorStyleRubberBand3D) -> vtkRenderer:
+        interactor = style.GetInteractor()
         x = interactor.GetEventPosition()[0]
         y = interactor.GetEventPosition()[1]
         ren = interactor.FindPokedRenderer(x, y)
-        ren.GetRenderWindow().Render()
+        return ren
 
-    def compute_bound(self, prop_ls: vtkProp3DCollection) -> np.array:
+    def add_actor_to_assem(self, prop_ls: vtkProp3DCollection, ren: vtkRenderer) -> None:
         prop_ls.InitTraversal()
         prop = prop_ls.GetNextProp()
-
-        init_bd = np.array([np.PINF, np.NINF]*3, dtype=float)
-
         while not prop is None:
-            bds = np.array(prop.GetBounds())
-            min_b = bds[0::2]
-            max_b = bds[1::2]
-
-            min_mask = min_b < init_bd[0::2]
-            max_mask = max_b > init_bd[1::2]
-
-            init_bd[0::2][min_mask] = min_b[min_mask]
-            init_bd[1::2][max_mask] = max_b[max_mask]
+            self.selected_actor.AddPart(prop)
+            ren.RemoveActor(prop)
             prop = prop_ls.GetNextProp()
 
-        return init_bd
+    def remove_actor_from_assem(self, prop_ls: vtkProp3DCollection, ren: vtkRenderer) -> None:
+        prop_ls.InitTraversal()
+        prop = prop_ls.GetNextProp()
+        trs = self.selected_actor.GetUserTransform()
+        while not prop is None:
+            self.selected_actor.RemovePart(prop)
+            if not trs is None:
+                p_t = prop.GetUserTransform()
+                if p_t is None:
+                    p_t = vtkTransform()
+                    p_t.Identity()
+                    prop.SetUserTransform(p_t)
+
+                prop.GetUserTransform().Concatenate(trs)
+            ren.AddActor(prop)
+            prop = prop_ls.GetNextProp()
+    
+    def set_position(self, x, y, z):
+        self.selected_actor.SetPosition(x,y,z)
 
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
         interactor = obj.GetInteractor()
         self.widget.SetInteractor(interactor)
         props = self.find_poked_actor(obj)
+        ren = self.find_poked_renderer(obj)
 
         if props.GetNumberOfItems() > 0:
+            self.selected_actor = vtkAssembly()
+            ren.AddActor(self.selected_actor)
             box_rep = vtkBoxRepresentation()
             box_rep.SetPlaceFactor(1)
-            self.selected_actor = props
-            bds = self.compute_bound(props)
+            self.add_actor_to_assem(props, ren)
+            bds = np.array(self.selected_actor.GetBounds())
             box_rep.PlaceWidget(bds)
             self.widget.SetRepresentation(box_rep)
             self.widget.SetEnabled(1)
+
             self.emitter.interaction_start.emit(bds, props)
             self.emitter.object_position.emit(bds[0], bds[2], bds[4])
         else:
             if not self.selected_actor is None:
-                self.selected_actor.InitTraversal()
-                prop = self.selected_actor.GetNextProp()
-
-                c = 0
-                while not prop is None and len(self._init_t) > 0:
-                    p_t = prop.GetUserTransform()
-                    o_t = self._init_t[c]
-                    actor_property = prop.GetProperty()
-                    info = actor_property.GetInformation()
-                    id = info.Get(ID_KEY)
-                    self.emitter.commit_move.emit(p_t, o_t, prop, id)
-                    c += 1
-                    prop = self.selected_actor.GetNextProp()
-
-                self._init_t = []
-                self._first = True
+                prop_collection = vtkProp3DCollection()
+                self.selected_actor.GetActors(prop_collection)
+                self.remove_actor_from_assem(prop_collection, ren)
+                self.widget.SetRepresentation(None)
+                self.widget.SetEnabled(0)
                 self.selected_actor = None
-            self.widget.SetRepresentation(None)
-            self.widget.SetEnabled(0)
+                self.init_t = vtkTransform()
+                self._init_t.Identity()
+                self._init_t.PostMultiply()
             self.emitter.interaction_end.emit()
-        self.update_render()
+
+        ren.GetRenderWindow().Render()
