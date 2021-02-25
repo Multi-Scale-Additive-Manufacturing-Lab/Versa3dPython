@@ -34,10 +34,6 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
         self.emitter = MouseSignalEmitter()
 
-        self._init_t = vtkTransform()
-        self._init_t.Identity()
-        self._init_t.PostMultiply()
-
     def move_cb(self, caller: vtkBoxWidget2, ev: str) -> None:
         trs = vtkTransform()
         box_rep = caller.GetRepresentation()
@@ -122,9 +118,6 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
                 self.widget.SetRepresentation(None)
                 self.widget.SetEnabled(0)
                 self.selected_actor = None
-                self.init_t = vtkTransform()
-                self._init_t.Identity()
-                self._init_t.PostMultiply()
             self.emitter.interaction_end.emit()
 
         ren.GetRenderWindow().Render()
