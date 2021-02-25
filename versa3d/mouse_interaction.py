@@ -123,6 +123,5 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
                 self.widget.SetEnabled(0)
                 self.selected_actor = None
             self.emitter.interaction_end.emit()
-            self._poked_ren = None
 
         self.update_ren()
