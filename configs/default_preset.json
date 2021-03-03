@@ -144,6 +144,16 @@
                 ]
             }
         },
+        "infill": {
+            "type": "float",
+            "value": 0.5,
+            "ui": {
+                "label": "InFill",
+                "category": "Layer Parameters",
+                "section": "Binder Deposition",
+                "range" : [0, 1.0]
+            }
+        },
         "tool_path_pattern": {
             "type": "enum",
             "value": 0,

@@ -83,7 +83,8 @@ class SlicingTest(unittest.TestCase):
     
     def test_dither_boat(self):
         self.print_param.fill_pattern.value = 1
-        self.print_param.skin_offset.value = 0.1
+        self.print_param.skin_offset.value = 1.0
+        self.print_param.infill.value = 0.5
 
         slicer = VoxelSlicer()
         slicer.set_settings(self.printer_setting,
