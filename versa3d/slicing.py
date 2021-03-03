@@ -1,8 +1,13 @@
-import vtk
 import numpy as np
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
-from vtkmodules.util.vtkConstants import VTK_FLOAT
+from vtkmodules.util.vtkConstants import VTK_FLOAT, VTK_UNSIGNED_CHAR
+from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkImageData
+from vtkmodules.vtkCommonCore import vtkInformation
+from vtkmodules.vtkCommonExecutionModel import vtkStreamingDemandDrivenPipeline
+from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil, vtkImageStencil
+from vtkmodules.vtkImagingGeneral import vtkImageEuclideanDistance
+from vtkmodules.vtkImagingCore import vtkImageThreshold, vtkImageShiftScale, vtkImageMask
 
 from abc import ABC, abstractmethod
 
@@ -23,16 +28,16 @@ class GenericSlicer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def slice_object(self, input_src: vtk.vtkPolyData):
+    def slice_object(self, input_src: vtkPolyData):
         pass
-    
+
     @staticmethod
     def compute_spacing(layer_thickness: float, resolution: float) -> np.array:
         spacing = np.zeros(3, dtype=float)
         spacing[0:2] = 25.4/resolution
         spacing[2] = np.min(layer_thickness)
         return spacing
-    
+
     @staticmethod
     def compute_dim(bounds: np.array, spacing: np.array) -> np.array:
         return np.ceil((bounds[1::2] - bounds[0::2]) / spacing).astype(int)
@@ -58,40 +63,41 @@ class FullBlackSlicer(GenericSlicer):
     def update_printer(self, setting: PrintSetting) -> bool:
         return False
 
-    def update_info(self, input_src: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> None:
+    def update_info(self, input_src: vtkInformation, outInfo: vtkInformation) -> None:
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         bounds = np.array(input_src.GetBounds())
         img_dim = self.compute_dim(bounds, spacing)
-        outInfo.Set(vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
+        outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
                     (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
 
-    def slice_object(self, input_src: vtk.vtkPolyData) -> vtk.vtkImageData:
+    def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         img_dim = self.compute_dim(bounds, spacing)
         origin = bounds[0::2]
 
-        background_img = vtk.vtkImageData()
+        background_img = vtkImageData()
         background_img.SetSpacing(spacing)
         background_img.SetDimensions(img_dim)
         background_img.SetOrigin(origin)
-        background_img.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+        background_img.AllocateScalars(VTK_UNSIGNED_CHAR, 1)
         background_img.GetPointData().GetScalars().Fill(0)
 
-        poly_sten = vtk.vtkPolyDataToImageStencil()
+        poly_sten = vtkPolyDataToImageStencil()
         poly_sten.SetInputData(input_src)
         poly_sten.SetOutputOrigin(origin)
         poly_sten.SetOutputSpacing(spacing)
         poly_sten.SetOutputWholeExtent(background_img.GetExtent())
         poly_sten.Update()
 
-        stencil = vtk.vtkImageStencil()
+        stencil = vtkImageStencil()
         stencil.SetInputData(background_img)
         stencil.SetStencilConnection(poly_sten.GetOutputPort())
         stencil.SetBackgroundValue(255)
         stencil.ReverseStencilOff()
         stencil.Update()
         return stencil.GetOutput()
+
 
 class Dithering(GenericSlicer):
     def __init__(self) -> None:
@@ -100,7 +106,7 @@ class Dithering(GenericSlicer):
         self._skin_thickness = 0.1
         self._infill = 0.80
         self._dithering = 0
-    
+
     def update_printhead(self, setting: PixelPrinthead) -> bool:
         if np.any(setting.dpi.value != self._resolution):
             self._resolution = setting.dpi.value
@@ -117,53 +123,53 @@ class Dithering(GenericSlicer):
         if setting.skin_offset.value != self._skin_thickness:
             self._skin_thickness = setting.skin_offset.value
             modified_flag = True
-        
+
         return modified_flag
 
     def update_printer(self, setting: PrintSetting) -> bool:
         return False
-    
-    def update_info(self, input_src: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> None:
+
+    def update_info(self, input_src: vtkInformation, outInfo: vtkInformation) -> None:
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         bounds = np.array(input_src.GetBounds())
         img_dim = self.compute_dim(bounds, spacing)
-        outInfo.Set(vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
+        outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
                     (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
-    
-    def slice_object(self, input_src: vtk.vtkPolyData) -> vtk.vtkImageData:
+
+    def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
         spacing = self.compute_spacing(self._layer_thickness, self._resolution)
         img_dim = self.compute_dim(bounds, spacing)
         origin = bounds[0::2]
 
-        background_img = vtk.vtkImageData()
+        background_img = vtkImageData()
         background_img.SetSpacing(spacing)
         background_img.SetDimensions(img_dim)
         background_img.SetOrigin(origin)
         background_img.AllocateScalars(VTK_FLOAT, 1)
         background_img.GetPointData().GetScalars().Fill(0)
 
-        poly_sten = vtk.vtkPolyDataToImageStencil()
+        poly_sten = vtkPolyDataToImageStencil()
         poly_sten.SetInputData(input_src)
         poly_sten.SetOutputOrigin(origin)
         poly_sten.SetOutputSpacing(spacing)
         poly_sten.SetOutputWholeExtent(background_img.GetExtent())
         poly_sten.Update()
 
-        stencil = vtk.vtkImageStencil()
+        stencil = vtkImageStencil()
         stencil.SetInputData(background_img)
         stencil.SetStencilConnection(poly_sten.GetOutputPort())
         stencil.SetBackgroundValue(1.0)
         stencil.ReverseStencilOn()
         stencil.Update()
 
-        edt = vtk.vtkImageEuclideanDistance()
+        edt = vtkImageEuclideanDistance()
         edt.SetInputConnection(stencil.GetOutputPort())
         edt.InitializeOn()
         edt.Update()
 
         pix_offset = self._skin_thickness/np.min(spacing)
-        skin_img = vtk.vtkImageThreshold()
+        skin_img = vtkImageThreshold()
         skin_img.ThresholdByUpper(pix_offset)
         skin_img.SetOutputScalarTypeToFloat()
         skin_img.SetInValue(self._infill)
@@ -171,26 +177,27 @@ class Dithering(GenericSlicer):
         skin_img.SetInputConnection(edt.GetOutputPort())
         skin_img.Update()
 
-        mask_im = vtk.vtkImageShiftScale()
+        mask_im = vtkImageShiftScale()
         mask_im.SetOutputScalarTypeToUnsignedChar()
         mask_im.SetScale(255)
         mask_im.SetInputConnection(stencil.GetOutputPort())
         mask_im.Update()
 
-        mask = vtk.vtkImageMask()
+        mask = vtkImageMask()
         mask.SetImageInputData(skin_img.GetOutput())
         mask.SetMaskInputData(mask_im.GetOutput())
         mask.SetNotMask(0)
         mask.SetMaskedOutputValue(1)
         mask.Update()
 
-        char_skin = vtk.vtkImageShiftScale()
+        char_skin = vtkImageShiftScale()
         char_skin.SetOutputScalarTypeToUnsignedChar()
         char_skin.SetScale(255)
         char_skin.SetInputConnection(mask.GetOutputPort())
         char_skin.Update()
 
         return char_skin.GetOutput()
+
 
 class VoxelSlicer(VTKPythonAlgorithmBase):
     def __init__(self):
@@ -226,14 +233,14 @@ class VoxelSlicer(VTKPythonAlgorithmBase):
         if self.slicer.update_param(setting):
             self.Modified()
 
-    def RequestInformation(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> int:
+    def RequestInformation(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> int:
         input_src = vtk.vtkPolyData.GetData(inInfo[0])
         info = outInfo.GetInformationObject(0)
         self.slicer.update_info(input_src, info)
         return 1
 
-    def RequestData(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> int:
-        input_src = vtk.vtkPolyData.GetData(inInfo[0])
-        output = vtk.vtkImageData.GetData(outInfo)
+    def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> int:
+        input_src = vtkPolyData.GetData(inInfo[0])
+        output = vtkImageData.GetData(outInfo)
         output.ShallowCopy(self.slicer.slice_object(input_src))
         return 1
