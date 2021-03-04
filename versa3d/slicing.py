@@ -342,7 +342,7 @@ class VoxDithering(VTKPythonAlgorithmBase):
                         di = i + m[0]
                         dj = j + m[1]
 
-                        if ext[0] <= di and di < ext[1] and ext[2] <= dj and dj < ext[3]:
+                        if ext[0] <= di and di <= ext[1] and ext[2] <= dj and dj <= ext[3]:
                             old_val = output.GetScalarComponentAsDouble(
                                 di, dj, ext[4], 0)
                             quantization = old_val + error*m[2]
