@@ -12,6 +12,31 @@ from vtkmodules.vtkImagingCore import vtkImageThreshold, vtkImageShiftScale, vtk
 from abc import ABC, abstractmethod
 
 from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter
+from enum import Enum
+
+
+class DitheringEnum(Enum):
+    FloydSteinberg = [
+        [1, 0, 7.0 / 16.0],
+        [-1, 1, 3.0 / 16.0],
+        [0, 1, 5.0 / 16.0],
+        [1, 1, 1.0 / 16.0]]
+
+    Atkinson = [
+        [1, 0, 7.0 / 48.0],
+        [2, 0, 5.0 / 48.0],
+        [-2, 1, 3.0 / 48.0],
+        [-1, 1, 5.0 / 48.0],
+        [0, 1, 7.0 / 48.0],
+        [1, 1, 5.0 / 48.0],
+        [2, 1, 3.0 / 48.0],
+        [-2, 2, 1.0 / 48.0],
+        [-1, 2, 3.0 / 48.0],
+        [0, 2, 5.0 / 48.0],
+        [0, 2, 5.0 / 48.0],
+        [1, 2, 3.0 / 48.0],
+        [2, 2, 1.0 / 48.0]
+    ]
 
 
 class GenericSlicer(ABC):
@@ -170,11 +195,14 @@ class Dithering(GenericSlicer):
         stencil.SetBackgroundValue(0.0)
         stencil.Update()
 
-        extent = foreground_img.GetExtent()
+        dims = foreground_img.GetDimensions()
 
-        for z_id in range(extent[4], extent[5]):
+        for z_id in range(dims[2]):
 
-            voi_extent = [extent[0], extent[1], extent[2], extent[3], z_id, z_id]
+            voi_extent = [0, dims[0] - 1,
+                          0, dims[1] - 1,
+                          z_id, z_id]
+
             voi = vtkExtractVOI()
             voi.SetVOI(voi_extent)
             voi.SetSampleRate([1]*3)
@@ -195,6 +223,12 @@ class Dithering(GenericSlicer):
             skin_img.SetInputConnection(edt.GetOutputPort())
             skin_img.Update()
 
+            dithering = VoxDithering()
+            dithering.SetInputConnection(skin_img.GetOutputPort())
+            dithering.Update()
+
+            test = dithering.GetOutputDataObject(0)
+
             full_im = vtkImageShiftScale()
             full_im.SetOutputScalarTypeToUnsignedChar()
             full_im.SetScale(255)
@@ -203,7 +237,7 @@ class Dithering(GenericSlicer):
             full_im.Update()
 
             mask = vtkImageMask()
-            mask.SetImageInputData(skin_img.GetOutput())
+            mask.SetImageInputData(dithering.GetOutputDataObject(0))
             mask.SetMaskInputData(full_im.GetOutput())
             mask.SetMaskedOutputValue(1)
             mask.Update()
@@ -263,4 +297,56 @@ class VoxelSlicer(VTKPythonAlgorithmBase):
         input_src = vtkPolyData.GetData(inInfo[0])
         output = vtkImageData.GetData(outInfo)
         output.ShallowCopy(self.slicer.slice_object(input_src))
+        return 1
+
+
+class VoxDithering(VTKPythonAlgorithmBase):
+    def __init__(self):
+        VTKPythonAlgorithmBase.__init__(self,
+                                        nInputPorts=1, inputType='vtkImageData',
+                                        nOutputPorts=1, outputType='vtkImageData')
+
+        self.dith_map = DitheringEnum.FloydSteinberg.value
+
+    def closest_color(self, x: float) -> float:
+        if x <= 0:
+            return 0.0
+        elif(x >= 1.0):
+            return 1.0
+        else:
+            return round(x, 0)
+
+    def RequestInformation(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> int:
+        input_src = vtkImageData.GetData(inInfo[0])
+        ext = input_src.GetExtent()
+        o_info = outInfo.GetInformationObject(0)
+        o_info.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(), ext, 6)
+        return 1
+
+    def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> int:
+        input_src = vtkImageData.GetData(inInfo[0])
+        output = vtkImageData.GetData(outInfo)
+        ext = input_src.GetExtent()
+        output.DeepCopy(input_src)
+
+        error_map = DitheringEnum.FloydSteinberg.value
+
+        for i in range(ext[0], ext[1]):
+            for j in range(ext[2], ext[3]):
+                pix_val = output.GetScalarComponentAsDouble(i, j, ext[4], 0)
+                new_val = self.closest_color(pix_val)
+                output.SetScalarComponentFromDouble(i, j, ext[4], 0, new_val)
+                error = pix_val - new_val
+                if error != 0:
+                    for m in error_map:
+                        di = i + m[0]
+                        dj = j + m[1]
+
+                        if ext[0] <= di and di < ext[1] and ext[2] <= dj and dj < ext[3]:
+                            old_val = output.GetScalarComponentAsDouble(
+                                di, dj, ext[4], 0)
+                            quantization = old_val + error*m[2]
+                            output.SetScalarComponentFromDouble(
+                                di, dj, ext[4], 0, quantization)
+
         return 1
