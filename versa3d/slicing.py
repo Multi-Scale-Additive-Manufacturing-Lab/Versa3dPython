@@ -227,8 +227,6 @@ class Dithering(GenericSlicer):
             dithering.SetInputConnection(skin_img.GetOutputPort())
             dithering.Update()
 
-            test = dithering.GetOutputDataObject(0)
-
             full_im = vtkImageShiftScale()
             full_im.SetOutputScalarTypeToUnsignedChar()
             full_im.SetScale(255)
@@ -327,25 +325,26 @@ class VoxDithering(VTKPythonAlgorithmBase):
         input_src = vtkImageData.GetData(inInfo[0])
         output = vtkImageData.GetData(outInfo)
         ext = input_src.GetExtent()
-        output.DeepCopy(input_src)
+        output.ShallowCopy(input_src)
 
         error_map = DitheringEnum.FloydSteinberg.value
 
-        for i in range(ext[0], ext[1]):
-            for j in range(ext[2], ext[3]):
+        for j in range(ext[2], ext[3] + 1):
+            for i in range(ext[0], ext[1] + 1):
                 pix_val = output.GetScalarComponentAsDouble(i, j, ext[4], 0)
                 new_val = self.closest_color(pix_val)
-                output.SetScalarComponentFromDouble(i, j, ext[4], 0, new_val)
                 error = pix_val - new_val
                 if error != 0:
+                    output.SetScalarComponentFromDouble(i, j, ext[4], 0, new_val)
                     for m in error_map:
                         di = i + m[0]
                         dj = j + m[1]
+                        derror = m[2]
 
                         if ext[0] <= di and di <= ext[1] and ext[2] <= dj and dj <= ext[3]:
                             old_val = output.GetScalarComponentAsDouble(
                                 di, dj, ext[4], 0)
-                            quantization = old_val + error*m[2]
+                            quantization = old_val + error*derror
                             output.SetScalarComponentFromDouble(
                                 di, dj, ext[4], 0, quantization)
 
