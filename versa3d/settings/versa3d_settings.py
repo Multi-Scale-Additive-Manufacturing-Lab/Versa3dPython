@@ -87,6 +87,7 @@ class BinderJettingPrintParameter(GenericPrintParameter):
     fill_pattern: IntEntry
     tool_path_pattern: IntEntry
     feed_bed_velocity: FloatEntry
+    infill: FloatEntry
 
     process: str = 'bjp'
 
