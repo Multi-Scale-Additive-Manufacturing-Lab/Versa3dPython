@@ -18,6 +18,7 @@ from versa3d.settings_window import SettingsWindow
 from versa3d.movement_widget import MovementPanel
 from versa3d.settings import SettingTypeKey, SettingWrapper
 from versa3d.mouse_interaction import RubberBandHighlight
+from versa3d.scene import Versa3dScene
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -47,20 +48,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi(ui_file_path, self)
 
-        self.stl_renderer = vtk.vtkRenderer()
-        self.vtkWidget.GetRenderWindow().AddRenderer(self.stl_renderer)
-
-        self.stl_interactor = self.vtkWidget.GetRenderWindow().GetInteractor()
-
-        self.rubber_style = RubberBandHighlight()
-        self.rubber_style.emitter.interaction_start.connect(self.spawn_movement_win)
-        self.rubber_style.emitter.interaction_end.connect(self.remove_movement_win)
-        
-        self.stl_interactor.SetInteractorStyle(self.rubber_style)
-
-        self.stl_interactor.GetPickingManager().EnabledOn()
-        self.stl_interactor.Initialize()
-        self.stl_interactor.Start()
+        self.scene = Versa3dScene(self.vtkWidget)
+        self.scene.selection_start.connect(self.spawn_movement_win)
+        self.scene.selection_end.connect(self.remove_movement_win)
 
         self.push_button_mod_print_settings.clicked.connect(
             self.show_param_window)
@@ -89,20 +79,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.movement_panel.translate_sig.connect(self.translate_obj)
         #self.movement_panel.rotate_sig.connect(self.rotate_obj)
         #self.movement_panel.scale_sig.connect(self.scale_obj)
-        self.rubber_style.emitter.object_position.connect(self.movement_panel.update_current_position)
-
-        self.selected_obj = None
+        self.scene.selection_pos.connect(self.movement_panel.update_current_position)
     
     @pyqtSlot(float, float, float)
     def translate_obj(self, x : float, y : float, z : float):
-        self.rubber_style.set_position(x,y,z)
+        self.scene.rubber_style.set_position(x,y,z)
     
-    @pyqtSlot(np.ndarray, vtkProp3DCollection)
-    def spawn_movement_win(self, bds : np.ndarray, calldata : vtkProp3DCollection) -> None:
-        # TODO do absolute movement
-        if calldata.GetNumberOfItems() > 0:
-            self.object_interaction.setCurrentIndex(1)
-            self.selected_obj = calldata
+    @pyqtSlot()
+    def spawn_movement_win(self) -> None:
+        self.object_interaction.setCurrentIndex(1)
     
     @pyqtSlot()
     def remove_movement_win(self) -> None:
@@ -159,93 +144,3 @@ class MainWindow(QtWidgets.QMainWindow):
             self.printhead_cmb_box.addItem(value)
         elif(setting_type == SettingTypeKey.print_param.value):
             self.print_settings_cmb_box.addItem(value)
-    
-    @pyqtSlot(vtk.vtkActor)
-    def render(self, actor : vtk.vtkActor):
-        self.stl_renderer.AddActor(actor)
-        self.stl_renderer.GetRenderWindow().Render()
-    
-    @pyqtSlot(vtk.vtkActor)
-    def unrender(self, actor : vtk.vtkActor):
-        self.stl_renderer.RemoveActor(actor)
-        self.stl_renderer.GetRenderWindow().Render()
-
-    def setup_scene(self, size: np.array) -> None:
-        """set grid scene
-
-        Args:
-            size (array(3,)): size of scene
-        """
-        colors = vtk.vtkNamedColors()
-
-        self.stl_renderer.SetBackground(colors.GetColor3d("lightslategray"))
-
-        # add coordinate axis
-        self.axes_actor = vtk.vtkAxesActor()
-        self.axes_actor.SetShaftTypeToLine()
-        self.axes_actor.SetTipTypeToCone()
-        self.axes_actor.SetPickable(False)
-        self.axes_actor.SetDragable(False)
-
-        self.axes_actor.SetTotalLength(size[0], size[1], size[2])
-
-        number_grid = 50
-
-        X = numpy_support.numpy_to_vtk(np.linspace(0, size[0], number_grid))
-        Y = numpy_support.numpy_to_vtk(np.linspace(0, size[1], number_grid))
-        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
-
-        # set up grid
-        self._grid = vtk.vtkRectilinearGrid()
-        self._grid.SetDimensions(number_grid, number_grid, number_grid)
-        self._grid.SetXCoordinates(X)
-        self._grid.SetYCoordinates(Y)
-        self._grid.SetZCoordinates(Z)
-
-        self._geometry_filter = vtk.vtkRectilinearGridGeometryFilter()
-        self._geometry_filter.SetInputData(self._grid)
-        self._geometry_filter.SetExtent(
-            0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
-        self._geometry_filter.Update()
-
-        grid_mapper = vtk.vtkPolyDataMapper()
-        grid_mapper.SetInputConnection(self._geometry_filter.GetOutputPort())
-
-        grid_actor = vtk.vtkActor()
-        grid_actor.SetMapper(grid_mapper)
-        grid_actor.GetProperty().SetRepresentationToWireframe()
-        grid_actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
-        grid_actor.GetProperty().EdgeVisibilityOn()
-        grid_actor.SetPickable(False)
-        grid_actor.SetDragable(False)
-
-        self.stl_renderer.AddActor(self.axes_actor)
-        self.stl_renderer.AddActor(grid_actor)
-
-        camera = vtk.vtkCamera()
-        camera.SetPosition(size)
-        camera.SetFocalPoint(0, 0, 0)
-        camera.Roll(-110)
-        self.stl_renderer.SetActiveCamera(camera)
-
-    @pyqtSlot(float, float, float)
-    def resize_scene(self, n_x: float, n_y: float, n_z: float) -> None:
-
-        self.axes_actor.SetTotalLength(n_x, n_y, n_z)
-
-        number_grid = 50
-
-        X = numpy_support.numpy_to_vtk(np.linspace(0, n_x, number_grid))
-        Y = numpy_support.numpy_to_vtk(np.linspace(0, n_y, number_grid))
-        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
-
-        self._grid.SetDimensions(number_grid, number_grid, number_grid)
-        self._grid.SetXCoordinates(X)
-        self._grid.SetYCoordinates(Y)
-        self._grid.SetZCoordinates(Z)
-
-        self._geometry_filter.SetExtent(
-            0, number_grid - 1, 0, number_grid - 1, 0, number_grid - 1)
-        self._geometry_filter.Update()
-
-        self.stl_renderer.GetRenderWindow().Render()

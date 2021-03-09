@@ -20,13 +20,13 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
 
     printer_setting = control.settings.get_printer(0)
     build_bed_size = printer_setting.build_bed_size.value
-    main_win.setup_scene(build_bed_size)
+    main_win.scene.resize_scene(*build_bed_size)
 
     main_win.change_printer_signal.connect(control.change_printer)
     main_win.change_printhead_signal.connect(control.change_printhead)
     main_win.change_preset_signal.connect(control.change_preset)
 
-    control.update_scene.connect(main_win.resize_scene)
+    control.update_scene.connect(main_win.scene.resize_scene)
     
     main_win.show_parameter_win.connect(control.edit_preset)
     control.spawn_preset_win_signal.connect(main_win.spawn_setting_window)
@@ -38,15 +38,15 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     control.spawn_printhead_win_signal.connect(main_win.spawn_printhead_window)
 
     main_win.import_obj_signal.connect(control.import_object)
-    control.render_signal.connect(main_win.render)
-    control.unrender_signal.connect(main_win.unrender)
+    control.render_signal.connect(main_win.scene.render)
+    control.unrender_signal.connect(main_win.scene.unrender)
 
     main_win.undo_sig.connect(control.undo_stack.undo)
     main_win.redo_sig.connect(control.undo_stack.redo)
 
     main_win.export_gcode_signal.connect(control.export_gcode)
-    main_win.rubber_style.emitter.commit_move.connect(control.transform)
-    main_win.transform_sig.connect(control.transform)
+    #main_win.rubber_style.emitter.commit_move.connect(control.transform)
+    #main_win.transform_sig.connect(control.transform)
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)
