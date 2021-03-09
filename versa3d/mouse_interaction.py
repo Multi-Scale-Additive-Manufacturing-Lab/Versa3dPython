@@ -47,9 +47,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         picker.AreaPick(start_pos[0], start_pos[1],
                         end_pos[0], end_pos[1], ren)
         props = picker.GetProp3Ds()
-        # there's only one
-        assem = picker.GetAssembly()
-        return props, assem
+        return props
 
     def find_poked_renderer(self, style: vtkInteractorStyleRubberBand3D) -> vtkRenderer:
         interactor = style.GetInteractor()
@@ -62,15 +60,15 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         if not self._poked_ren is None:
             self._poked_ren.GetRenderWindow().Render()
 
-    def add_actor_to_assem(self, prop_ls: vtkProp3DCollection, assem: vtkAssembly) -> None:
+    def add_actor_to_assem(self, prop_ls: vtkProp3DCollection, ren: vtkRenderer) -> None:
         prop_ls.InitTraversal()
         prop = prop_ls.GetNextProp()
         while not prop is None:
             self.selected_actor.AddPart(prop)
-            assem.RemovePart(prop)
+            ren.RemoveActor(prop)
             prop = prop_ls.GetNextProp()
     
-    def remove_actor_from_assem(self, assem: vtkAssembly) -> None:
+    def remove_actor_from_assem(self, ren: vtkRenderer) -> None:
         self.selected_actor.InitPathTraversal()
         path = self.selected_actor.GetNextPath()
         while not path is None:
@@ -79,7 +77,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             prop = node.GetViewProp()
             prop.PokeMatrix(mat)
             prop.ComputeMatrix()
-            assem.AddPart(prop)
+            ren.AddActor(prop)
             
             path = self.selected_actor.GetNextPath()
     
@@ -95,18 +93,16 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
         interactor = obj.GetInteractor()
         self.widget.SetInteractor(interactor)
-        props, assem = self.find_poked_actor(obj)
+        props = self.find_poked_actor(obj)
         ren = self.find_poked_renderer(obj)
         self._poked_ren = ren
-        if not assem is None:
-            self._assem = assem
         
         if props.GetNumberOfItems() > 0:
             self.selected_actor = vtkAssembly()
             ren.AddActor(self.selected_actor)
             box_rep = vtkBoxRepresentation()
             box_rep.SetPlaceFactor(1)
-            self.add_actor_to_assem(props, assem)
+            self.add_actor_to_assem(props, ren)
             bds = np.array(self.selected_actor.GetBounds())
             box_rep.PlaceWidget(bds)
             self.widget.SetRepresentation(box_rep)
@@ -115,9 +111,9 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self.cb_int(True)
             self.cb_pos(bds[0], bds[2], bds[4])
         else:
-            if not self.selected_actor is None and not self._assem is None:
+            if not self.selected_actor is None:
                 ren.RemoveActor(self.selected_actor)
-                self.remove_actor_from_assem(self._assem)
+                self.remove_actor_from_assem(ren)
                 self.widget.SetRepresentation(None)
                 self.widget.SetEnabled(0)
                 self.selected_actor = None

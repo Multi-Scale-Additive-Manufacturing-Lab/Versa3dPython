@@ -33,15 +33,8 @@ class Versa3dScene(QObject):
         self.interactor.Initialize()
         self.interactor.Start()
 
-        self._ren_obj = vtkRC.vtkAssembly()
-
-        self._sliced_obj = vtkRC.vtkAssembly()
-        self._sliced_obj.SetPickable(False)
-        self._sliced_obj.SetDragable(False)
-        self._sliced_obj.VisibilityOff()
-
-        self._ren.AddActor(self._ren_obj)
-        self._ren.AddActor(self._sliced_obj)
+        self._ls_obj = {}
+        self._ls_sliced_obj = {}
     
     def selection_pos_cb(self, x : float, y : float, z : float):
         self.selection_pos.emit(x, y, z)
@@ -141,22 +134,38 @@ class Versa3dScene(QObject):
         
         self._ren.GetRenderWindow().Render()
     
+    def _compute_bounds(self, ls_actor: vtkRC.vtkActorCollection) -> np.ndarray:
+        bds = np.array([np.inf, -np.inf]*3)
+        ls_actor.InitTraversal()
+        actor = ls_actor.GetNextActor()
+
+        while not actor is None:
+            bounds = np.array(actor.GetBounds())
+            min_val = bds[0::2] > bounds[0::2]
+            max_val = bds[1::2] < bounds[1::2]
+
+            bds[0::2][min_val] = bounds[0::2][min_val]
+            bds[1::2][max_val] = bounds[0::2][max_val]
+
+            actor = ls_actor.GetNextActor()
+        return bds
+    
     @pyqtSlot(vtkRC.vtkActor)
     def render(self, obj : vtkRC.vtkActor) -> None:
-        n_prop = self._ren_obj.GetParts().GetNumberOfItems()
-        if n_prop == 0:
+        ls_prop = self._ren.GetActors()
+        if ls_prop.GetNumberOfItems() == 0:
             obj.SetPosition(self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
         else:
-            current_bds = self._ren_obj.GetBounds()
+            current_bds = self._compute_bounds(ls_prop)
             le = obj.GetLength()
             obj.SetPosition(current_bds[1]+le*0.50, current_bds[3]+le*0.50, 0)
 
-        self._ren_obj.AddPart(obj)
+        self._ren.AddActor(obj)
         self._ren.GetRenderWindow().Render()
     
     @pyqtSlot(vtkRC.vtkActor)
     def unrender(self, obj : vtkRC.vtkActor) -> None:
-        self._ren_obj.RemovePart(obj)
+        self._ren.RemoveActor(obj)
         self._ren.GetRenderWindow().Render()
 
     @pyqtSlot(vtkRC.vtkActor)
