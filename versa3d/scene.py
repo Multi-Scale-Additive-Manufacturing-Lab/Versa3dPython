@@ -23,8 +23,8 @@ class Versa3dScene(QObject):
         vtkqwidget.GetRenderWindow().AddRenderer(self._ren)
 
         self.interactor = vtkqwidget.GetRenderWindow().GetInteractor()
-
-        self._setup_scene(50.0, 50.0, 50.0)
+        self.scene_size = [50.0, 50.0, 50.0]
+        self._setup_scene(*self.scene_size)
 
         self.rubber_style = RubberBandHighlight(self.selection_cb, self.selection_pos_cb)
         self.interactor.SetInteractorStyle(self.rubber_style)
@@ -107,6 +107,10 @@ class Versa3dScene(QObject):
     
     @pyqtSlot(float, float, float)
     def resize_scene(self, x: float, y: float, z: float) -> None:
+        self.scene_size[0] = x
+        self.scene_size[1] = y
+        self.scene_size[2] = z
+
         self.axes_actor.SetTotalLength(x, y, z)
 
         number_grid = 50
@@ -139,6 +143,14 @@ class Versa3dScene(QObject):
     
     @pyqtSlot(vtkRC.vtkActor)
     def render(self, obj : vtkRC.vtkActor) -> None:
+        n_prop = self._ren_obj.GetParts().GetNumberOfItems()
+        if n_prop == 0:
+            obj.SetPosition(self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
+        else:
+            current_bds = self._ren_obj.GetBounds()
+            le = obj.GetLength()
+            obj.SetPosition(current_bds[1]+le*0.50, current_bds[3]+le*0.50, 0)
+
         self._ren_obj.AddPart(obj)
         self._ren.GetRenderWindow().Render()
     
