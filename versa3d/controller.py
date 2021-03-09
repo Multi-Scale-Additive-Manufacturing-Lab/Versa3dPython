@@ -30,8 +30,8 @@ class Versa3dController(QObject):
     update_scene = pyqtSignal(float, float, float)
     selection_obj = pyqtSignal(bool, tuple)
 
-    render_signal = pyqtSignal(vtkActor)
-    unrender_signal = pyqtSignal(vtkActor)
+    render_signal = pyqtSignal(PrintObject)
+    unrender_signal = pyqtSignal(PrintObject)
 
     spawn_preset_win_signal = pyqtSignal(SettingWrapper)
     spawn_printer_win_signal = pyqtSignal(SettingWrapper)
@@ -129,11 +129,11 @@ class Versa3dController(QObject):
             setting_dict = self._settings.get_printer(self._printer_idx)
             bbs = setting_dict.build_bed_size.value
             
-            self.render_signal.emit(obj.actor)
+            self.render_signal.emit(obj)
         else:
             obj = self.print_objects.pop(obj.id)
             self.platter.RemoveInputConnection(0, obj.GetOutputPort())
-            self.unrender_signal.emit(obj.actor)
+            self.unrender_signal.emit(obj)
         
         self.platter.Update()
 

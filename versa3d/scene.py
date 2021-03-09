@@ -9,6 +9,7 @@ from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject
 import numpy as np
 from vtkmodules.util import numpy_support
 from versa3d.mouse_interaction import RubberBandHighlight
+from versa3d.print_platter import PrintObject
 
 
 class Versa3dScene(QObject):
@@ -134,38 +135,36 @@ class Versa3dScene(QObject):
         
         self._ren.GetRenderWindow().Render()
     
-    def _compute_bounds(self, ls_actor: vtkRC.vtkActorCollection) -> np.ndarray:
+    def _compute_bounds(self, ls_actor) -> np.ndarray:
         bds = np.array([np.inf, -np.inf]*3)
-        ls_actor.InitTraversal()
-        actor = ls_actor.GetNextActor()
-
-        while not actor is None:
+        for obj in ls_actor.values():
+            actor = obj.actor
             bounds = np.array(actor.GetBounds())
             min_val = bds[0::2] > bounds[0::2]
             max_val = bds[1::2] < bounds[1::2]
 
             bds[0::2][min_val] = bounds[0::2][min_val]
             bds[1::2][max_val] = bounds[0::2][max_val]
-
-            actor = ls_actor.GetNextActor()
         return bds
     
-    @pyqtSlot(vtkRC.vtkActor)
-    def render(self, obj : vtkRC.vtkActor) -> None:
-        ls_prop = self._ren.GetActors()
-        if ls_prop.GetNumberOfItems() == 0:
-            obj.SetPosition(self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
+    @pyqtSlot(PrintObject)
+    def render(self, obj : PrintObject) -> None:
+        
+        if len(self._ls_obj) == 0:
+            obj.actor.SetPosition(self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
         else:
-            current_bds = self._compute_bounds(ls_prop)
-            le = obj.GetLength()
-            obj.SetPosition(current_bds[1]+le*0.50, current_bds[3]+le*0.50, 0)
+            current_bds = self._compute_bounds(self._ls_obj)
+            le = obj.actor.GetLength()
+            obj.actor.SetPosition(current_bds[1]+le*0.50, current_bds[3]+le*0.50, 0)
 
-        self._ren.AddActor(obj)
+        self._ls_obj[obj.id] = obj
+        self._ren.AddActor(obj.actor)
         self._ren.GetRenderWindow().Render()
     
-    @pyqtSlot(vtkRC.vtkActor)
-    def unrender(self, obj : vtkRC.vtkActor) -> None:
-        self._ren.RemoveActor(obj)
+    @pyqtSlot(PrintObject)
+    def unrender(self, obj : PrintObject) -> None:
+        self._ls_obj.pop(obj.id)
+        self._ren.RemoveActor(obj.actor)
         self._ren.GetRenderWindow().Render()
 
     @pyqtSlot(vtkRC.vtkActor)
