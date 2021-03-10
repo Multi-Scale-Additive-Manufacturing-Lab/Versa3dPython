@@ -66,9 +66,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.printer_cmb_box.currentIndexChanged.connect(
             self.change_printer_signal)
         self.printhead_cmb_box.currentIndexChanged.connect(
-            self.change_printer_signal)
+            self.change_printhead_signal)
         self.print_settings_cmb_box.currentIndexChanged.connect(
-            self.change_printer_signal)
+            self.change_preset_signal)
 
         self.ExportGCodeButton.clicked.connect(self.export_gcode)
 
