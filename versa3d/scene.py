@@ -42,7 +42,7 @@ class Versa3dScene(QObject):
         self._create_slider()
 
         self._ls_obj = {}
-        self._ls_sliced_obj = {}
+        self.sliced_obj = None
 
     def _create_button(self):
         im_r_1 = vtkPNGReader()
@@ -59,8 +59,10 @@ class Versa3dScene(QObject):
         box_rep.SetNumberOfStates(2)
         box_rep.SetButtonTexture(0, im_r_1.GetOutput())
         box_rep.SetButtonTexture(1, im_r_2.GetOutput())
+        box_rep.SetState(0)
         self.button.SetInteractor(self.interactor)
         self.button.SetRepresentation(box_rep)
+        self.button.AddObserver('StateChangedEvent', self._hide_show_obj)
 
         coord = vtkRC.vtkCoordinate()
         coord.SetCoordinateSystemToNormalizedDisplay()
@@ -102,6 +104,25 @@ class Versa3dScene(QObject):
         self.slider.SetRepresentation(slider_rep)
         self.slider.SetAnimationModeToAnimate()
         self.slider.EnabledOn()
+    
+    def _hide_show_obj(self, obj: vtkButtonWidget, event: str):
+        rep = obj.GetRepresentation()
+        state = rep.GetState()
+
+        for obj in self._ls_obj.values():
+            if state:
+                obj.actor.VisibilityOff()
+            else:
+                obj.actor.VisibilityOn()
+        
+        if not self.sliced_obj is None:
+            if state :
+                self.sliced_obj.VisibilityOn()
+            else:
+                self.sliced_obj.VisibilityOff()
+        
+        self._ren.GetRenderWindow().Render()
+
 
     def selection_pos_cb(self, x: float, y: float, z: float):
         self.selection_pos.emit(x, y, z)
@@ -226,5 +247,7 @@ class Versa3dScene(QObject):
 
     @pyqtSlot(vtkRC.vtkActor)
     def render_sliced_obj(self, sliced_obj: vtkRC.vtkActor) -> None:
-        self._sliced_obj.AddPart(sliced_obj)
+        sliced_obj.SetPickable(False)
+        self._ren.AddActor(sliced_obj)
+        self.sliced_obj = sliced_obj
         self._ren.GetRenderWindow().Render()
