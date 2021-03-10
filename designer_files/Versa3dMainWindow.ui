@@ -134,6 +134,13 @@
            </layout>
           </item>
           <item>
+           <widget class="QPushButton" name="SliceButton">
+            <property name="text">
+             <string>Slice</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="ExportGCodeButton">
             <property name="text">
              <string>Export G-Code</string>
@@ -148,7 +155,7 @@
               <height>600</height>
              </size>
             </property>
-            <widget class="QWidget" name="object_interactionPage1" native="true"/>
+            <widget class="QWidget" name="object_interactionPage1"/>
            </widget>
           </item>
          </layout>
