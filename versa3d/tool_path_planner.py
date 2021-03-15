@@ -1,4 +1,5 @@
 import vtk
+import os
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from versa3d.gcode import BigMachineGcode, GCodeWriter, GcodeStep
 from abc import ABC, abstractmethod
@@ -152,4 +153,6 @@ class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
         return 1
 
     def write(self, file_path: str) -> None:
-        self.gcode_writer.export_file(file_path, self._steps)
+        # TODO change to something more flexible, duplication of zip extension
+        s_fp = os.path.splitext(file_path)[0]
+        self.gcode_writer.export_file(s_fp, self._steps)
