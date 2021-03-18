@@ -4,14 +4,14 @@ from typing import Tuple
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
 import vtk
-from vtkmodules.vtkRenderingCore import vtkActor
+from vtkmodules.vtkRenderingCore import vtkActor, vtkImageActor, vtkPolyDataMapper
 from vtkmodules.vtkCommonTransforms import vtkTransform
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings, SettingWrapper
 from versa3d.slicing import VoxelSlicer
 from versa3d.tool_path_planner import ToolPathPlannerFilter
-from versa3d.print_platter import PrintObject, PrintPlatter
+from versa3d.print_platter import PrintObject
 
 from numpy import ndarray
 from typing import Tuple
@@ -33,6 +33,8 @@ class Versa3dController(QObject):
     render_signal = pyqtSignal(PrintObject)
     unrender_signal = pyqtSignal(PrintObject)
 
+    render_sl_signal = pyqtSignal(PrintObject)
+
     spawn_preset_win_signal = pyqtSignal(SettingWrapper)
     spawn_printer_win_signal = pyqtSignal(SettingWrapper)
     spawn_printhead_win_signal = pyqtSignal(SettingWrapper)
@@ -43,15 +45,12 @@ class Versa3dController(QObject):
         self._settings = Versa3dSettings()
 
         self.print_objects = {}
-        self.platter = PrintPlatter()
 
         self.undo_stack = QtWidgets.QUndoStack(self)
 
         self._printer_idx = 0
         self._printhead_idx = 0
         self._parameter_preset_idx = 0
-
-        self.setup_pipeline()
 
         self._settings.update_printer_signal.connect(
             self.update_scene_listener)
@@ -125,48 +124,25 @@ class Versa3dController(QObject):
     def import_callback(self, obj: PrintObject, mode=True) -> None:
         if mode:
             self.print_objects[obj.id] = obj
-            self.platter.SetInputConnection(0, obj.GetOutputPort())
-            setting_dict = self._settings.get_printer(self._printer_idx)
-            bbs = setting_dict.build_bed_size.value
-            
             self.render_signal.emit(obj)
         else:
             obj = self.print_objects.pop(obj.id)
-            self.platter.RemoveInputConnection(0, obj.GetOutputPort())
             self.unrender_signal.emit(obj)
-        
-        self.platter.Update()
 
     @pyqtSlot(str)
     def export_gcode(self, file_path: str) -> None:
-        printer_setting = self.settings.get_printer(self._printer_idx)
-        printhead_setting = self.settings.get_printhead(self._printhead_idx)
-        param_setting = self.settings.get_parameter_preset(
-            self._parameter_preset_idx)
-        self.slice_object()
-        self.tool_path_gen.set_settings(
-            printer_setting, printhead_setting, param_setting)
-        self.tool_path_gen.Update()
-        self.tool_path_gen.write(file_path)
-
-    def setup_pipeline(self) -> None:
-        self.voxelizer = VoxelSlicer()
-        self.voxelizer.SetInputConnection(self.platter.GetOutputPort())
-        self.tool_path_gen = ToolPathPlannerFilter()
-        self.tool_path_gen.SetInputConnection(self.voxelizer.GetOutputPort())
+        # TODO reconnect gcode export later
+        pass
 
     @pyqtSlot(str, str)
     def import_object(self, filename: str, ext: str) -> None:
         if(filename != ''):
             obj_src = reader_factory(filename, ext)
 
-            obj = PrintObject()
-            obj.SetInputConnection(obj_src.GetOutputPort())
-            obj.Update()
+            obj = PrintObject(obj_src)
 
             com = vscom.ImportCommand(obj, self.import_callback)
             self.undo_stack.push(com)
-            obj.import_command = com
     
     @pyqtSlot(vtkTransform, vtkTransform, vtkActor, str)
     def transform(self, current_t : vtkTransform, old_t : vtkTransform, actor : vtkActor, id : str):
@@ -180,6 +156,7 @@ class Versa3dController(QObject):
         printhead_setting = self.settings.get_printhead(self._printhead_idx)
         param_setting = self.settings.get_parameter_preset(
             self._parameter_preset_idx)
-        self.voxelizer.set_settings(
-            printer_setting, printhead_setting, param_setting)
-        self.voxelizer.Update()
+
+        for obj in self.print_objects.values():
+            obj.slice_obj(printer_setting, printhead_setting, param_setting)
+            self.render_sl_signal.emit(obj)

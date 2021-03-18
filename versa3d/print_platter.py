@@ -2,88 +2,73 @@ import numpy as np
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase, vtkAlgorithm
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
 from vtkmodules.vtkCommonCore import vtkInformation
-from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkCommonDataModel import vtkPolyData,vtkDataObject
+from vtkmodules.vtkCommonExecutionModel import vtkPolyDataAlgorithm
 from vtkmodules.util.vtkConstants import VTK_OBJECT
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor, vtkActor, vtkRenderer, vtkPolyDataMapper
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkAppendPolyData
+from vtkmodules.vtkFiltersCore import vtkMarchingCubes
 from vtkmodules.util.misc import calldata_type
 from vtkmodules.util import keys
-from PyQt5.QtCore import QUuid
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from PyQt5.QtCore import QObject, QUuid, pyqtSlot, pyqtSignal
 
 from typing import Callable
 from time import time
 
+from versa3d.slicing import VoxelSlicer
+from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter
+
 ID_KEY = keys.MakeKey(keys.StringKey, 'id', "vtkActor")
 
-class PrintPlatter(VTKPythonAlgorithmBase):
-    def __init__(self) -> None:
-        VTKPythonAlgorithmBase.__init__(
-            self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
-
-    def FillInputPortInformation(self, port: int, info: vtkInformation) -> None:
-        if port == 0:
-            info.Set(vtkAlgorithm.INPUT_IS_REPEATABLE(), 1)
-            info.Set(vtkAlgorithm.INPUT_IS_OPTIONAL(), 1)
-        return 1
-
-    def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> bool:
-
-        n_object = inInfo[0].GetNumberOfInformationObjects()
-
-        if n_object > 0:
-            append_f = vtkAppendPolyData()
-            append_f.UserManagedInputsOff()
-            for i in range(n_object):
-                i_info = inInfo[0].GetInformationObject(i)
-                input_poly = vtkPolyData.GetData(i_info)
-                append_f.AddInputData(input_poly)
-
-            append_f.Update()
-
-            output = vtkPolyData.GetData(outInfo)
-            output.ShallowCopy(append_f.GetOutput())
-
-        return 1
-
-
-class PrintObject(VTKPythonAlgorithmBase):
-    def __init__(self) -> None:
-        VTKPythonAlgorithmBase.__init__(
-            self, nInputPorts=1, inputType='vtkPolyData', nOutputPorts=1, outputType='vtkPolyData')
-
-        self._actor = vtkActor()
-
+class PrintObject():
+    def __init__(self, poly_src : vtkPolyDataAlgorithm) -> None:
+        self._poly_src = poly_src
         self.id = QUuid.createUuid().toString()
-        self.initialised = False
+        self.actor = vtkActor()
+
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputConnection(poly_src.GetOutputPort())
+        self.actor.SetMapper(mapper)
 
         info = vtkInformation()
         info.Set(ID_KEY, self.id)
-        self._actor.GetProperty().SetInformation(info)
-
-    @property
-    def actor(self) -> vtkActor:
-        return self._actor
-
-    def RequestData(self, request: str, inInfo: vtkInformation, outInfo: vtkInformation) -> bool:
-        input_poly = vtkPolyData.GetData(inInfo[0])
-
-        if not self.initialised:
-            mapper = vtkPolyDataMapper()
-            mapper.AddInputDataObject(input_poly)
-            self._actor.SetMapper(mapper)
-            self.initialised = True
-
-        output = vtkPolyData.GetData(outInfo)
+        self.actor.GetProperty().SetInformation(info)
 
         transform = vtkTransform()
-        transform.SetMatrix(self._actor.GetMatrix())
+        transform.SetMatrix(self.actor.GetMatrix())
 
-        coord_converter = vtkTransformPolyDataFilter()
-        coord_converter.SetTransform(transform)
-        coord_converter.AddInputData(input_poly)
-        coord_converter.Update()
-        output.ShallowCopy(coord_converter.GetOutput())
+        self._coord_converter = vtkTransformPolyDataFilter()
+        self._coord_converter.SetTransform(transform)
+        self._coord_converter.AddInputData(poly_src.GetOutput())
+        self._coord_converter.Update()
 
-        return 1
+        self._voxelizer = VoxelSlicer()
+        self._voxelizer.SetInputConnection(self._coord_converter.GetOutputPort())
+
+        self.results = vtkActor()
+
+    def slice_obj(self, printer: PrintSetting,
+                     printhead: PixelPrinthead,
+                     print_param: GenericPrintParameter) -> None:
+
+        transform = vtkTransform()
+        transform.SetMatrix(self.actor.GetMatrix())
+        self._coord_converter.SetTransform(transform)
+
+        self._voxelizer.set_settings(printer, printhead, print_param)
+        self._voxelizer.Update()
+
+        surf = vtkMarchingCubes()
+        surf.SetValue(0, 255)
+        surf.AddInputData(self._voxelizer.GetOutputDataObject(0))
+        surf.Update()
+
+        polymap = vtkPolyDataMapper()
+        polymap.SetInputData(surf.GetOutput())
+        
+        actor = vtkActor()
+        actor.SetMapper(polymap)
+        self.results.ShallowCopy(actor)

@@ -35,6 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     import_obj_signal = pyqtSignal(str, str)
     export_gcode_signal = pyqtSignal(str)
+    slice_object_signal = pyqtSignal()
 
     change_printer_signal = pyqtSignal(int)
     change_printhead_signal = pyqtSignal(int)
@@ -71,6 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.change_preset_signal)
 
         self.ExportGCodeButton.clicked.connect(self.export_gcode)
+        self.SliceButton.clicked.connect(self.slice_object_signal)
 
         self.movement_panel = MovementPanel(self)
         self.object_interaction.insertWidget(1, self.movement_panel)

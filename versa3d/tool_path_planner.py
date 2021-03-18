@@ -153,6 +153,6 @@ class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
         return 1
 
     def write(self, file_path: str) -> None:
-        # TODO change to something more flexible, duplication of zip extension
+        # TODO change to something more flexible, duplication of zip extension 
         s_fp = os.path.splitext(file_path)[0]
         self.gcode_writer.export_file(s_fp, self._steps)

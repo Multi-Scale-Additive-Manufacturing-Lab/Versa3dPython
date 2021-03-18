@@ -40,11 +40,13 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     main_win.import_obj_signal.connect(control.import_object)
     control.render_signal.connect(main_win.scene.render)
     control.unrender_signal.connect(main_win.scene.unrender)
+    control.render_sl_signal.connect(main_win.scene.render_sliced_obj)
 
     main_win.undo_sig.connect(control.undo_stack.undo)
     main_win.redo_sig.connect(control.undo_stack.redo)
 
     main_win.export_gcode_signal.connect(control.export_gcode)
+    main_win.slice_object_signal.connect(control.slice_object)
     #main_win.rubber_style.emitter.commit_move.connect(control.transform)
     #main_win.transform_sig.connect(control.transform)
 
