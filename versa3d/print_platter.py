@@ -32,6 +32,7 @@ class ActorTypeKey(IntEnum):
 
 class PrintObject(QObject):
     modified_sig = pyqtSignal(str)
+    render_res_sig = pyqtSignal(str)
 
     def __init__(self, poly_src : vtkPolyDataAlgorithm, parent: Optional['QObject'] = None) -> None:
         super().__init__(parent=parent)
@@ -48,6 +49,7 @@ class PrintObject(QObject):
         user_transform.PostMultiply()
         self.actor.SetUserTransform(user_transform)
 
+        self.actor.ComputeMatrix()
         transform = vtkTransform()
         transform.SetMatrix(self.actor.GetMatrix())
 
@@ -67,7 +69,6 @@ class PrintObject(QObject):
         user_trs = self.actor.GetUserTransform()
         user_trs.Concatenate(trs)
 
-        self._coord_converter.SetTransform(user_trs)
         self.modified_sig.emit(self.id)
     
     def pop_transform(self) -> None:
@@ -94,6 +95,12 @@ class PrintObject(QObject):
                      printhead: PixelPrinthead,
                      print_param: GenericPrintParameter) -> None:
 
+        # TODO not taking advantage of pipeline check later why
+        self.actor.ComputeMatrix()
+        full_trs = vtkTransform()
+        full_trs.SetMatrix(self.actor.GetMatrix())
+        self._coord_converter.SetTransform(full_trs)
+
         self._voxelizer.set_settings(printer, printhead, print_param)
         self._voxelizer.Update()
 
@@ -109,6 +116,8 @@ class PrintObject(QObject):
         actor.SetMapper(polymap)
         self._init_output_id_key(actor)
         self.results.ShallowCopy(actor)
+
+        self.render_res_sig.emit(self.id)
 
 def arrange_part(ls_part : List[PrintObject], target_obj : PrintObject):
     part_bbox = np.zeros(6)
@@ -134,10 +143,23 @@ class PrintPlatter(QObject):
         super().__init__(parent=parent)
         self._plate = {}
         self.scene_size = [50.0, 50.0, 50.0]
+        self._n = -1
+    
+    def __iter__(self):
+        self._n = -1
+        return self
+    
+    def __next__(self):
+        self._n += 1
+        if self._n < len(self._plate):
+            return list(self._plate.values())[self._n]
+        raise StopIteration
 
     def import_part(self, obj_src : vtkPolyDataAlgorithm):
         obj = PrintObject(obj_src)
         obj.modified_sig.connect(self.unrender_sl)
+        obj.render_res_sig.connect(self.render_sl)
+
         self.place_object(obj)
         com = vscom.ImportCommand(obj, self)
         self.command_sig.emit(com)

@@ -140,6 +140,5 @@ class Versa3dController(QObject):
         param_setting = self.settings.get_parameter_preset(
             self._parameter_preset_idx)
 
-        for obj in self.print_plate.values():
+        for obj in self.print_plate:
             obj.slice_obj(printer_setting, printhead_setting, param_setting)
-            self.render_sl_signal.emit(obj)

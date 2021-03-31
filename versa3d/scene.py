@@ -16,7 +16,7 @@ import numpy as np
 from typing import List
 from vtkmodules.util import numpy_support
 from versa3d.mouse_interaction import RubberBandHighlight
-from versa3d.print_platter import PrintObject
+from versa3d.print_platter import PrintObject, TYPE_KEY, ActorTypeKey
 
 class Versa3dScene(QObject):
     selection_start = pyqtSignal()
@@ -109,16 +109,23 @@ class Versa3dScene(QObject):
     
     def _hide_show_obj(self, obj: vtkButtonWidget, event: str):
         rep = obj.GetRepresentation()
-        state = rep.GetState()
+        vis_state = rep.GetState()
 
-        for key, obj in self._ls_obj.items():
-            if state:
-                obj.actor.VisibilityOff()
-                obj.results.VisibilityOn()
-            else:
-                obj.actor.VisibilityOn()
-                obj.results.VisibilityOff()
-        
+        ls_actor = self._ren.GetActors()
+        ls_actor.InitTraversal()
+
+        act = ls_actor.GetNextActor()
+        while not act is None:
+            info = act.GetPropertyKeys()
+            if not info is None:
+                t_k = info.Get(TYPE_KEY)
+                if ActorTypeKey.Input == t_k:
+                    act.SetVisibility(not vis_state)
+                elif ActorTypeKey.Result == t_k:
+                    act.SetVisibility(vis_state)
+
+            act = ls_actor.GetNextActor()
+
         self._ren.GetRenderWindow().Render()
 
     def selection_pos_cb(self, x: float, y: float, z: float):
@@ -226,4 +233,9 @@ class Versa3dScene(QObject):
         obj.results.SetPickable(False)
         obj.results.VisibilityOff()
         self._ren.AddActor(obj.results)
+        self._ren.GetRenderWindow().Render()
+    
+    @pyqtSlot(PrintObject)
+    def unrender_sliced_obj(self, obj: PrintObject) -> None:
+        self._ren.RemoveActor(obj.results)
         self._ren.GetRenderWindow().Render()

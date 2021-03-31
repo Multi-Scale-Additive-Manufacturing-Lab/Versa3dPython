@@ -41,6 +41,7 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     control.print_plate.render_signal.connect(main_win.scene.render)
     control.print_plate.unrender_signal.connect(main_win.scene.unrender)
     control.print_plate.render_sl_signal.connect(main_win.scene.render_sliced_obj)
+    control.print_plate.unrender_sl_signal.connect(main_win.scene.unrender_sliced_obj)
 
     main_win.undo_sig.connect(control.undo_stack.undo)
     main_win.redo_sig.connect(control.undo_stack.redo)
