@@ -8,17 +8,22 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkInteractionWidgets import vtkButtonWidget, vtkTexturedButtonRepresentation2D
 from vtkmodules.vtkInteractionWidgets import vtkSliderRepresentation2D, vtkSliderWidget
 from vtkmodules.vtkIOImage import vtkPNGReader
+from vtkmodules.vtkCommonTransforms import vtkTransform
+from PyQt5.QtWidgets import QUndoCommand
+
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject
 import numpy as np
+from typing import List
 from vtkmodules.util import numpy_support
 from versa3d.mouse_interaction import RubberBandHighlight
 from versa3d.print_platter import PrintObject
-
 
 class Versa3dScene(QObject):
     selection_start = pyqtSignal()
     selection_end = pyqtSignal()
     selection_pos = pyqtSignal(float, float, float)
+
+    transform_sig = pyqtSignal(list, vtkTransform)
 
     def __init__(self, vtkqwidget: QVTKRenderWindowInteractor) -> None:
         super().__init__(parent=vtkqwidget)
@@ -31,17 +36,15 @@ class Versa3dScene(QObject):
         self._setup_scene(*self.scene_size)
 
         self.rubber_style = RubberBandHighlight(
-            self.selection_cb, self.selection_pos_cb)
+            self.selection_cb, self.selection_pos_cb, self.transform_cb)
         self.interactor.SetInteractorStyle(self.rubber_style)
-
+        
         self.interactor.GetPickingManager().EnabledOn()
         self.interactor.Initialize()
         self.interactor.Start()
 
         self._create_button()
         self._create_slider()
-
-        self._ls_obj = {}
 
     def _create_button(self):
         im_r_1 = vtkPNGReader()
@@ -108,7 +111,7 @@ class Versa3dScene(QObject):
         rep = obj.GetRepresentation()
         state = rep.GetState()
 
-        for obj in self._ls_obj.values():
+        for key, obj in self._ls_obj.items():
             if state:
                 obj.actor.VisibilityOff()
                 obj.results.VisibilityOn()
@@ -118,7 +121,6 @@ class Versa3dScene(QObject):
         
         self._ren.GetRenderWindow().Render()
 
-
     def selection_pos_cb(self, x: float, y: float, z: float):
         self.selection_pos.emit(x, y, z)
 
@@ -127,6 +129,9 @@ class Versa3dScene(QObject):
             self.selection_start.emit()
         else:
             self.selection_end.emit()
+    
+    def transform_cb(self, idx : List[str], trs : vtkTransform) -> None:
+        self.transform_sig.emit(idx, trs)
 
     def _setup_scene(self, x: float, y: float, z: float) -> None:
         colors = vtkNamedColors()
@@ -206,41 +211,17 @@ class Versa3dScene(QObject):
 
         self._ren.GetRenderWindow().Render()
 
-    def _compute_bounds(self, ls_actor) -> np.ndarray:
-        bds = np.array([np.inf, -np.inf]*3)
-        for obj in ls_actor.values():
-            actor = obj.actor
-            bounds = np.array(actor.GetBounds())
-            min_val = bds[0::2] > bounds[0::2]
-            max_val = bds[1::2] < bounds[1::2]
-
-            bds[0::2][min_val] = bounds[0::2][min_val]
-            bds[1::2][max_val] = bounds[0::2][max_val]
-        return bds
-
     @pyqtSlot(PrintObject)
     def render(self, obj: PrintObject) -> None:
-
-        if len(self._ls_obj) == 0:
-            obj.actor.SetPosition(
-                self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
-        else:
-            current_bds = self._compute_bounds(self._ls_obj)
-            le = obj.actor.GetLength()
-            obj.actor.SetPosition(
-                current_bds[1]+le*0.50, current_bds[3]+le*0.50, 0)
-
-        self._ls_obj[obj.id] = obj
         self._ren.AddActor(obj.actor)
         self._ren.GetRenderWindow().Render()
 
     @pyqtSlot(PrintObject)
     def unrender(self, obj: PrintObject) -> None:
-        self._ls_obj.pop(obj.id)
         self._ren.RemoveActor(obj.actor)
         self._ren.GetRenderWindow().Render()
 
-    @pyqtSlot(vtkRC.vtkActor)
+    @pyqtSlot(PrintObject)
     def render_sliced_obj(self, obj: PrintObject) -> None:
         obj.results.SetPickable(False)
         obj.results.VisibilityOff()

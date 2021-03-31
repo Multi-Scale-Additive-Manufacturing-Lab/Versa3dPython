@@ -11,7 +11,7 @@ import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings, SettingWrapper
 from versa3d.slicing import VoxelSlicer
 from versa3d.tool_path_planner import ToolPathPlannerFilter
-from versa3d.print_platter import PrintObject
+from versa3d.print_platter import PrintObject, PrintPlatter
 
 from numpy import ndarray
 from typing import Tuple
@@ -28,12 +28,6 @@ def reader_factory(f_path: str, ext: str) -> vtk.vtkAbstractPolyDataReader:
 
 class Versa3dController(QObject):
     update_scene = pyqtSignal(float, float, float)
-    selection_obj = pyqtSignal(bool, tuple)
-
-    render_signal = pyqtSignal(PrintObject)
-    unrender_signal = pyqtSignal(PrintObject)
-
-    render_sl_signal = pyqtSignal(PrintObject)
 
     spawn_preset_win_signal = pyqtSignal(SettingWrapper)
     spawn_printer_win_signal = pyqtSignal(SettingWrapper)
@@ -44,7 +38,7 @@ class Versa3dController(QObject):
 
         self._settings = Versa3dSettings()
 
-        self.print_objects = {}
+        self.print_plate = PrintPlatter(self)
 
         self.undo_stack = QtWidgets.QUndoStack(self)
 
@@ -54,6 +48,9 @@ class Versa3dController(QObject):
 
         self._settings.update_printer_signal.connect(
             self.update_scene_listener)
+
+        self.update_scene.connect(self.print_plate.resize_scene)
+        self.print_plate.command_sig.connect(self.push_command)
 
     @pyqtSlot(int, str)
     def update_scene_listener(self, idx: int, attr_key: str):
@@ -121,14 +118,6 @@ class Versa3dController(QObject):
     def load_settings(self) -> None:
         self.settings.load_all()
 
-    def import_callback(self, obj: PrintObject, mode=True) -> None:
-        if mode:
-            self.print_objects[obj.id] = obj
-            self.render_signal.emit(obj)
-        else:
-            obj = self.print_objects.pop(obj.id)
-            self.unrender_signal.emit(obj)
-
     @pyqtSlot(str)
     def export_gcode(self, file_path: str) -> None:
         # TODO reconnect gcode export later
@@ -138,16 +127,10 @@ class Versa3dController(QObject):
     def import_object(self, filename: str, ext: str) -> None:
         if(filename != ''):
             obj_src = reader_factory(filename, ext)
+            self.print_plate.import_part(obj_src)
 
-            obj = PrintObject(obj_src)
-
-            com = vscom.ImportCommand(obj, self.import_callback)
-            self.undo_stack.push(com)
-    
-    @pyqtSlot(vtkTransform, vtkTransform, vtkActor, str)
-    def transform(self, current_t : vtkTransform, old_t : vtkTransform, actor : vtkActor, id : str):
-        # TODO add import command as parent
-        com = vscom.TransformCommand(current_t, old_t, actor)
+    @pyqtSlot(QtWidgets.QUndoCommand)
+    def push_command(self, com : QtWidgets.QUndoCommand):
         self.undo_stack.push(com)
 
     @pyqtSlot()
@@ -157,6 +140,6 @@ class Versa3dController(QObject):
         param_setting = self.settings.get_parameter_preset(
             self._parameter_preset_idx)
 
-        for obj in self.print_objects.values():
+        for obj in self.print_plate.values():
             obj.slice_obj(printer_setting, printhead_setting, param_setting)
             self.render_sl_signal.emit(obj)

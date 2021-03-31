@@ -2,48 +2,33 @@ import os
 
 from PyQt5.QtWidgets import QUndoCommand
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkRenderingCore import vtkActor
-from versa3d.print_platter import PrintObject
-from typing import Callable
+from vtkmodules.vtkRenderingCore import vtkProp3D
+from typing import Callable, List
 
 from numpy import ndarray
 
 class ImportCommand(QUndoCommand):
-    def __init__(self, print_object: PrintObject, cb: Callable[[PrintObject, bool], None], parent: QUndoCommand = None) -> None:
-        """[summary]
-
-        Args:
-            print_object (PrintObject): print object
-            cb (Callable[[PrintObject, bool], None]): callback
-            parent (QUndoCommand, optional): Defaults to None.
-        """
+    def __init__(self, print_object: 'PrintObject', platter : 'PrintPlatter', parent: QUndoCommand = None) -> None:
         super().__init__(parent)
         self._obj = print_object
-        self._cb = cb
+        self._pl = platter
 
     def redo(self):
-        self._cb(self._obj, True)
+        self._pl.add_part(self._obj)
 
     def undo(self):
-        self._cb(self._obj, False)
+        self._pl.remove_part(self._obj)
 
 class TransformCommand(QUndoCommand):
-    def __init__(self, current: vtkTransform, prev: vtkTransform, actor: vtkActor, parent: QUndoCommand = None) -> None:
-        """[summary]
-
-        Args:
-            transform_matrix (vtkTransform): transformation matrix
-            cb (Callable[[vtkTransform], None]): call back to apply transform
-            parent (QUndoCommand, optional): parent undo command. Defaults to None.
-        """
+    def __init__(self, trs: vtkTransform, ls_obj: List['PrintObject'], parent: QUndoCommand = None) -> None:
         super().__init__(parent)
-        self._current = current
-        self._prev = prev
-        self._actor = actor
-        self._exec_first = True
+        self._current = trs
+        self._ls_obj = ls_obj
 
     def redo(self):
-        self._actor.SetUserTransform(self._current)
+        for obj in self._ls_obj:
+            obj.push_transform(self._current)
 
     def undo(self):
-        self._actor.SetUserTransform(self._prev)
+        for obj in self._ls_obj:
+            obj.pop_transform()
