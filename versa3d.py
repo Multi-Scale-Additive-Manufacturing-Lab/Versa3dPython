@@ -49,8 +49,6 @@ def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
     main_win.export_gcode_signal.connect(control.export_gcode)
     main_win.slice_object_signal.connect(control.slice_object)
     main_win.scene.transform_sig.connect(control.print_plate.apply_transform)
-    #main_win.rubber_style.emitter.commit_move.connect(control.transform)
-    #main_win.transform_sig.connect(control.transform)
 
 if __name__ == "__main__":
     APP = QtWidgets.QApplication(sys.argv)
