@@ -101,6 +101,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self._poked_ren.GetRenderWindow().Render()
     
     def set_position(self, x, y, z):
+        self._moved = True
         box_rep = self.widget.GetRepresentation()
         trs = vtkTransform()
         box_rep.GetTransform(trs)
