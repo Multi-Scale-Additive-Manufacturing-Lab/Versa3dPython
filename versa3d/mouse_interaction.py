@@ -97,12 +97,13 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self._poked_ren.GetRenderWindow().Render()
     
     def set_position(self, x, y, z):
-        bds = np.array(self.selected_actor.GetBounds())
-        diff = np.array([x,y,z]) - bds[0::2]
-        self.selected_actor.AddPosition(diff)
-        n_bds = self.selected_actor.GetBounds()
         box_rep = self.widget.GetRepresentation()
-        box_rep.PlaceWidget(n_bds)
+        trs = vtkTransform()
+        box_rep.GetTransform(trs)
+        bds = box_rep.GetBounds()
+        trs.Translate(x - bds[0], y - bds[2], z - bds[4])
+        box_rep.SetTransform(trs)
+        self.apply_transform(trs)
         self.update_ren()
     
     def compute_bds(self, props : vtkProp3DCollection):
