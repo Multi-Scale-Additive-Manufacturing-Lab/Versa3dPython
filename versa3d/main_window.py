@@ -17,7 +17,6 @@ from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.movement_widget import MovementPanel
 from versa3d.settings import SettingTypeKey, SettingWrapper
-from versa3d.mouse_interaction import RubberBandHighlight
 from versa3d.scene import Versa3dScene
 
 
