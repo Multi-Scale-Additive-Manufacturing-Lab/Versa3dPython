@@ -30,6 +30,8 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         self.cb_pos = cb_pos
         self.cb_com = cb_com
 
+        self._moved = False
+
     def move_cb(self, caller: vtkBoxWidget2, ev: str) -> None:
         trs = vtkTransform()
         box_rep = caller.GetRepresentation()
@@ -37,6 +39,8 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         bds = box_rep.GetBounds()
         self.cb_pos(bds[0], bds[2], bds[4])
         self.apply_transform(trs)
+
+        self._moved = True
 
     def apply_transform(self, trs : vtkTransform):
         self._selected_actor.InitTraversal()
@@ -156,11 +160,13 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             self.cb_pos(bds[0], bds[2], bds[4])
         else:
             if not self._selected_actor is None:
-                self.commit_transform(self._selected_actor)
+                if self._moved:
+                    self.commit_transform(self._selected_actor)
                 self.widget.SetRepresentation(None)
                 self.widget.SetEnabled(0)
                 self._selected_actor = None
                 self._prev_trs = []
+                self._moved = False
 
             self.cb_int(False)
         self.update_ren()
