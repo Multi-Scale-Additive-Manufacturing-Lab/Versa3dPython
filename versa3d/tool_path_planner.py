@@ -1,12 +1,12 @@
 import vtk
 import os
-from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from versa3d.gcode import BigMachineGcode, GCodeWriter, GcodeStep
 from abc import ABC, abstractmethod
 
 import numpy as np
 
 from versa3d.settings import PrintSetting, BinderJettingPrintParameter, BinderJettingPrinter, GenericPrinter, PixelPrinthead
+from versa3d.print_platter import PrintObject
 
 from typing import List, Any
 
@@ -103,11 +103,8 @@ TOOL_PATH_NAME = {
 }
 
 
-class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
+class ToolPathPlannerFilter():
     def __init__(self) -> None:
-        VTKPythonAlgorithmBase.__init__(self,
-                                        nInputPorts=1, inputType='vtkImageData',
-                                        nOutputPorts=0)
         self.gcode_writer = None
         self._gcode_flavour = None
 
@@ -152,7 +149,10 @@ class ToolPathPlannerFilter(VTKPythonAlgorithmBase):
             self.gcode_writer, img_stack)
         return 1
 
-    def write(self, file_path: str) -> None:
+    def write(self, file_path: str, obj : List[PrintObject]) -> None:
         # TODO change to something more flexible, duplication of zip extension 
         s_fp = os.path.splitext(file_path)[0]
+
+        
+
         self.gcode_writer.export_file(s_fp, self._steps)

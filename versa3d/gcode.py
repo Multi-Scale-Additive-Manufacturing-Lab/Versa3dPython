@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import os
 import shutil
 from PIL import Image
-from vtk.numpy_interface import dataset_adapter as dsa
+from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 
 from typing import Callable, List
