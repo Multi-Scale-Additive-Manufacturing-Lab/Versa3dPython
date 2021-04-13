@@ -12,6 +12,7 @@ from vtkmodules.vtkImagingCore import vtkImageThreshold, vtkImageShiftScale, vtk
 from abc import ABC, abstractmethod
 
 from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter
+from versa3d.util import compute_spacing, compute_dim
 from enum import Enum
 
 
@@ -56,17 +57,6 @@ class GenericSlicer(ABC):
     def slice_object(self, input_src: vtkPolyData):
         pass
 
-    @staticmethod
-    def compute_spacing(layer_thickness: float, resolution: float) -> np.array:
-        spacing = np.zeros(3, dtype=float)
-        spacing[0:2] = 25.4/resolution
-        spacing[2] = np.min(layer_thickness)
-        return spacing
-
-    @staticmethod
-    def compute_dim(bounds: np.array, spacing: np.array) -> np.array:
-        return np.ceil((bounds[1::2] - bounds[0::2]) / spacing).astype(int)
-
 
 class FullBlackSlicer(GenericSlicer):
     def __init__(self) -> None:
@@ -89,16 +79,16 @@ class FullBlackSlicer(GenericSlicer):
         return False
 
     def update_info(self, input_src: vtkInformation, outInfo: vtkInformation) -> None:
-        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
+        spacing = compute_spacing(self._layer_thickness, self._resolution)
         bounds = np.array(input_src.GetBounds())
-        img_dim = self.compute_dim(bounds, spacing)
+        img_dim = compute_dim(bounds, spacing)
         outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
                     (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
 
     def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
-        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
-        img_dim = self.compute_dim(bounds, spacing)
+        spacing = compute_spacing(self._layer_thickness, self._resolution)
+        img_dim = compute_dim(bounds, spacing)
         origin = bounds[0::2]
 
         background_img = vtkImageData()
@@ -159,7 +149,7 @@ class Dithering(GenericSlicer):
         return False
 
     def update_info(self, input_src: vtkInformation, outInfo: vtkInformation) -> None:
-        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
+        spacing = compute_spacing(self._layer_thickness, self._resolution)
         bounds = np.array(input_src.GetBounds())
         img_dim = self.compute_dim(bounds, spacing)
         outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
@@ -167,7 +157,7 @@ class Dithering(GenericSlicer):
 
     def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
-        spacing = self.compute_spacing(self._layer_thickness, self._resolution)
+        spacing = compute_spacing(self._layer_thickness, self._resolution)
         img_dim = self.compute_dim(bounds, spacing)
         origin = bounds[0::2]
 
