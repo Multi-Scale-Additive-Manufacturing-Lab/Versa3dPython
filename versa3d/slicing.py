@@ -300,6 +300,8 @@ class VoxelSlicer(VTKPythonAlgorithmBase):
 
 class VoxDithering(VTKPythonAlgorithmBase):
     def __init__(self):
+        """ internal class Dithering
+        """
         VTKPythonAlgorithmBase.__init__(self,
                                         nInputPorts=1, inputType='vtkImageData',
                                         nOutputPorts=1, outputType='vtkImageData')
