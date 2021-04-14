@@ -20,6 +20,7 @@ from time import time
 
 from versa3d.slicing import VoxelSlicer
 from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter
+from versa3d.tool_path_planner import ToolPathPlannerFilter
 import versa3d.versa3d_command as vscom
 from enum import IntEnum
 
@@ -93,6 +94,10 @@ class PrintObject(QObject):
         info.Set(TYPE_KEY, ActorTypeKey.Result)
 
         obj.SetPropertyKeys(info)
+    
+    @property
+    def sliced_object(self):
+        return self._voxelizer.GetOutputDataObject(0)
 
     def slice_obj(self, printer: PrintSetting,
                   printhead: PixelPrinthead,
@@ -103,6 +108,7 @@ class PrintObject(QObject):
         full_trs = vtkTransform()
         full_trs.SetMatrix(self.actor.GetMatrix())
         self._coord_converter.SetTransform(full_trs)
+        self._coord_converter.Update()
 
         self._voxelizer.set_settings(printer, printhead, print_param)
         self._voxelizer.Update()
@@ -121,9 +127,6 @@ class PrintObject(QObject):
         self.results.ShallowCopy(actor)
 
         self.render_res_sig.emit(self.id)
-    
-    def get_output(self):
-        return self._voxelizer.GetOutputPort()
 
 
 def arrange_part(ls_part: List[PrintObject], target_obj: PrintObject):
@@ -152,6 +155,12 @@ class PrintPlatter(QObject):
         self._plate = {}
         self.scene_size = [50.0, 50.0, 50.0]
         self._n = -1
+
+        self._path_planner = ToolPathPlannerFilter()
+
+        self._printer = None
+        self._printhead = None
+        self._param = None
 
     def __iter__(self):
         self._n = -1
@@ -211,13 +220,14 @@ class PrintPlatter(QObject):
                   printhead: PixelPrinthead,
                   print_param: GenericPrintParameter) -> None:
 
+        self._printer = printer
+        self._printhead = printhead
+        self._param = print_param
+
         for obj in self._plate.values():
             obj.slice_obj(printer, printhead, print_param)
 
-    def export_gcode(self, output_path: str,
-                     printer: PrintSetting,
-                     printhead: PixelPrinthead,
-                     print_param: GenericPrintParameter) -> None:
-        self.slice_obj(printer, printhead, print_param)
+    def export_gcode(self, output_path: str) -> None:
+        self._path_planner.write(output_path, self._plate.values(), self._printer, self._printhead, self._param)
 
 

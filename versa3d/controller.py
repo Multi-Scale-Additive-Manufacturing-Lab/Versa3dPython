@@ -120,8 +120,8 @@ class Versa3dController(QObject):
 
     @pyqtSlot(str)
     def export_gcode(self, file_path: str) -> None:
-        # TODO reconnect gcode export later
-        pass
+        self.slice_object()
+        self.print_plate.export_gcode(file_path)
 
     @pyqtSlot(str, str)
     def import_object(self, filename: str, ext: str) -> None:
@@ -140,5 +140,4 @@ class Versa3dController(QObject):
         param_setting = self.settings.get_parameter_preset(
             self._parameter_preset_idx)
 
-        for obj in self.print_plate:
-            obj.slice_obj(printer_setting, printhead_setting, param_setting)
+        self.print_plate.slice_obj(printer_setting, printhead_setting, param_setting)

@@ -2,96 +2,106 @@ import vtk
 import os
 from versa3d.gcode import BigMachineGcode, GCodeWriter, GcodeStep
 from abc import ABC, abstractmethod
-
+from vtkmodules.vtkCommonDataModel import vtkImageData
+from vtkmodules.util.vtkConstants import VTK_UNSIGNED_CHAR
+from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 
 from versa3d.settings import PrintSetting, BinderJettingPrintParameter, BinderJettingPrinter, GenericPrinter, PixelPrinthead
-from versa3d.print_platter import PrintObject
-
-from typing import List, Any
+# from versa3d.print_platter import PrintObject
+import versa3d.util as vutil
+from typing import Callable, List, Any, Tuple
 
 GCODE_FLAVOUR = {
     0: BigMachineGcode
 }
 
 
+GenericToolPathPlanner = Callable[[GCodeWriter, List['PrintObject'],
+                                   GenericPrinter,
+                                   PixelPrinthead,
+                                   BinderJettingPrintParameter], List[GcodeStep]]
+
+
 class GenericToolPathPlanner(ABC):
     @abstractmethod
-    def update_printhead(self, setting: PrintSetting):
-        pass
-
-    @abstractmethod
-    def update_printer(self, setting: PrintSetting):
-        pass
-
-    @abstractmethod
-    def update_param(self, setting: PrintSetting):
-        pass
-
-    @abstractmethod
-    def generate_step(self, gcode_writer: GCodeWriter, image: Any):
-        pass
+    def export(self, gcode_writer: BigMachineGcode,
+               ls_obj: List['PrintObject'],
+               printer: GenericPrinter,
+               printhead: PixelPrinthead,
+               param: BinderJettingPrintParameter) -> List[GcodeStep]:
+        raise(NotImplementedError)
 
 
-class BinderJettingPlanner(GenericToolPathPlanner):
-    def __init__(self) -> None:
-        super().__init__()
-        self._build_bed_size = np.array([100, 100, 300], dtype=float)
-        self._coord_offset = np.array([100, 100], dtype=float)
+class BinderJettingToolPath(GenericToolPathPlanner):
 
-        self._roller_rpm = 200.0
-        self._print_speed = 10.0
+    def merge_image(self, build_dim: np.ndarray, spacing: np.ndarray, ls_obj: List['PrintObject']) -> Tuple[vtkImageData, int]:
 
-    def update_printhead(self, setting: PrintSetting) -> bool:
-        return False
+        bg_im = vtkImageData()
+        bg_im.SetSpacing(spacing)
+        bg_im.SetDimensions(build_dim)
+        bg_im.SetOrigin(0, 0, 0)
+        bg_im.AllocateScalars(VTK_UNSIGNED_CHAR, 1)
+        bg_im.GetPointData().GetScalars().Fill(255)
 
-    def update_param(self, setting: BinderJettingPrintParameter) -> bool:
-        modified = False
-        if self._roller_rpm != setting.roller_rpm.value:
-            self._roller_rpm = setting.roller_rpm.value
-            modified = True
+        w_bg = dsa.WrapDataObject(bg_im)
+        data_bg = np.reshape(
+            w_bg.PointData['ImageScalars'], build_dim, order='F')
 
-        if self._print_speed != setting.print_speed.value:
-            self._print_speed = setting.print_speed.value
-            modified = True
+        top_layer = 0
 
-        return modified
+        for obj in ls_obj:
+            vtk_im = dsa.WrapDataObject(obj.sliced_object)
+            origin = np.ceil(np.array(vtk_im.GetOrigin())/spacing).astype(int)
+            obj_dim = np.array(vtk_im.GetDimensions()).astype(int)
+            top_z = origin[2] + obj_dim[2]
+            obj_data = np.reshape(
+                vtk_im.PointData['ImageScalars'], obj_dim, order='F')
+            data_bg[origin[0]:origin[0] + obj_dim[0],
+                    origin[1]:origin[1] + obj_dim[1],
+                    origin[2]:top_z] = obj_data
 
-    def update_printer(self, setting: BinderJettingPrinter) -> bool:
-        modified = False
-        if np.any(self._build_bed_size != setting.build_bed_size.value):
-            self._build_bed_size = setting.build_bed_size.value
-            modified = True
+            if(top_z > top_layer):
+                top_layer = top_z
 
-        if np.any(self._coord_offset != setting.coord_offset.value):
-            self._coord_offset = setting.coord_offset.value
-            modified = True
+        return bg_im, top_layer
 
-        return modified
+    def export(self, gcode_writer: BigMachineGcode,
+               ls_obj: List['PrintObject'],
+               printer: GenericPrinter,
+               printhead: PixelPrinthead,
+               param: BinderJettingPrintParameter) -> List[GcodeStep]:
 
-    def generate_step(self, gcode_writer: BigMachineGcode, image: vtk.vtkImageData) -> List[GcodeStep]:
-        z_spacing = image.GetSpacing()[2]
-        z_d = image.GetDimensions()[2]
-        origin = np.array(image.GetOrigin())
+        res = printhead.dpi.value
+        layer_thickness = param.layer_thickness.value
+        build_bed_size = printer.build_bed_size.value
+        spacing = vutil.compute_spacing(layer_thickness, res)
+
+        coord_offset = printer.coord_offset.value
+        roller_rpm = param.roller_rpm.value
+        print_speed = param.print_speed.value
+
+        build_dim = np.ceil(build_bed_size / spacing).astype(int)
+        vtk_im, top_layer = self.merge_image(build_dim, spacing, ls_obj)
 
         ls_step = []
         ls_step.append(gcode_writer.set_units('metric'))
         ls_step.append(gcode_writer.home_axis(['X', 'Y', 'Z', 'U']))
 
-        ls_step.append(gcode_writer.set_position_offset(self._coord_offset))
+        ls_step.append(gcode_writer.set_position_offset(coord_offset))
         ls_step.append(gcode_writer.initialise_printhead(1))
 
-        for z in range(z_d):
+        for z in range(top_layer):
             ls_step.append(gcode_writer.move([0, 0]))
-            ls_step.append(gcode_writer.roller_start(1, self._roller_rpm))
+            ls_step.append(gcode_writer.roller_start(1, roller_rpm))
 
-            ls_step.append(gcode_writer.move_feed_bed(z_spacing))
-            ls_step.append(gcode_writer.move_build_bed(z_spacing))
+            ls_step.append(gcode_writer.move_feed_bed(layer_thickness))
+            ls_step.append(gcode_writer.move_build_bed(layer_thickness))
 
-            ls_step.append(gcode_writer.move([0, self._build_bed_size[1]]))
+            ls_step.append(gcode_writer.move([0, build_bed_size[1]]))
 
             ls_step.append(gcode_writer.print_image(
-                'img_{}.bmp'.format(z), image, z, 1, origin[0], origin[1], self._print_speed))
+                'img_{}.bmp'.format(z), vtk_im, z, 1, 0, 0, print_speed))
 
             ls_step.append(gcode_writer.roller_stop())
 
@@ -99,7 +109,7 @@ class BinderJettingPlanner(GenericToolPathPlanner):
 
 
 TOOL_PATH_NAME = {
-    0: BinderJettingPlanner
+    0: BinderJettingToolPath
 }
 
 
@@ -117,42 +127,45 @@ class ToolPathPlannerFilter():
         self._printhead = None
         self._param = None
 
-    def set_settings(self, printer: GenericPrinter,
-                     printhead: PixelPrinthead,
-                     print_param: BinderJettingPrintParameter) -> None:
-        self.set_printer(printer)
-        self.set_print_parameter(print_param)
-        self.set_printhead(printhead)
+    @property
+    def printer(self) -> GenericPrinter:
+        return self._printer
 
-    def set_printer(self, setting: GenericPrinter) -> None:
-        if setting.gcode_flavour.value != self._gcode_flavour:
-            self.Modified()
-            self._gcode_flavour = setting.gcode_flavour.value
-            self.gcode_writer = GCODE_FLAVOUR[self._gcode_flavour]()
+    @property
+    def printhead(self) -> PixelPrinthead:
+        return self._printhead
 
-    def set_printhead(self, setting: PixelPrinthead):
-        if self.step_generator.update_printhead(setting):
-            self.Modified()
+    @property
+    def print_parameter(self) -> BinderJettingPrintParameter:
+        return self._param
 
-    def set_print_parameter(self, setting: BinderJettingPrintParameter) -> None:
-        if setting.tool_path_pattern.value != self._tool_path_pattern:
-            self.Modified()
-            self._tool_path_pattern = setting.tool_path_pattern.value
-            self.step_generator = TOOL_PATH_NAME[self._tool_path_pattern]()
+    @printer.setter
+    def printer(self, setting: GenericPrinter) -> None:
+        self._gcode_flavour = setting.gcode_flavour.value
+        self.gcode_writer = GCODE_FLAVOUR[self._gcode_flavour]()
+        self._printer = setting
 
-        if self.step_generator.update_param(setting):
-            self.Modified()
+    @printhead.setter
+    def printhead(self, setting: PixelPrinthead):
+        self._printhead = setting
 
-    def RequestData(self, request: str, inInfo: vtk.vtkInformation, outInfo: vtk.vtkInformation) -> int:
-        img_stack = vtk.vtkImageData.GetData(inInfo[0])
-        self._steps = self.step_generator.generate_step(
-            self.gcode_writer, img_stack)
-        return 1
+    @print_parameter.setter
+    def print_parameter(self, setting: BinderJettingPrintParameter) -> None:
+        self._tool_path_pattern = setting.tool_path_pattern.value
+        self.step_generator = TOOL_PATH_NAME[self._tool_path_pattern]()
+        self._param = setting
 
-    def write(self, file_path: str, obj : List[PrintObject]) -> None:
-        # TODO change to something more flexible, duplication of zip extension 
+    def write(self, file_path: str, ls_obj: List['PrintObject'],
+              printer: GenericPrinter,
+              printhead: PixelPrinthead,
+              param: BinderJettingPrintParameter) -> None:
+        # TODO change to something more flexible, duplication of zip extension
         s_fp = os.path.splitext(file_path)[0]
 
-        
+        self.printer = printer
+        self.printhead = printhead
+        self.print_parameter = param
 
+        self._steps = self.step_generator.export(
+            self.gcode_writer, ls_obj, self.printer, self.printhead, self.print_parameter)
         self.gcode_writer.export_file(s_fp, self._steps)
