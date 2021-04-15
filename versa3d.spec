@@ -2,15 +2,12 @@
 
 block_cipher = None
 
-hidden_imports = ['vtk',
-                  'vtk.qt',
-                  'vtk.qt.QVTKRenderWindowInteractor']
 
 a = Analysis(['versa3d.py'],
-             pathex=['.'],
+             pathex=['\\\\ecfile1.uwaterloo.ca\\m384wang\\My Documents\\GitHub\\Versa3dPython'],
              binaries=[],
-             datas=[('./designer_files/Versa3dMainWindow.ui','GUI')],
-             hiddenimports=hidden_imports,
+             datas=[],
+             hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -24,8 +21,8 @@ exe = EXE(pyz,
           a.scripts,
           [],
           exclude_binaries=True,
-          name='main',
-          debug=True,
+          name='versa3d',
+          debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
