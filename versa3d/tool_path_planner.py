@@ -1,4 +1,3 @@
-import vtk
 import os
 from versa3d.gcode import BigMachineGcode, GCodeWriter, GcodeStep
 from abc import ABC, abstractmethod

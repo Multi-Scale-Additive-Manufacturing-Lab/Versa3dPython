@@ -3,7 +3,6 @@
 from typing import Set
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-import vtk
 from vtkmodules.util.misc import calldata_type
 from vtkmodules.util.vtkConstants import VTK_OBJECT
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-import vtk
+from vtkmodules.vtkCommonDataModel import vtkImageData
+from vtkmodules.vtkImagingCore import vtkExtractVOI
 from tempfile import TemporaryDirectory
 import os
 import shutil
@@ -35,7 +36,7 @@ class GCodeWriter(ABC):
         pass
 
     @abstractmethod
-    def print_image(self, image: vtk.vtkImageData) -> GcodeStep:
+    def print_image(self, image: vtkImageData) -> GcodeStep:
         pass
 
     @abstractmethod
@@ -121,12 +122,12 @@ class BigMachineGcode(GCodeWriter):
     def initialise_printhead(self, printhead_num: int) -> GcodeStep:
         return lambda: 'M6 P1 ; Select Imtech\nM93 P%i ; Initialize printhead\n' % (printhead_num)
 
-    def print_image(self, img_name: str, img: vtk.vtkImageData,
+    def print_image(self, img_name: str, img: vtkImageData,
                     z: int, printhead_num: int,
                     x: float, y: float, speed: float) -> GcodeStep:
         def f() -> str:
             x_d, y_d, _ = img.GetDimensions()
-            single_slice = vtk.vtkExtractVOI()
+            single_slice = vtkExtractVOI()
             single_slice.SetSampleRate([1, 1, 1])
             single_slice.SetInputData(img)
             single_slice.SetVOI(0, x_d - 1, 0, y_d - 1, z, z)

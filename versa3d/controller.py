@@ -3,9 +3,10 @@ from typing import Tuple
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
-import vtk
 from vtkmodules.vtkRenderingCore import vtkActor, vtkImageActor, vtkPolyDataMapper
 from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkIOCore import vtkAbstractPolyDataReader
+from vtkmodules.vtkIOGeometry import vtkSTLReader
 import versa3d.print_platter as ppl
 import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings, SettingWrapper
@@ -16,9 +17,9 @@ from versa3d.print_platter import PrintObject, PrintPlatter
 from numpy import ndarray
 from typing import Tuple
 
-def reader_factory(f_path: str, ext: str) -> vtk.vtkAbstractPolyDataReader:
+def reader_factory(f_path: str, ext: str) -> vtkAbstractPolyDataReader:
     if ext.lower() == 'stl (*.stl)':
-        reader = vtk.vtkSTLReader()
+        reader = vtkSTLReader()
         reader.SetFileName(f_path)
         reader.Update()
         return reader
