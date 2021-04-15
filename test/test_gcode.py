@@ -31,6 +31,7 @@ class GcodeTest(unittest.TestCase):
         self.printhead = mock.Mock()
 
     def test_generate_gcode(self):
+        ## REDO INTERFACE CHANGED
         slicer = ToolPathPlannerFilter()
         slicer.set_settings(self.printer_obj, self.printhead, self.print_param)
 

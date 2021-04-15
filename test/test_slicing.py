@@ -7,6 +7,7 @@ from unittest import mock
 
 from versa3d.slicing import VoxelSlicer
 
+## TODO INTERFACE CHANGED
 
 class SlicingTest(unittest.TestCase):
 
