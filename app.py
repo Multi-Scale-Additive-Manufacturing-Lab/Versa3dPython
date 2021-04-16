@@ -56,7 +56,7 @@ if __name__ == "__main__":
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         BASE_PATH = sys._MEIPASS
-        UI_PATH = os.path.join(BASE_PATH, 'GUI', 'Versa3dMainWindow.ui')
+        UI_PATH = os.path.join(BASE_PATH, 'designer_files', 'Versa3dMainWindow.ui')
     except Exception:
         BASE_PATH = os.path.abspath(".")
         UI_PATH = os.path.join(

@@ -2,13 +2,20 @@
 
 block_cipher = None
 
-a = Analysis(['versa3d.py'],
+hiddenimports = ['vtk',
+              'vtkmodules',
+              'vtkmodules.all',
+              'vtkmodules.qt.QVTKRenderWindowInteractor',
+              'vtkmodules.util',
+              'vtkmodules.util.numpy_support']
+
+a = Analysis(['app.py'],
              pathex=['.'],
              binaries=[],
              datas=[('./designer_files/*.ui','designer_files'),
                     ('./designer_files/icon/*.svg','designer_files/icon'),
                     ('./designer_files/icon/vtk_icon/*.png','designer_files/icon/vtk_icon')],
-             hiddenimports=[],
+             hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
