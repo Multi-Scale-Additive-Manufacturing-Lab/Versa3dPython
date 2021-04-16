@@ -6,10 +6,10 @@ from vtkmodules.util.vtkConstants import VTK_UNSIGNED_CHAR
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 import numpy as np
 
-from versa3d.settings import PrintSetting, BinderJettingPrintParameter, BinderJettingPrinter, GenericPrinter, PixelPrinthead
+from versa3d.settings import BinderJettingPrintParameter, GenericPrinter, PixelPrinthead
 # from versa3d.print_platter import PrintObject
 import versa3d.util as vutil
-from typing import Callable, List, Any, Tuple
+from typing import Callable, List, Tuple
 
 GCODE_FLAVOUR = {
     0: BigMachineGcode

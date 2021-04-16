@@ -2,10 +2,7 @@ import os
 
 from PyQt5.QtWidgets import QUndoCommand
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkRenderingCore import vtkProp3D
-from typing import Callable, List
-
-from numpy import ndarray
+from typing import List
 
 class ImportCommand(QUndoCommand):
     def __init__(self, print_object: 'PrintObject', platter : 'PrintPlatter', parent: QUndoCommand = None) -> None:

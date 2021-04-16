@@ -9,7 +9,6 @@ from vtkmodules.vtkInteractionWidgets import vtkButtonWidget, vtkTexturedButtonR
 from vtkmodules.vtkInteractionWidgets import vtkSliderRepresentation2D, vtkSliderWidget
 from vtkmodules.vtkIOImage import vtkPNGReader
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from PyQt5.QtWidgets import QUndoCommand
 
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject
 import numpy as np

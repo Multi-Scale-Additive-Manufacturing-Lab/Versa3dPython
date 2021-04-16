@@ -1,16 +1,11 @@
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
-from vtkmodules.vtkRenderingCore import vtkCellPicker, vtkAssembly, vtkInteractorStyle, vtkProp3DCollection
-from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker, vtkAssemblyPath, vtkActor, vtkRenderer
+from vtkmodules.vtkRenderingCore import vtkProp3DCollection
+from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker, vtkRenderer
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget2, vtkBoxRepresentation
-from vtkmodules.vtkCommonCore import vtkInformation, vtkInformationVector
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import numpy as np
-from typing import Tuple, Callable
-
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject
-from PyQt5.QtWidgets import QUndoCommand
+from typing import Callable
 
 from versa3d.print_platter import ID_KEY
 

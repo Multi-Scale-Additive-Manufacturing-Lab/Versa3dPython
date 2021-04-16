@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*
 
-from typing import Set
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from vtkmodules.util.misc import calldata_type
-from vtkmodules.util.vtkConstants import VTK_OBJECT
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleRubberBand3D
-from vtkmodules.vtkRenderingCore import vtkProp3DCollection, vtkActor
+from vtkmodules.vtkRenderingCore import vtkActor
 from vtkmodules.vtkCommonTransforms import vtkTransform
 
-from vtkmodules.util import numpy_support
-from vtkmodules import vtkInteractionStyle as vtkIntStyle
-import numpy as np
-from versa3d.controller import Versa3dController
 from versa3d.settings_window import SettingsWindow
 from versa3d.movement_widget import MovementPanel
 from versa3d.settings import SettingTypeKey, SettingWrapper

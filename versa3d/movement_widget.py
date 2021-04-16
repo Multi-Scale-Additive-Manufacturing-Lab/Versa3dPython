@@ -1,8 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
-from typing import Optional
-
 
 class MovementPanel(QWidget):
     translate_sig = pyqtSignal(float, float, float)

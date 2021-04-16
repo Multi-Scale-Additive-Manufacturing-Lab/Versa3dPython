@@ -2,10 +2,9 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QDialogButtonBox, QDialog, QAbstractButton, QInputDialog, QMessageBox, QComboBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QObject
-from versa3d.settings import Versa3dSettings, SingleEntry, PrintSetting, SettingWrapper
+from versa3d.settings import SingleEntry, PrintSetting, SettingWrapper
 
 import attr
-from typing import Callable, Dict
 
 class SettingsWindow(QDialog):
     apply_setting_signal = pyqtSignal()

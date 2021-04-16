@@ -3,18 +3,11 @@ from typing import Tuple
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
-from vtkmodules.vtkRenderingCore import vtkActor, vtkImageActor, vtkPolyDataMapper
-from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkIOCore import vtkAbstractPolyDataReader
 from vtkmodules.vtkIOGeometry import vtkSTLReader
-import versa3d.print_platter as ppl
-import versa3d.versa3d_command as vscom
 from versa3d.settings import Versa3dSettings, SettingWrapper
-from versa3d.slicing import VoxelSlicer
-from versa3d.tool_path_planner import ToolPathPlannerFilter
-from versa3d.print_platter import PrintObject, PrintPlatter
+from versa3d.print_platter import PrintPlatter
 
-from numpy import ndarray
 from typing import Tuple
 
 def reader_factory(f_path: str, ext: str) -> vtkAbstractPolyDataReader:

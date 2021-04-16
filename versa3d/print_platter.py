@@ -1,22 +1,15 @@
 from PyQt5.QtWidgets import QUndoCommand
 import numpy as np
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase, vtkAlgorithm
-from vtkmodules.vtkInteractionWidgets import vtkBoxWidget
 from vtkmodules.vtkCommonCore import vtkInformation
-from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkDataObject
 from vtkmodules.vtkCommonExecutionModel import vtkPolyDataAlgorithm
-from vtkmodules.util.vtkConstants import VTK_OBJECT
-from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor, vtkActor, vtkRenderer, vtkPolyDataMapper
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
-from vtkmodules.vtkFiltersCore import vtkAppendPolyData
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes
-from vtkmodules.util.misc import calldata_type
 from vtkmodules.util import keys
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from PyQt5.QtCore import QObject, QUuid, pyqtSlot, pyqtSignal
 
-from typing import Callable, Optional, List
-from time import time
+from typing import Optional, List
 
 from versa3d.slicing import VoxelSlicer
 from versa3d.settings import PrintSetting, PixelPrinthead, GenericPrintParameter

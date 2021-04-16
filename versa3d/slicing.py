@@ -1,6 +1,5 @@
 import numpy as np
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 from vtkmodules.util.vtkConstants import VTK_DOUBLE, VTK_UNSIGNED_CHAR
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkImageData
 from vtkmodules.vtkCommonCore import vtkInformation
