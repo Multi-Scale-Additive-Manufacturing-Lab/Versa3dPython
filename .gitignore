@@ -1,3 +1,6 @@
+test_output/
+build/
+
 # Compiled python files
 *.py[oc]
 

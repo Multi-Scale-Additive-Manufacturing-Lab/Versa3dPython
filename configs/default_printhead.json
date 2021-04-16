@@ -1,0 +1,36 @@
+{
+    "binder_jetting_printhead": {
+        "process": "bjp",
+        "dpi": {
+            "type": "array<int>",
+            "value": [
+                50,
+                50
+            ],
+            "ui": {
+                "label": "Printhead DPI",
+                "category": "general",
+                "section": "Resolution",
+                "unit": "dpi",
+                "range" : [[1, 4000],[1, 4000]]
+            }
+        }
+    },
+    "dlp_printhead": {
+        "process": "dlp",
+        "dpi": {
+            "type": "array<int>",
+            "value": [
+                500,
+                500
+            ],
+            "ui": {
+                "label": "Printhead DPI",
+                "category": "general",
+                "section": "Resolution",
+                "unit": "dpi",
+                "range" : [[1, 4000],[1, 4000]]
+            }
+        }
+    }
+}

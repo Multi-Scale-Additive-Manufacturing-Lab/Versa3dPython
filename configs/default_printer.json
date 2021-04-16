@@ -1,0 +1,92 @@
+{
+    "bj_printer": {
+        "process" : "bjp",
+        "build_bed_size": {
+            "type": "array<float>",
+            "value": [
+                100,
+                100,
+                100
+            ],
+            "ui" : {
+                "label": "bed size",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm",
+                "range" : [[1, 1000],[1, 1000],[1, 1000]]
+            }
+        },
+        "coord_offset": {
+            "type": "array<float>",
+            "value": [
+                33,
+                50
+            ],
+            "ui" : {
+                "label": "XY coordinate offset",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm",
+                "range" : [[-1000, 1000],[-1000, 1000]]
+            }
+        },
+        "gcode_flavour" : {
+            "type": "enum",
+            "value": 0,
+            "ui": {
+                "label": "GCode Flavour",
+                "category": "IO",
+                "section": "Gcode",
+                "enum_list": [
+                    "BigMachine",
+                    "AnyCubic"
+                ]
+            }
+        }
+    },
+    "dlp_printer": {
+        "process" : "dlp",
+        "build_bed_size": {
+            "type": "array<float>",
+            "value": [
+                50,
+                50,
+                80
+            ],
+            "ui": {
+                "label": "bed size",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm",
+                "range" : [[1, 1000],[1, 1000],[1, 1000]]
+            }
+        },
+        "coord_offset": {
+            "type": "array<float>",
+            "value": [
+                0,
+                0
+            ],
+            "ui" : {
+                "label": "XY coordinate offset",
+                "category": "general",
+                "section": "bed settings",
+                "unit": "mm",
+                "range" : [[-1000, 1000],[-1000, 1000]]
+            }
+        },
+        "gcode_flavour" : {
+            "type": "enum",
+            "value": 0,
+            "ui": {
+                "label": "GCode Flavour",
+                "category": "IO",
+                "section": "Gcode",
+                "enum_list": [
+                    "BigMachine",
+                    "AnyCubic"
+                ]
+            }
+        }
+    }
+}
