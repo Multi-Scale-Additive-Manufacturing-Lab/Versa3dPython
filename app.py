@@ -12,11 +12,11 @@ from versa3d.main_window import MainWindow
 from versa3d.controller import Versa3dController
 
 def set_up_app(main_win : MainWindow, control : Versa3dController) -> None:
-    CONTROLLER.settings.add_setting_signal.connect(
+    control.settings.add_setting_signal.connect(
         main_win.populate_printer_drop_down
     )
 
-    CONTROLLER.load_settings()
+    control.load_settings()
 
     printer_setting = control.settings.get_printer(0)
     build_bed_size = printer_setting.build_bed_size.value
