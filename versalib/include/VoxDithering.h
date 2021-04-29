@@ -1,7 +1,11 @@
 #ifndef VOXDITHERING_H
 #define VOXDITHERING_H
-
+#include <map>
 #include "vtkImageAlgorithm.h"
+
+using namespace std;
+
+#define DitherMap map<pair<int, int>, float>
 
 namespace
 {
@@ -9,7 +13,23 @@ namespace
     {
     public:
         vtkTypeMacro(VoxDithering, vtkImageAlgorithm);
-        void PrintSelf(ostream& os, vtkIndent indent) override;
+        void PrintSelf(ostream &os, vtkIndent indent) override;
+        enum class DitheringType : int
+        {
+            floyd_steinberg,
+            atkinson,
+            jarvis_judice_ninke,
+            stucki,
+            burkes,
+            sierra3,
+            sierra2,
+            sierra2_4a,
+            stevenson_arce
+        };
+
+        //vtkSetMacro(Dithering, DitheringType);
+        //vtkGetMacro(Dithering, DitheringType);
+        DitherMap GetDitherMap(DitheringType type);
 
     protected:
         VoxDithering();
@@ -21,12 +41,10 @@ namespace
         int RequestData(vtkInformation *request, vtkInformationVector **inputVector,
                         vtkInformationVector *outputVector) override;
 
-        // see algorithm for more info
-        int FillInputPortInformation(int port, vtkInformation *info) override;
-    
     private:
-        void operator=(const VoxDithering&) = delete;
-
+        void operator=(const VoxDithering &) = delete;
+        double ClosestVal(double pixel);
+        DitheringType Dithering;
     };
 
 }
