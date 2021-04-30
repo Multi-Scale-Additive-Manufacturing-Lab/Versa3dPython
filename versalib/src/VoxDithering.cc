@@ -1,3 +1,15 @@
+/*
+ * File: VoxDithering.cc
+ * Project: Versa3d
+ * File Created: 2021-04-30
+ * Author: Marc Wang (marc.wang@uwaterloo.ca)
+ * -----
+ * Last Modified: 2021-04-30
+ * Modified By: Marc Wang (marc.wang@uwaterloo.ca>)
+ * -----
+ * Copyright (c) 2021, MSAM Lab - University of Waterloo
+ */
+
 #include "VoxDithering.h"
 #include <math.h>
 
@@ -156,7 +168,6 @@ int VoxDithering::RequestData(vtkInformation *vtkNotUsed(request),
 
     int *ext = outImg->GetExtent();
 
-    int *dims = outImg->GetDimensions();
     for (int k = ext[4]; k < ext[5]; ++k)
     {
         for (int j = ext[2]; j < ext[3]; ++j)
