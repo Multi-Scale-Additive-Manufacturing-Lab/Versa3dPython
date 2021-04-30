@@ -1,7 +1,14 @@
+__author__ = "Marc Wang"
+__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__license__ = "BSD-3-Clause"
+__maintainer__ = "Marc Wang"
+__email__ = "marc.wang@uwaterloo.ca"
+
+
 import numpy as np
 
 
-def compute_spacing(layer_thickness: float, xy_resolution: float) -> np.array:
+def compute_spacing(layer_thickness: float, xy_resolution: float) -> np.ndarray:
     """[summary]
 
     Args:
@@ -15,6 +22,7 @@ def compute_spacing(layer_thickness: float, xy_resolution: float) -> np.array:
     spacing[0:2] = 25.4/xy_resolution
     spacing[2] = np.min(layer_thickness)
     return spacing
+
 
 def compute_dim(bounds: np.ndarray, spacing: np.ndarray) -> np.ndarray:
     """[summary]

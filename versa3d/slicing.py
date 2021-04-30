@@ -1,3 +1,10 @@
+__author__ = "Marc Wang"
+__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__license__ = "BSD-3-Clause"
+__maintainer__ = "Marc Wang"
+__email__ = "marc.wang@uwaterloo.ca"
+
+
 import numpy as np
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.util.vtkConstants import VTK_DOUBLE, VTK_UNSIGNED_CHAR
