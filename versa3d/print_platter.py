@@ -1,3 +1,10 @@
+__author__ = "Marc Wang"
+__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__license__ = "BSD-3-Clause"
+__maintainer__ = "Marc Wang"
+__email__ = "marc.wang@uwaterloo.ca"
+
+
 from PyQt5.QtWidgets import QUndoCommand
 import numpy as np
 from vtkmodules.vtkCommonCore import vtkInformation
