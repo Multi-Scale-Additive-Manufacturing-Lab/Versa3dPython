@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -9,8 +9,9 @@ from PyQt5.QtWidgets import QUndoCommand
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from typing import List
 
+
 class ImportCommand(QUndoCommand):
-    def __init__(self, print_object: 'PrintObject', platter : 'PrintPlatter', parent: QUndoCommand = None) -> None:
+    def __init__(self, print_object: 'PrintObject', platter: 'PrintPlatter', parent: QUndoCommand = None) -> None:
         super().__init__(parent)
         self._obj = print_object
         self._pl = platter
@@ -20,6 +21,7 @@ class ImportCommand(QUndoCommand):
 
     def undo(self):
         self._pl.remove_part(self._obj)
+
 
 class TransformCommand(QUndoCommand):
     def __init__(self, trs: vtkTransform, ls_obj: List['PrintObject'], parent: QUndoCommand = None) -> None:

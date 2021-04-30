@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -19,7 +19,7 @@ def compute_spacing(layer_thickness: float, xy_resolution: float) -> np.ndarray:
         np.array: [description]
     """
     spacing = np.zeros(3, dtype=float)
-    spacing[0:2] = 25.4/xy_resolution
+    spacing[0:2] = 25.4 / xy_resolution
     spacing[2] = np.min(layer_thickness)
     return spacing
 

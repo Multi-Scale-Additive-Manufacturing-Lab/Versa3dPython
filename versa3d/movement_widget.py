@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -8,6 +8,7 @@ __email__ = "marc.wang@uwaterloo.ca"
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
+
 
 class MovementPanel(QWidget):
     translate_sig = pyqtSignal(float, float, float)
@@ -91,7 +92,7 @@ class MovementPanel(QWidget):
         grid.addWidget(label, row, 0)
         for i in range(3):
             spin_box = QtWidgets.QDoubleSpinBox()
-            grid.addWidget(spin_box, row, i+1)
+            grid.addWidget(spin_box, row, i + 1)
             ls_spin.append(spin_box)
             self.reset_sig.connect(spin_box.setValue)
         return ls_spin

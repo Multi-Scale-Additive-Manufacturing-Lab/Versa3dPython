@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -94,7 +94,7 @@ class PrintObject(QObject):
         info.Set(TYPE_KEY, ActorTypeKey.Result)
 
         obj.SetPropertyKeys(info)
-    
+
     @property
     def sliced_object(self):
         return self._voxelizer.GetOutputDataObject(0)
@@ -139,7 +139,7 @@ def arrange_part(ls_part: List[PrintObject], target_obj: PrintObject):
     part_bbox[0::2] = np.min(ls_bds, axis=0)[0::2]
     part_bbox[1::2] = np.max(ls_bds, axis=0)[1::2]
 
-    target_obj.actor.SetPosition(part_bbox[1]*1.5, part_bbox[3]*1.5, 0)
+    target_obj.actor.SetPosition(part_bbox[1] * 1.5, part_bbox[3] * 1.5, 0)
 
 
 class PrintPlatter(QObject):
@@ -184,7 +184,7 @@ class PrintPlatter(QObject):
     def place_object(self, obj: PrintObject):
         if len(self._plate) == 0:
             obj.actor.SetPosition(
-                self.scene_size[0]/3.0, self.scene_size[1]/3.0, 0)
+                self.scene_size[0] / 3.0, self.scene_size[1] / 3.0, 0)
         else:
             arrange_part(self._plate.values(), obj)
 
@@ -228,6 +228,5 @@ class PrintPlatter(QObject):
             obj.slice_obj(printer, printhead, print_param)
 
     def export_gcode(self, output_path: str) -> None:
-        self._path_planner.write(output_path, self._plate.values(), self._printer, self._printhead, self._param)
-
-
+        self._path_planner.write(output_path, self._plate.values(
+        ), self._printer, self._printhead, self._param)

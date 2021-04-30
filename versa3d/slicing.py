@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -89,7 +89,7 @@ class FullBlackSlicer(GenericSlicer):
         bounds = np.array(input_src.GetBounds())
         img_dim = compute_dim(bounds, spacing)
         outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
-                    (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
+                    (0, img_dim[0] - 1, 0, img_dim[1] - 1, 0, img_dim[2] - 1), 6)
 
     def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
@@ -159,7 +159,7 @@ class Dithering(GenericSlicer):
         bounds = np.array(input_src.GetBounds())
         img_dim = self.compute_dim(bounds, spacing)
         outInfo.Set(vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
-                    (0, img_dim[0]-1, 0, img_dim[1]-1, 0, img_dim[2]-1), 6)
+                    (0, img_dim[0] - 1, 0, img_dim[1] - 1, 0, img_dim[2] - 1), 6)
 
     def slice_object(self, input_src: vtkPolyData) -> vtkImageData:
         bounds = np.array(input_src.GetBounds())
@@ -201,7 +201,7 @@ class Dithering(GenericSlicer):
 
             voi = vtkExtractVOI()
             voi.SetVOI(voi_extent)
-            voi.SetSampleRate([1]*3)
+            voi.SetSampleRate([1] * 3)
             voi.SetInputConnection(stencil.GetOutputPort())
             voi.Update()
 
@@ -210,7 +210,7 @@ class Dithering(GenericSlicer):
             edt.InitializeOn()
             edt.Update()
 
-            pix_offset = self._skin_thickness/np.min(spacing)
+            pix_offset = self._skin_thickness / np.min(spacing)
             skin_img = vtkImageThreshold()
             skin_img.ThresholdByUpper(pix_offset)
             skin_img.SetOutputScalarTypeToFloat()
@@ -333,7 +333,8 @@ class VoxDithering(VTKPythonAlgorithmBase):
                 new_val = self.closest_color(pix_val)
                 error = pix_val - new_val
                 if error != 0:
-                    output.SetScalarComponentFromDouble(i, j, ext[4], 0, new_val)
+                    output.SetScalarComponentFromDouble(
+                        i, j, ext[4], 0, new_val)
                     for m in error_map:
                         di = i + m[0]
                         dj = j + m[1]
@@ -342,7 +343,7 @@ class VoxDithering(VTKPythonAlgorithmBase):
                         if ext[0] <= di and di <= ext[1] and ext[2] <= dj and dj <= ext[3]:
                             old_val = output.GetScalarComponentAsDouble(
                                 di, dj, ext[4], 0)
-                            quantization = old_val + error*derror
+                            quantization = old_val + error * derror
                             output.SetScalarComponentFromDouble(
                                 di, dj, ext[4], 0, quantization)
 

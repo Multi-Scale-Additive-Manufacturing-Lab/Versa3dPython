@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -23,6 +23,7 @@ from vtkmodules.util import numpy_support
 from versa3d.mouse_interaction import RubberBandHighlight
 from versa3d.print_platter import PrintObject, TYPE_KEY, ActorTypeKey
 
+
 class Versa3dScene(QObject):
     selection_start = pyqtSignal()
     selection_end = pyqtSignal()
@@ -43,7 +44,7 @@ class Versa3dScene(QObject):
         self.rubber_style = RubberBandHighlight(
             self.selection_cb, self.selection_pos_cb, self.transform_cb)
         self.interactor.SetInteractorStyle(self.rubber_style)
-        
+
         self.interactor.GetPickingManager().EnabledOn()
         self.interactor.Initialize()
         self.interactor.Start()
@@ -111,7 +112,7 @@ class Versa3dScene(QObject):
         self.slider.SetRepresentation(slider_rep)
         self.slider.SetAnimationModeToAnimate()
         self.slider.EnabledOn()
-    
+
     def _hide_show_obj(self, obj: vtkButtonWidget, event: str):
         rep = obj.GetRepresentation()
         vis_state = rep.GetState()
@@ -141,8 +142,8 @@ class Versa3dScene(QObject):
             self.selection_start.emit()
         else:
             self.selection_end.emit()
-    
-    def transform_cb(self, idx : List[str], trs : vtkTransform) -> None:
+
+    def transform_cb(self, idx: List[str], trs: vtkTransform) -> None:
         self.transform_sig.emit(idx, trs)
 
     def _setup_scene(self, x: float, y: float, z: float) -> None:
@@ -163,7 +164,7 @@ class Versa3dScene(QObject):
 
         X = numpy_support.numpy_to_vtk(np.linspace(0, x, number_grid))
         Y = numpy_support.numpy_to_vtk(np.linspace(0, y, number_grid))
-        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
+        Z = numpy_support.numpy_to_vtk(np.array([0] * number_grid))
 
         # set up grid
         self._grid = vtkRectilinearGrid()
@@ -210,7 +211,7 @@ class Versa3dScene(QObject):
 
         X = numpy_support.numpy_to_vtk(np.linspace(0, x, number_grid))
         Y = numpy_support.numpy_to_vtk(np.linspace(0, y, number_grid))
-        Z = numpy_support.numpy_to_vtk(np.array([0]*number_grid))
+        Z = numpy_support.numpy_to_vtk(np.array([0] * number_grid))
 
         self._grid.SetDimensions(number_grid, number_grid, number_grid)
         self._grid.SetXCoordinates(X)
@@ -239,7 +240,7 @@ class Versa3dScene(QObject):
         obj.results.VisibilityOff()
         self._ren.AddActor(obj.results)
         self._ren.GetRenderWindow().Render()
-    
+
     @pyqtSlot(PrintObject)
     def unrender_sliced_obj(self, obj: PrintObject) -> None:
         self._ren.RemoveActor(obj.results)

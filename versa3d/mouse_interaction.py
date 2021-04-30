@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -16,8 +16,9 @@ from typing import Callable
 
 from versa3d.print_platter import ID_KEY
 
+
 class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
-    def __init__(self, cb_int : Callable[[bool], None], cb_pos : Callable[[float, float, float], None], cb_com : Callable[[str, vtkTransform], None]) -> None:
+    def __init__(self, cb_int: Callable[[bool], None], cb_pos: Callable[[float, float, float], None], cb_com: Callable[[str, vtkTransform], None]) -> None:
         super().__init__()
         self.AddObserver('SelectionChangedEvent', self.highlight)
         self.widget = vtkBoxWidget2()
@@ -44,7 +45,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
 
         self._moved = True
 
-    def apply_transform(self, trs : vtkTransform):
+    def apply_transform(self, trs: vtkTransform):
         self._selected_actor.InitTraversal()
         obj = self._selected_actor.GetNextProp()
         count = 0
@@ -57,7 +58,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             obj = self._selected_actor.GetNextProp()
             count += 1
 
-    def commit_transform(self, ls_obj : vtkProp3DCollection):
+    def commit_transform(self, ls_obj: vtkProp3DCollection):
         ls_obj.InitTraversal()
         obj = ls_obj.GetNextProp()
         idx = []
@@ -76,7 +77,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
             idx.append(id)
             obj = ls_obj.GetNextProp()
             count += 1
-        
+
         self.cb_com(idx, trs)
 
     def find_poked_actor(self, style: vtkInteractorStyleRubberBand3D):
@@ -97,11 +98,11 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         y = interactor.GetEventPosition()[1]
         ren = interactor.FindPokedRenderer(x, y)
         return ren
-    
+
     def update_ren(self):
         if not self._poked_ren is None:
             self._poked_ren.GetRenderWindow().Render()
-    
+
     def set_position(self, x, y, z):
         self._moved = True
         box_rep = self.widget.GetRepresentation()
@@ -112,8 +113,8 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         box_rep.SetTransform(trs)
         self.apply_transform(trs)
         self.update_ren()
-    
-    def compute_bds(self, props : vtkProp3DCollection):
+
+    def compute_bds(self, props: vtkProp3DCollection):
         props.InitTraversal()
         obj = props.GetNextProp()
         n_item = props.GetNumberOfItems()
@@ -122,25 +123,25 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         for i in range(n_item):
             bounds = obj.GetBounds()
             obj = props.GetNextProp()
-            bd_boxes[i,...] = bounds
+            bd_boxes[i, ...] = bounds
 
-        final_bds[0::2] = np.min(bd_boxes, axis = 0)[0::2]
-        final_bds[1::2] = np.max(bd_boxes, axis = 0)[1::2]
+        final_bds[0::2] = np.min(bd_boxes, axis=0)[0::2]
+        final_bds[1::2] = np.max(bd_boxes, axis=0)[1::2]
         return final_bds
-    
+
     def get_user_trs(self, props: vtkProp3DCollection):
         props.InitTraversal()
         obj = props.GetNextProp()
         prev_trs = []
         while not obj is None:
-           trs = obj.GetUserTransform()
-           if trs is None:
-               trs = vtkTransform()
-               trs.Identity()
-               trs.PostMultiply()
-           prev_trs.append(trs)
-           obj = props.GetNextProp()
-        
+            trs = obj.GetUserTransform()
+            if trs is None:
+                trs = vtkTransform()
+                trs.Identity()
+                trs.PostMultiply()
+            prev_trs.append(trs)
+            obj = props.GetNextProp()
+
         return prev_trs
 
     def highlight(self, obj: vtkInteractorStyleRubberBand3D, event: str) -> None:
@@ -149,7 +150,7 @@ class RubberBandHighlight(vtkInteractorStyleRubberBand3D):
         props = self.find_poked_actor(obj)
         ren = self.find_poked_renderer(obj)
         self._poked_ren = ren
-        
+
         if props.GetNumberOfItems() > 0:
             box_rep = vtkBoxRepresentation()
             box_rep.SetPlaceFactor(1)

@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -13,14 +13,15 @@ from versa3d.settings import SingleEntry, PrintSetting, SettingWrapper
 
 import attr
 
+
 class SettingsWindow(QDialog):
     apply_setting_signal = pyqtSignal()
 
     def __init__(self, slave_cmb: QComboBox,
-                setting_obj : SettingWrapper, 
-                parent: QObject = None):
+                 setting_obj: SettingWrapper,
+                 parent: QObject = None):
         super().__init__(parent=parent)
-        self.setting_obj =setting_obj
+        self.setting_obj = setting_obj
 
         init_idx = slave_cmb.currentIndex()
 

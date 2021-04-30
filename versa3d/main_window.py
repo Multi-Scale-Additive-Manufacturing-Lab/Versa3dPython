@@ -1,8 +1,9 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
+
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
@@ -21,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
     Args:
         QtWidgets (QMainWindow): main window
     """
-    
+
     transform_sig = pyqtSignal(vtkTransform, vtkTransform, vtkActor, str)
 
     undo_sig = pyqtSignal()
@@ -73,18 +74,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.object_interaction.setCurrentIndex(0)
 
         self.movement_panel.translate_sig.connect(self.translate_obj)
-        #self.movement_panel.rotate_sig.connect(self.rotate_obj)
-        #self.movement_panel.scale_sig.connect(self.scale_obj)
-        self.scene.selection_pos.connect(self.movement_panel.update_current_position)
-    
+        # self.movement_panel.rotate_sig.connect(self.rotate_obj)
+        # self.movement_panel.scale_sig.connect(self.scale_obj)
+        self.scene.selection_pos.connect(
+            self.movement_panel.update_current_position)
+
     @pyqtSlot(float, float, float)
-    def translate_obj(self, x : float, y : float, z : float):
-        self.scene.rubber_style.set_position(x,y,z)
-    
+    def translate_obj(self, x: float, y: float, z: float):
+        self.scene.rubber_style.set_position(x, y, z)
+
     @pyqtSlot()
     def spawn_movement_win(self) -> None:
         self.object_interaction.setCurrentIndex(1)
-    
+
     @pyqtSlot()
     def remove_movement_win(self) -> None:
         self.object_interaction.setCurrentIndex(0)
@@ -118,17 +120,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_printhead_win.emit()
 
     @pyqtSlot(SettingWrapper)
-    def spawn_setting_window(self, val : SettingWrapper) -> None:
+    def spawn_setting_window(self, val: SettingWrapper) -> None:
         win = SettingsWindow(self.print_settings_cmb_box, val, self)
         win.exec()
-    
+
     @pyqtSlot(SettingWrapper)
-    def spawn_printer_window(self, val : SettingWrapper) -> None:
+    def spawn_printer_window(self, val: SettingWrapper) -> None:
         win = SettingsWindow(self.printer_cmb_box, val, self)
         win.exec()
-    
+
     @pyqtSlot(SettingWrapper)
-    def spawn_printhead_window(self, val : SettingWrapper) -> None:
+    def spawn_printhead_window(self, val: SettingWrapper) -> None:
         win = SettingsWindow(self.printhead_cmb_box, val, self)
         win.exec()
 

@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -58,7 +58,8 @@ class BinderJettingToolPath(GenericToolPathPlanner):
 
         for obj in ls_obj:
             vtk_im = dsa.WrapDataObject(obj.sliced_object)
-            origin = np.ceil(np.array(vtk_im.GetOrigin())/spacing).astype(int)
+            origin = np.ceil(np.array(vtk_im.GetOrigin())
+                             / spacing).astype(int)
             obj_dim = np.array(vtk_im.GetDimensions()).astype(int)
             top_z = origin[2] + obj_dim[2]
             obj_data = np.reshape(

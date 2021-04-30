@@ -1,5 +1,5 @@
 __author__ = "Marc Wang"
-__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__copyright__ = "Copyright (c) 2021 Marc Wang"
 __license__ = "BSD-3-Clause"
 __maintainer__ = "Marc Wang"
 __email__ = "marc.wang@uwaterloo.ca"
@@ -27,6 +27,7 @@ class SettingTypeKey(Enum):
     printhead = 'preset_printhead'
     print_param = 'preset_param'
 
+
 @attr.s(auto_attribs=True)
 class PrintSetting:
     process: str
@@ -49,12 +50,14 @@ class PrintSetting:
                 setting_dict[attr_n] = copy.deepcopy(val)
         return cls(**setting_dict)
 
+
 @attr.s(auto_attribs=True)
 class SettingWrapper:
-    setting : Dict[str, PrintSetting]
-    clone : Callable[[int, str], None]
-    remove : Callable[[int], None]
-    save : Callable[[int], None]
+    setting: Dict[str, PrintSetting]
+    clone: Callable[[int, str], None]
+    remove: Callable[[int], None]
+    save: Callable[[int], None]
+
 
 @attr.s(auto_attribs=True)
 class GenericPrinter(PrintSetting):
