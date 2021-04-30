@@ -1,5 +1,9 @@
-import os
-from typing import Tuple
+__author__ = "Marc Wang"
+__copyright__ = "Copyright (c) 2021 MSAM Lab - University of Waterloo"
+__license__ = "BSD-3-Clause"
+__maintainer__ = "Marc Wang"
+__email__ = "marc.wang@uwaterloo.ca"
+
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5 import QtWidgets
@@ -9,6 +13,7 @@ from versa3d.settings import Versa3dSettings, SettingWrapper
 from versa3d.print_platter import PrintPlatter
 
 from typing import Tuple
+
 
 def reader_factory(f_path: str, ext: str) -> vtkAbstractPolyDataReader:
     if ext.lower() == 'stl (*.stl)':
@@ -57,19 +62,19 @@ class Versa3dController(QObject):
     @property
     def settings(self) -> None:
         return self._settings
-    
+
     @property
     def printer_idx(self) -> int:
         return self._printer_idx
-    
+
     @printer_idx.setter
-    def printer_idx(self, idx : int):
+    def printer_idx(self, idx: int):
         if self._printer_idx != idx:
             self._printer_idx = idx
             printer_setting = self._settings.get_printer(idx)
             new_size = printer_setting.build_bed_size.value
             self.update_scene.emit(new_size[0], new_size[1], new_size[2])
-        
+
     @pyqtSlot(int)
     def change_printer(self, idx: int) -> None:
         self.printer_idx = idx
@@ -81,32 +86,32 @@ class Versa3dController(QObject):
     @pyqtSlot(int)
     def change_preset(self, idx: int) -> None:
         self._parameter_preset_idx = idx
-    
+
     @pyqtSlot()
     def edit_printer(self) -> None:
         printer_setting = self._settings.printer
-        cb_obj = SettingWrapper(printer_setting, 
-                        self._settings.clone_printer,
-                        self._settings.remove_printer,
-                        self._settings.save_printer)
+        cb_obj = SettingWrapper(printer_setting,
+                                self._settings.clone_printer,
+                                self._settings.remove_printer,
+                                self._settings.save_printer)
         self.spawn_printer_win_signal.emit(cb_obj)
-    
+
     @pyqtSlot()
     def edit_printhead(self) -> None:
         printhead_setting = self._settings.printhead
-        cb_obj = SettingWrapper(printhead_setting, 
-                        self._settings.clone_printhead,
-                        self._settings.remove_printhead,
-                        self._settings.save_printhead)
+        cb_obj = SettingWrapper(printhead_setting,
+                                self._settings.clone_printhead,
+                                self._settings.remove_printhead,
+                                self._settings.save_printhead)
         self.spawn_printhead_win_signal.emit(cb_obj)
-    
+
     @pyqtSlot()
     def edit_preset(self) -> None:
         param_setting = self._settings.parameter_preset
-        cb_obj = SettingWrapper(param_setting, 
-                        self._settings.clone_parameter_preset,
-                        self._settings.remove_parameter_preset,
-                        self._settings.save_parameter_preset)
+        cb_obj = SettingWrapper(param_setting,
+                                self._settings.clone_parameter_preset,
+                                self._settings.remove_parameter_preset,
+                                self._settings.save_parameter_preset)
         self.spawn_preset_win_signal.emit(cb_obj)
 
     def load_settings(self) -> None:
@@ -124,7 +129,7 @@ class Versa3dController(QObject):
             self.print_plate.import_part(obj_src)
 
     @pyqtSlot(QtWidgets.QUndoCommand)
-    def push_command(self, com : QtWidgets.QUndoCommand):
+    def push_command(self, com: QtWidgets.QUndoCommand):
         self.undo_stack.push(com)
 
     @pyqtSlot()
@@ -134,4 +139,5 @@ class Versa3dController(QObject):
         param_setting = self.settings.get_parameter_preset(
             self._parameter_preset_idx)
 
-        self.print_plate.slice_obj(printer_setting, printhead_setting, param_setting)
+        self.print_plate.slice_obj(
+            printer_setting, printhead_setting, param_setting)
