@@ -39,9 +39,12 @@
 #include <math.h>
 
 #include "vtkInformation.h"
+#include "vtkObjectFactory.h"
 #include "vtkInformationVector.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkImageData.h"
+
+vtkStandardNewMacro(VoxDithering);
 
 VoxDithering::VoxDithering()
 {

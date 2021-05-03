@@ -1,10 +1,10 @@
 /*
- * File: VoxDithering.h
+ * File: VoxelizerFilter.h
  * Project: Versa3d
- * File Created: 2021-04-30
+ * File Created: 2021-05-03
  * Author: Marc Wang (marc.wang@uwaterloo.ca)
  * -----
- * Last Modified: 2021-04-30
+ * Last Modified: 2021-05-03
  * Modified By: Marc Wang (marc.wang@uwaterloo.ca>)
  * -----
  * Copyright (c) 2021 Marc Wang. All rights reserved. 
@@ -35,51 +35,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VOXDITHERING_H
-#define VOXDITHERING_H
-#include <map>
-#include "vtkImageAlgorithm.h"
+#ifndef VOXELIZERFILTER_H
+#define VOXELIZERFILTER_H
+#include <array>
 
-using namespace std;
+#include "vtkVoxelModeller.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
 
-#define DitherMap map<pair<int, int>, float>
-
-class VoxDithering : public vtkImageAlgorithm
+class VoxelizerFilter : public vtkVoxelModeller
 {
 public:
-    vtkTypeMacro(VoxDithering, vtkImageAlgorithm);
+    vtkTypeMacro(VoxelizerFilter, vtkVoxelModeller);
     void PrintSelf(ostream &os, vtkIndent indent) override;
-    enum class DitheringType : int
-    {
-        floyd_steinberg,
-        atkinson,
-        jarvis_judice_ninke,
-        stucki,
-        burkes,
-        sierra3,
-        sierra2,
-        sierra2_4a,
-        stevenson_arce
-    };
-    static VoxDithering* New();
-    //vtkSetMacro(Dithering, DitheringType);
-    //vtkGetMacro(Dithering, DitheringType);
-    DitherMap GetDitherMap(DitheringType type);
+
+    static VoxelizerFilter *New();
+    vtkSetClampMacro(ContourThickness, double, 0.0, 100.0);
+    vtkGetMacro(ContourThickness, double);
+    vtkSetVector3Macro(Dpi, int);
+    vtkGetVector3Macro(Dpi, int);
 
 protected:
-    VoxDithering();
-    ~VoxDithering() override = default;
-
-    int RequestInformation(vtkInformation *, vtkInformationVector **, vtkInformationVector *) override;
+    VoxelizerFilter();
+    ~VoxelizerFilter() override = default;
 
     // see vtkAlgorithm for details
     int RequestData(vtkInformation *request, vtkInformationVector **inputVector,
                     vtkInformationVector *outputVector) override;
+    int RequestInformation(vtkInformation *request, vtkInformationVector **inputVector,
+                           vtkInformationVector *outputVector) override;
+
+    int FillInputPortInformation(int port, vtkInformation *info);
 
 private:
-    void operator=(const VoxDithering &) = delete;
-    double ClosestVal(double pixel);
-    DitheringType Dithering;
+    void operator=(const VoxelizerFilter &) = delete;
+    double ContourThickness;
+    int Dpi[3];
 };
 
 #endif
