@@ -48,6 +48,11 @@ class CMakeBuild(build_ext):
         ]
         build_args = []
 
+        if self.debug:
+            cmake_args += ["-DBUILD_TEST=TRUE"]
+        else:
+            cmake_args += ["-DBUILD_TEST=FALSE"]
+
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
             # multithreads automatically. MSVC would require all variables be
