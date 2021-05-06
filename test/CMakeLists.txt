@@ -1,8 +1,3 @@
-file(COPY 
-    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_file/
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/test_artifact/
-)
-
 SET(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
 SET(TEST_SRC ${TEST_DIR}/test_voxelization.cpp
              ${TEST_DIR}/test_main.cpp)

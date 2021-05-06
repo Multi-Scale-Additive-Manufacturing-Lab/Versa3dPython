@@ -55,6 +55,10 @@ VoxelizerFilter::VoxelizerFilter()
     this->ScalarType = VTK_UNSIGNED_CHAR;
     this->ForegroundValue = 255;
     this->BackgroundValue = 0;
+
+    this->Dpi[0] = 600;
+    this->Dpi[1] = 600;
+    this->Dpi[2] = 600;
 }
 
 int VoxelizerFilter::RequestInformation(vtkInformation *vtkNotUsed(request),
@@ -65,15 +69,15 @@ int VoxelizerFilter::RequestInformation(vtkInformation *vtkNotUsed(request),
     vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
     vtkPolyData *input = vtkPolyData::GetData(inInfo);
 
-    this->SetModelBounds(input->GetBounds());
+    input->GetBounds(this->ModelBounds);
     double origin[3];
     double spacing[3];
 
     for (int i = 0; i < 3; i++)
     {
-        origin[i] = this->ModelBounds[2 * i];
-        spacing[i] = this->Dpi[i] / 25.4;
-        this->SampleDimensions[i] = (this->ModelBounds[2 * i + 1] - this->ModelBounds[2 * i]) / spacing[i];
+        spacing[i] = 25.4/this->Dpi[i];
+        origin[i] = this->ModelBounds[2 * i] + spacing[i] / 2;
+        this->SampleDimensions[i] = static_cast<int>(ceil((this->ModelBounds[2 * i + 1] - this->ModelBounds[2 * i]) / spacing[i]));
     }
 
     outInfo->Set(vtkDataObject::ORIGIN(), origin, 3);
@@ -95,29 +99,31 @@ int VoxelizerFilter::RequestData(vtkInformation *vtkNotUsed(request),
     vtkInformation *outInfo = outputVector->GetInformationObject(0);
     vtkImageData *output = vtkImageData::GetData(outInfo);
 
-    vtkNew<vtkImageData> bgIm;
-    bgIm->SetExtent(outInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT()));
-    bgIm->AllocateScalars(outInfo);
+    int ext[6];
+    outInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext);
 
-    double origin[3], spacing[3];
-    outInfo->Set(vtkDataObject::SPACING(), spacing, 3);
-    outInfo->Set(vtkDataObject::ORIGIN(), origin, 3);
-    bgIm->AllocateScalars(outInfo);
-    bgIm->SetOrigin(origin);
-    bgIm->SetSpacing(spacing);
+    double origin[3];
+    double spacing[3];
+    outInfo->Get(vtkDataObject::ORIGIN(), origin);
+    outInfo->Get(vtkDataObject::SPACING(), spacing);
+
+    vtkNew<vtkImageData> bgIm;
     bgIm->SetDimensions(this->SampleDimensions);
-    vtkDataArray *newScalars = bgIm->GetPointData()->GetScalars();
-    newScalars->Fill(this->BackgroundValue);
+    bgIm->SetOrigin(origin);
+    bgIm->SetExtent(ext);
+    bgIm->AllocateScalars(outInfo);
+    bgIm->SetSpacing(spacing);
+    bgIm->GetPointData()->GetScalars()->Fill(this->ForegroundValue);
 
     vtkNew<vtkPolyDataToImageStencil> PolySten;
     PolySten->SetInputData(input);
     PolySten->SetOutputOrigin(origin);
     PolySten->SetOutputSpacing(spacing);
-    PolySten->SetOutputWholeExtent(output->GetExtent());
+    PolySten->SetOutputWholeExtent(ext);
     PolySten->Update();
 
     vtkNew<vtkImageStencil> Sten;
-    Sten->SetInputData(input);
+    Sten->SetInputData(bgIm);
     Sten->SetStencilConnection(PolySten->GetOutputPort());
     Sten->SetBackgroundValue(this->BackgroundValue);
     Sten->ReverseStencilOff();
