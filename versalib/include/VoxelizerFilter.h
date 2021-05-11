@@ -39,19 +39,17 @@
 #define VOXELIZERFILTER_H
 #include <array>
 
-#include "vtkVoxelModeller.h"
+#include "vtkImageAlgorithm.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 
-class VoxelizerFilter : public vtkVoxelModeller
+class VoxelizerFilter : public vtkImageAlgorithm
 {
 public:
-    vtkTypeMacro(VoxelizerFilter, vtkVoxelModeller);
+    vtkTypeMacro(VoxelizerFilter, vtkImageAlgorithm);
     void PrintSelf(ostream &os, vtkIndent indent) override;
 
     static VoxelizerFilter *New();
-    vtkSetClampMacro(ContourThickness, double, 0.0, 100.0);
-    vtkGetMacro(ContourThickness, double);
     vtkSetVector3Macro(Dpi, int);
     vtkGetVector3Macro(Dpi, int);
 
@@ -69,8 +67,12 @@ protected:
 
 private:
     void operator=(const VoxelizerFilter &) = delete;
-    double ContourThickness;
     int Dpi[3];
+    double ForegroundValue;
+    double BackgroundValue;
+    int ScalarType;
+    int SampleDimensions[3];
+    double ModelBounds[6];
 };
 
 #endif

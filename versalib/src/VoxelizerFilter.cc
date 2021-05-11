@@ -50,11 +50,20 @@ vtkStandardNewMacro(VoxelizerFilter);
 
 VoxelizerFilter::VoxelizerFilter()
 {
-    this->ContourThickness = 0.0;
+    this->ScalarType = VTK_BIT;
+    this->ForegroundValue = 1.0;
+    this->BackgroundValue = 0.0;
 
-    this->ScalarType = VTK_UNSIGNED_CHAR;
-    this->ForegroundValue = 255;
-    this->BackgroundValue = 0;
+    this->ModelBounds[0] = 0.0;
+    this->ModelBounds[1] = 0.0;
+    this->ModelBounds[2] = 0.0;
+    this->ModelBounds[3] = 0.0;
+    this->ModelBounds[4] = 0.0;
+    this->ModelBounds[5] = 0.0;
+
+    this->SampleDimensions[0] = 50;
+    this->SampleDimensions[1] = 50;
+    this->SampleDimensions[2] = 50;
 
     this->Dpi[0] = 600;
     this->Dpi[1] = 600;
@@ -75,7 +84,7 @@ int VoxelizerFilter::RequestInformation(vtkInformation *vtkNotUsed(request),
 
     for (int i = 0; i < 3; i++)
     {
-        spacing[i] = 25.4/this->Dpi[i];
+        spacing[i] = 25.4 / this->Dpi[i];
         origin[i] = this->ModelBounds[2 * i] + spacing[i] / 2;
         this->SampleDimensions[i] = static_cast<int>(ceil((this->ModelBounds[2 * i + 1] - this->ModelBounds[2 * i]) / spacing[i]));
     }
@@ -142,5 +151,4 @@ int VoxelizerFilter::FillInputPortInformation(int vtkNotUsed(port), vtkInformati
 void VoxelizerFilter::PrintSelf(ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
-    os << indent << "Contour thickness : " << this->ContourThickness << "\n";
 }
