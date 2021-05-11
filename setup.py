@@ -49,9 +49,9 @@ class CMakeBuild(build_ext):
         build_args = []
 
         if self.debug:
-            cmake_args += ["-DBUILD_TEST=TRUE"]
+            cmake_args += ["-DBUILD_TESTING=TRUE"]
         else:
-            cmake_args += ["-DBUILD_TEST=FALSE"]
+            cmake_args += ["-DBUILD_TESTING=FALSE"]
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
@@ -106,13 +106,13 @@ class CMakeBuild(build_ext):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="versalib",
-    version="0.0.1",
+    name="versaLib",
+    version="1.0.0-alpha",
     author="Marc Wang",
     author_email="",
     description="versa",
     long_description="",
-    ext_modules=[CMakeExtension("versalib")],
+    ext_modules=[CMakeExtension("VersaLibPython")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
 )
