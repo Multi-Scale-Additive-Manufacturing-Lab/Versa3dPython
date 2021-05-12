@@ -7,14 +7,16 @@ hiddenimports = ['vtk',
               'vtkmodules.all',
               'vtkmodules.qt.QVTKRenderWindowInteractor',
               'vtkmodules.util',
-              'vtkmodules.util.numpy_support']
+              'vtkmodules.util.numpy_support',
+			  'PIL']
 
 a = Analysis(['app.py'],
              pathex=['.'],
              binaries=[],
              datas=[('./designer_files/*.ui','designer_files'),
                     ('./designer_files/icon/*.svg','designer_files/icon'),
-                    ('./designer_files/icon/vtk_icon/*.png','designer_files/icon/vtk_icon')],
+                    ('./designer_files/icon/vtk_icon/*.png','designer_files/icon/vtk_icon'),
+					('./configs', 'configs')],
              hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
