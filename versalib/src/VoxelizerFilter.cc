@@ -50,9 +50,9 @@ vtkStandardNewMacro(VoxelizerFilter);
 
 VoxelizerFilter::VoxelizerFilter()
 {
-    this->ScalarType = VTK_BIT;
-    this->ForegroundValue = 1.0;
-    this->BackgroundValue = 0.0;
+    this->ScalarType = VTK_UNSIGNED_CHAR;
+    this->ForegroundValue = 255;
+    this->BackgroundValue = 0;
 
     this->ModelBounds[0] = 0.0;
     this->ModelBounds[1] = 0.0;

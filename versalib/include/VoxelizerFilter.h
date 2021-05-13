@@ -37,7 +37,6 @@
 
 #ifndef VOXELIZERFILTER_H
 #define VOXELIZERFILTER_H
-#include <array>
 
 #include "vtkImageAlgorithm.h"
 #include "vtkInformation.h"
@@ -56,8 +55,7 @@ public:
 protected:
     VoxelizerFilter();
     ~VoxelizerFilter() override = default;
-
-    // see vtkAlgorithm for details
+    
     int RequestData(vtkInformation *request, vtkInformationVector **inputVector,
                     vtkInformationVector *outputVector) override;
     int RequestInformation(vtkInformation *request, vtkInformationVector **inputVector,
