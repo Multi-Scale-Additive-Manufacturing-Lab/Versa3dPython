@@ -48,6 +48,7 @@ public:
     vtkTypeMacro(VoxShelling, vtkImageAlgorithm);
     void PrintSelf(ostream &os, vtkIndent indent) override;
     static VoxShelling *New();
+    vtkSetClampMacro(ContourThickness, double, 0.01, 0.99);
 
 protected:
     VoxShelling();
@@ -64,7 +65,6 @@ private:
     void operator=(const VoxShelling &) = delete;
     double ContourThickness;
     double InFill;
-    int pix_offset;
 
     void ExecuteShelling(vtkImageData *inData, vtkImageData *outData, int outExt[6], int id);
 };

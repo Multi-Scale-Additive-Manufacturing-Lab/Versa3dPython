@@ -6,6 +6,7 @@
 #include "vtkImageEuclideanDistance.h"
 #include "vtkImageThreshold.h"
 #include "vtkImageMask.h"
+#include "vtkImageAccumulate.h"
 #include "vtkImageIterator.h"
 #include "vtkImageProgressIterator.h"
 
@@ -13,9 +14,8 @@ vtkStandardNewMacro(VoxShelling);
 
 VoxShelling::VoxShelling()
 {
-    this->ContourThickness = 0.1;
+    this->ContourThickness = 0.2;
     this->InFill = 0.8;
-    this->pix_offset = -1;
 
     this->SplitPathLength = 1;
 
@@ -30,9 +30,6 @@ int VoxShelling::RequestInformation(vtkInformation *vtkNotUsed(request),
     vtkImageData *input = vtkImageData::GetData(inInfo);
 
     double *spacing = input->GetSpacing();
-    double min_spacing = (spacing[0] > spacing[1]) ? spacing[1] : spacing[0];
-
-    this->pix_offset = static_cast<int>(ceil(this->ContourThickness / min_spacing));
 
     if (this->SplitMode != SLAB)
     {
@@ -65,10 +62,16 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
     edt->InitializeOn();
     edt->Update();
 
+    vtkNew<vtkImageAccumulate> findMax;
+    findMax->SetInputConnection(edt->GetOutputPort());
+    findMax->Update();
+
+    double *peak = findMax->GetMax();
+
     vtkNew<vtkImageThreshold> SkinImg;
-    SkinImg->ThresholdByUpper(this->pix_offset);
+    SkinImg->ThresholdByUpper(peak[0]*this->ContourThickness);
     SkinImg->SetOutputScalarTypeToFloat();
-    SkinImg->SetInValue(1.0 - this->InFill);
+    SkinImg->SetInValue(this->InFill);
     SkinImg->SetOutValue(0.0);
     SkinImg->SetInputConnection(edt->GetOutputPort());
     SkinImg->Update();
@@ -76,7 +79,7 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
     vtkNew<vtkImageMask> mask;
     mask->SetImageInputData(SkinImg->GetOutput());
     mask->SetMaskInputData(voi->GetOutput());
-    mask->SetMaskedOutputValue(1);
+    mask->SetMaskedOutputValue(1.0);
     mask->Update();
 
     vtkImageData *result = mask->GetOutput();
@@ -87,7 +90,7 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
         float *inSI = inIt.BeginSpan();
         float *outSI = outIt.BeginSpan();
         float *outSIEnd = outIt.EndSpan();
-        
+
         do{
             ++inSI;
             ++outSI;
