@@ -47,7 +47,7 @@ int VoxShelling::RequestInformation(vtkInformation *vtkNotUsed(request),
     }
     else
     {
-        vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, -1);
+        vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, 1);
     }
     return 1;
 }
@@ -57,10 +57,13 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
     vtkNew<vtkExtractVOI> voi;
     voi->SetSampleRate(1, 1, 1);
     voi->SetInputData(inData);
+    voi->SetVOI(outExt);
+    voi->Update();
 
     vtkNew<vtkImageEuclideanDistance> edt;
     edt->SetInputConnection(voi->GetOutputPort());
     edt->InitializeOn();
+    edt->Update();
 
     vtkNew<vtkImageThreshold> SkinImg;
     SkinImg->ThresholdByUpper(this->pix_offset);
@@ -68,29 +71,29 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
     SkinImg->SetInValue(1.0 - this->InFill);
     SkinImg->SetOutValue(0.0);
     SkinImg->SetInputConnection(edt->GetOutputPort());
+    SkinImg->Update();
 
     vtkNew<vtkImageMask> mask;
     mask->SetImageInputData(SkinImg->GetOutput());
     mask->SetMaskInputData(voi->GetOutput());
     mask->SetMaskedOutputValue(1);
-
-    voi->SetVOI(outExt);
     mask->Update();
 
     vtkImageData *result = mask->GetOutput();
     vtkImageIterator<float> inIt(result, result->GetExtent());
     vtkImageProgressIterator<float> outIt(outData, outExt, this, id);
 
-    while(!outIt.IsAtEnd()){
+    while(!inIt.IsAtEnd()){
         float *inSI = inIt.BeginSpan();
         float *outSI = outIt.BeginSpan();
         float *outSIEnd = outIt.EndSpan();
-
-        while(outSI != outSIEnd){
-            *outSI = *inSI;
+        
+        do{
             ++inSI;
             ++outSI;
-        }
+            *outSI = *inSI;
+        }while(outSI != outSIEnd);
+
         inIt.NextSpan();
         outIt.NextSpan();
     }
