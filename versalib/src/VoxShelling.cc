@@ -5,9 +5,9 @@
 #include "vtkExtractVOI.h"
 #include "vtkImageEuclideanDistance.h"
 #include "vtkImageThreshold.h"
-#include "vtkImageShiftScale.h"
 #include "vtkImageMask.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkImageIterator.h"
+#include "vtkImageProgressIterator.h"
 
 vtkStandardNewMacro(VoxShelling);
 
@@ -15,6 +15,10 @@ VoxShelling::VoxShelling()
 {
     this->ContourThickness = 0.1;
     this->InFill = 0.8;
+    this->pix_offset = -1;
+
+    this->SplitPathLength = 1;
+
 }
 
 int VoxShelling::RequestInformation(vtkInformation *vtkNotUsed(request),
@@ -25,71 +29,79 @@ int VoxShelling::RequestInformation(vtkInformation *vtkNotUsed(request),
 
     vtkImageData *input = vtkImageData::GetData(inInfo);
 
-    outInfo->Set(vtkDataObject::ORIGIN(), input->GetOrigin(), 3);
-    outInfo->Set(vtkDataObject::SPACING(), input->GetSpacing(), 3);
-    outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), input->GetExtent(), 6);
+    double *spacing = input->GetSpacing();
+    double min_spacing = (spacing[0] > spacing[1]) ? spacing[1] : spacing[0];
 
-    return 1;
-}
+    this->pix_offset = static_cast<int>(ceil(this->ContourThickness / min_spacing));
 
-int VoxShelling::RequestData(vtkInformation *vtkNotUsed(request),
-                                 vtkInformationVector **inputVector, vtkInformationVector *outputVector)
-{
-    vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-    vtkImageData *input = vtkImageData::GetData(inInfo);
-
-    // get the output
-    vtkInformation *outInfo = outputVector->GetInformationObject(0);
-    vtkImageData *output = vtkImageData::GetData(outInfo);
-
-    int ext[6];
-    outInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext);
-
-    double origin[3];
-    double spacing[3];
-    outInfo->Get(vtkDataObject::ORIGIN(), origin);
-    outInfo->Get(vtkDataObject::SPACING(), spacing);
-
-    output->AllocateScalars(VTK_DOUBLE, 1);
-    output->SetOrigin(origin);
-    output->SetSpacing(spacing);
-    output->SetExtent(ext);
-
-    vtkNew<vtkExtractVOI> voi;
-    voi->SetSampleRate(1, 1, 1);
-    voi->SetInputData(input);
-
-    vtkNew<vtkImageEuclideanDistance> t_edt;
-    t_edt->SetInputConnection(voi->GetOutputPort());
-    t_edt->InitializeOn();
-
-    double pix_offset = this->ContourThickness / spacing[2];
-
-    vtkNew<vtkImageThreshold> SkinImg;
-    SkinImg->ThresholdBetween(0, pix_offset);
-    SkinImg->SetOutputScalarTypeToDouble();
-    SkinImg->SetInValue(1.0);
-    SkinImg->SetOutValue(0);
-    SkinImg->SetInputConnection(t_edt->GetOutputPort());
-
-    for (auto z = ext[4]; z < ext[5]; ++z)
+    if (this->SplitMode != SLAB)
     {
-        int select[6] = {ext[0], ext[1], ext[2], ext[3], z, z};
-        voi->SetVOI(select);
-        voi->Update();
-        
-        t_edt->Update();
-        SkinImg->Update();
-
-        output->CopyAndCastFrom(SkinImg->GetOutput(), select);
+        vtkErrorMacro("only slab mode supported");
+        return 0;
     }
 
+    if (input->GetScalarType() != VTK_UNSIGNED_CHAR)
+    {
+        vtkErrorMacro("input image not unsigned_char");
+        return 0;
+    }
+    else
+    {
+        vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_FLOAT, -1);
+    }
     return 1;
 }
-int VoxShelling::FillInputPortInformation(int vtkNotUsed(port), vtkInformation *info)
+
+void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, int outExt[6], int id)
 {
-    info->Set(vtkImageAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
-    return 1;
+    vtkNew<vtkExtractVOI> voi;
+    voi->SetSampleRate(1, 1, 1);
+    voi->SetInputData(inData);
+
+    vtkNew<vtkImageEuclideanDistance> edt;
+    edt->SetInputConnection(voi->GetOutputPort());
+    edt->InitializeOn();
+
+    vtkNew<vtkImageThreshold> SkinImg;
+    SkinImg->ThresholdByUpper(this->pix_offset);
+    SkinImg->SetOutputScalarTypeToFloat();
+    SkinImg->SetInValue(1.0 - this->InFill);
+    SkinImg->SetOutValue(0.0);
+    SkinImg->SetInputConnection(edt->GetOutputPort());
+
+    vtkNew<vtkImageMask> mask;
+    mask->SetImageInputData(SkinImg->GetOutput());
+    mask->SetMaskInputData(voi->GetOutput());
+    mask->SetMaskedOutputValue(1);
+
+    voi->SetVOI(outExt);
+    mask->Update();
+
+    vtkImageData *result = mask->GetOutput();
+    vtkImageIterator<float> inIt(result, result->GetExtent());
+    vtkImageProgressIterator<float> outIt(outData, outExt, this, id);
+
+    while(!outIt.IsAtEnd()){
+        float *inSI = inIt.BeginSpan();
+        float *outSI = outIt.BeginSpan();
+        float *outSIEnd = outIt.EndSpan();
+
+        while(outSI != outSIEnd){
+            *outSI = *inSI;
+            ++inSI;
+            ++outSI;
+        }
+        inIt.NextSpan();
+        outIt.NextSpan();
+    }
+
+}
+
+void VoxShelling::ThreadedRequestData(vtkInformation *vtkNotUsed(request),
+                                      vtkInformationVector **vtkNotUsed(inputVector), vtkInformationVector *vtkNotUsed(outputVector),
+                                      vtkImageData ***inData, vtkImageData **outData, int outExt[6], int id)
+{
+    this->ExecuteShelling(inData[0][0], outData[0], outExt, id);
 }
 
 void VoxShelling::PrintSelf(ostream &os, vtkIndent indent)

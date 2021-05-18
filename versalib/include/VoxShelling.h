@@ -38,11 +38,11 @@
 #ifndef VOXSHELLING_H
 #define VOXSHELLING_H
 
-#include "vtkImageAlgorithm.h"
+#include "vtkThreadedImageAlgorithm.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 
-class VoxShelling : public vtkImageAlgorithm
+class VoxShelling : public vtkThreadedImageAlgorithm
 {
 public:
     vtkTypeMacro(VoxShelling, vtkImageAlgorithm);
@@ -52,17 +52,21 @@ public:
 protected:
     VoxShelling();
     ~VoxShelling() override = default;
-    int RequestData(vtkInformation *request, vtkInformationVector **inputVector,
-                    vtkInformationVector *outputVector) override;
+
+    void ThreadedRequestData(vtkInformation *request, vtkInformationVector **inputVector,
+                             vtkInformationVector *outputVector, vtkImageData ***inData, vtkImageData **outData,
+                             int outExt[6], int id) override;
+
     int RequestInformation(vtkInformation *request, vtkInformationVector **inputVector,
                            vtkInformationVector *outputVector) override;
-
-    int FillInputPortInformation(int port, vtkInformation *info);
 
 private:
     void operator=(const VoxShelling &) = delete;
     double ContourThickness;
     double InFill;
+    int pix_offset;
+
+    void ExecuteShelling(vtkImageData *inData, vtkImageData *outData, int outExt[6], int id);
 };
 
 #endif
