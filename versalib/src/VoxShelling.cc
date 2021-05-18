@@ -72,14 +72,14 @@ void VoxShelling::ExecuteShelling(vtkImageData *inData, vtkImageData *outData, i
     SkinImg->ThresholdByUpper(peak[0]*this->ContourThickness);
     SkinImg->SetOutputScalarTypeToFloat();
     SkinImg->SetInValue(this->InFill);
-    SkinImg->SetOutValue(0.0);
+    SkinImg->SetOutValue(1.0);
     SkinImg->SetInputConnection(edt->GetOutputPort());
     SkinImg->Update();
 
     vtkNew<vtkImageMask> mask;
     mask->SetImageInputData(SkinImg->GetOutput());
     mask->SetMaskInputData(voi->GetOutput());
-    mask->SetMaskedOutputValue(1.0);
+    mask->SetMaskedOutputValue(0.0);
     mask->Update();
 
     vtkImageData *result = mask->GetOutput();
