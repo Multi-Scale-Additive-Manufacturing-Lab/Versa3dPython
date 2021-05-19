@@ -29,8 +29,6 @@ int VoxShelling::RequestInformation(vtkInformation *vtkNotUsed(request),
 
     vtkImageData *input = vtkImageData::GetData(inInfo);
 
-    double *spacing = input->GetSpacing();
-
     if (this->SplitMode != SLAB)
     {
         vtkErrorMacro("only slab mode supported");
