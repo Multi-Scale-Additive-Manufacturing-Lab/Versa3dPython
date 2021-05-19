@@ -49,17 +49,32 @@ vtkStandardNewMacro(VoxDithering);
 VoxDithering::VoxDithering()
 {
     this->Dithering = VoxDithering::DitheringType::floyd_steinberg;
+    this->SplitPathLength = 1;
 }
 
 int VoxDithering::RequestInformation(vtkInformation *vtkNotUsed(request),
                                      vtkInformationVector **inputVector, vtkInformationVector *outputVector)
 {
+    vtkInformation *outInfo = outputVector->GetInformationObject(0);
     vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-    vtkImageData *inImg = vtkImageData::GetData(inInfo);
 
-    int *ext = inImg->GetExtent();
-    vtkInformation *o_info = outputVector->GetInformationObject(0);
-    o_info->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), ext, 6);
+    vtkImageData *input = vtkImageData::GetData(inInfo);
+
+    if (this->SplitMode != SLAB)
+    {
+        vtkErrorMacro("only slab mode supported");
+        return 0;
+    }
+
+    if (input->GetScalarType() != VTK_FLOAT && input->GetScalarType() != VTK_DOUBLE)
+    {
+        vtkErrorMacro("input image not float or double");
+        return 0;
+    }
+    else
+    {
+        vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
+    }
     return 1;
 }
 
@@ -184,23 +199,18 @@ DitherMap VoxDithering::GetDitherMap(DitheringType type)
     return d_map;
 }
 
-int VoxDithering::RequestData(vtkInformation *vtkNotUsed(request),
-                              vtkInformationVector **inputVector, vtkInformationVector *outputVector)
+void VoxDithering::ThreadedRequestData(vtkInformation *vtkNotUsed(request), vtkInformationVector **vtkNotUsed(inputVector),
+                             vtkInformationVector *vtkNotUsed(outputVector), vtkImageData ***inData, vtkImageData **outData,
+                             int outExt[6], int id)
 {
-    vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-    vtkImageData *inImg = vtkImageData::GetData(inInfo);
+    vtkImageData *inImg = inData[0][0];
+    vtkImageData *outImg = outData[0];
 
-    vtkInformation *outInfo = outputVector->GetInformationObject(0);
-    vtkImageData *outImg = vtkImageData::GetData(outInfo);
-    outImg->DeepCopy(inImg);
-
-    int *ext = outImg->GetExtent();
-
-    for (int k = ext[4]; k < ext[5]; ++k)
+    for (int k = outExt[4]; k <= outExt[5]; ++k)
     {
-        for (int j = ext[2]; j < ext[3]; ++j)
+        for (int j = outExt[2]; j <= outExt[3]; ++j)
         {
-            for (int i = ext[0]; i < ext[1]; ++i)
+            for (int i = outExt[0]; i <= outExt[1]; ++i)
             {
                 double pixel = outImg->GetScalarComponentAsDouble(i, j, k, 0);
                 double new_val = this->ClosestVal(pixel);
@@ -219,7 +229,7 @@ int VoxDithering::RequestData(vtkInformation *vtkNotUsed(request),
                         int di = id.first + i;
                         int dj = id.second + j;
 
-                        bool in_ext = ext[0] <= di && di <= ext[1] && ext[2] <= dj && dj <= ext[3];
+                        bool in_ext = outExt[0] <= di && di <= outExt[1] && outExt[2] <= dj && dj <= outExt[3];
                         if (in_ext)
                         {
                             double old_val = outImg->GetScalarComponentAsDouble(di, dj, k, 0);
@@ -231,8 +241,6 @@ int VoxDithering::RequestData(vtkInformation *vtkNotUsed(request),
             }
         }
     }
-
-    return 1;
 }
 
 void VoxDithering::PrintSelf(ostream &os, vtkIndent indent)

@@ -37,17 +37,20 @@
 
 #ifndef VOXDITHERING_H
 #define VOXDITHERING_H
+
 #include <map>
-#include "vtkImageAlgorithm.h"
+#include "vtkThreadedImageAlgorithm.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
 
 using namespace std;
 
 #define DitherMap map<pair<int, int>, float>
 
-class VoxDithering : public vtkImageAlgorithm
+class VoxDithering : public vtkThreadedImageAlgorithm
 {
 public:
-    vtkTypeMacro(VoxDithering, vtkImageAlgorithm);
+    vtkTypeMacro(VoxDithering, vtkThreadedImageAlgorithm);
     void PrintSelf(ostream &os, vtkIndent indent) override;
     enum class DitheringType : int
     {
@@ -70,11 +73,12 @@ protected:
     VoxDithering();
     ~VoxDithering() override = default;
 
-    int RequestInformation(vtkInformation *, vtkInformationVector **, vtkInformationVector *) override;
+    void ThreadedRequestData(vtkInformation *request, vtkInformationVector **inputVector,
+                             vtkInformationVector *outputVector, vtkImageData ***inData, vtkImageData **outData,
+                             int outExt[6], int id) override;
 
-    // see vtkAlgorithm for details
-    int RequestData(vtkInformation *request, vtkInformationVector **inputVector,
-                    vtkInformationVector *outputVector) override;
+    int RequestInformation(vtkInformation *request, vtkInformationVector **inputVector,
+                           vtkInformationVector *outputVector) override;
 
 private:
     void operator=(const VoxDithering &) = delete;
