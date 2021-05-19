@@ -16,10 +16,11 @@ set(
     src/VersaLib_wrapper.cc
 )
 
-add_library(VersaLibCore ${SRC_FILES} ${HEADER_FILES})
+vtk_module_add_module(VersaLib::VersaFilters
+  SOURCES ${SRC_FILES}
+  HEADERS ${HEADER_FILES}
+)
 
-target_link_libraries(VersaLibCore PRIVATE ${VTK_LIBRARIES})
-target_include_directories(VersaLibCore PUBLIC include) 
-
-pybind11_add_module(VersaLibPython ${LIB_SRC_WRAP})
-target_link_libraries(VersaLibPython PUBLIC VersaLibCore)
+vtk_module_include(VersaLib::VersaFilters
+    PUBLIC "include/"
+)

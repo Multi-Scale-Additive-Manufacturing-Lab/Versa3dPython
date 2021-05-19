@@ -1,0 +1,12 @@
+NAME
+  VersaLib::VersaFilters
+LIBRARY_NAME
+  VersaFilters
+DEPENDS
+  VTK::CommonExecutionModel
+  VTK::ImagingCore
+PRIVATE_DEPENDS
+  VTK::CommonCore
+  VTK::CommonDataModel
+  VTK::ImagingGeneral
+  VTK::ImagingStatistics
