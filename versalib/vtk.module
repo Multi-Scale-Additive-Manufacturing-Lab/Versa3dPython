@@ -10,3 +10,4 @@ PRIVATE_DEPENDS
   VTK::CommonDataModel
   VTK::ImagingGeneral
   VTK::ImagingStatistics
+  VTK::ImagingStencil
