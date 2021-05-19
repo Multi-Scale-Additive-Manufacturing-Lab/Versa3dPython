@@ -45,7 +45,7 @@
 class VoxShelling : public vtkThreadedImageAlgorithm
 {
 public:
-    vtkTypeMacro(VoxShelling, vtkImageAlgorithm);
+    vtkTypeMacro(VoxShelling, vtkThreadedImageAlgorithm);
     void PrintSelf(ostream &os, vtkIndent indent) override;
     static VoxShelling *New();
     vtkSetClampMacro(ContourThickness, double, 0.01, 0.99);
