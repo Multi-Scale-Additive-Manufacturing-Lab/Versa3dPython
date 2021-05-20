@@ -19,7 +19,7 @@ PLAT_TO_CMAKE = {
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=""):
-        Extension.__init__(self, name, sources=[])
+        Extension.__init__(self, name, sources=[], language = 'c++')
         self.sourcedir = os.path.abspath(sourcedir)
 
 
