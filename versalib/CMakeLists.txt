@@ -11,11 +11,6 @@ set(HEADER_FILES
     include/VoxShelling.h
 )
 
-set(
-    LIB_SRC_WRAP
-    src/VersaLib_wrapper.cc
-)
-
 vtk_module_add_module(VersaLib::VersaFilters
   SOURCES ${SRC_FILES}
   HEADERS ${HEADER_FILES}

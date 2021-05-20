@@ -8,6 +8,7 @@ include(CTest)
 
 find_package(VTK REQUIRED)
 find_package(Catch2 REQUIRED)
+find_package(pybind11 REQUIRED)
 
 include(GNUInstallDirs)
 
@@ -25,23 +26,9 @@ vtk_module_scan(
   PROVIDES_MODULES  modules
   ENABLE_TESTS      OFF)
 
-vtk_module_python_default_destination(python_destination)
-
 # Build the module we just scanned.
 vtk_module_build(MODULES ${modules})
-
-# Wrap it with Python.
-vtk_module_wrap_python(
-  MODULES         ${modules}
-  PYTHON_PACKAGE  "VersaLibPython"
-  MODULE_DESTINATION "${python_destination}"
-  # Static Python modules are almost never wanted.
-  BUILD_STATIC    OFF
-  INSTALL_HEADERS OFF)
-
-# Create an `__init__.py` for the wrapped module.
-file(WRITE "${CMAKE_BINARY_DIR}/${python_destination}/VersaLibPython/__init__.py" "")
-
+add_subdirectory(${CMAKE_SOURCE_DIR}/versalibpython)
 
 #if(${BUILD_TESTING})
 #add_subdirectory(${CMAKE_SOURCE_DIR}/test)
