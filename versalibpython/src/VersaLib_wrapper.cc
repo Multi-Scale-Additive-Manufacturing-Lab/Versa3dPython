@@ -37,6 +37,8 @@
 
 #include <pybind11/pybind11.h>
 
+#include "PybindVTKTypeCaster.h"
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(OasisLib, m)

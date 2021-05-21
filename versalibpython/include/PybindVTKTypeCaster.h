@@ -18,6 +18,8 @@
 
 #include "vtkObjectBase.h"
 #include "vtkPythonUtil.h"
+#include "vtkSmartPointer.h"
+#include "vtkNew.h"
 
 namespace pybind11
 {
