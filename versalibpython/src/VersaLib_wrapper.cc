@@ -38,10 +38,22 @@
 #include <pybind11/pybind11.h>
 
 #include "PybindVTKTypeCaster.h"
+#include "VoxelizerFilter.h"
+#include "vtkNew.h"
+#include "vtkImageData.h"
+#include "vtkAlgorithmOutput.h"
 
 namespace py = pybind11;
+using rvp = py::return_value_policy;
 
 PYBIND11_MODULE(OasisLib, m)
 {
     m.doc() = "VersaLib";
+
+    py::class_<VoxelizerFilter, std::unique_ptr<VoxelizerFilter, py::nodelete>>(m, "VoxelizerFilter")
+        .def(py::init([](){
+            return vtkNew<VoxelizerFilter>();
+        }))
+        .def("GetOutput", py::overload_cast<int>(&VoxelizerFilter::GetOutput), rvp::reference)
+        .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference);
 }
