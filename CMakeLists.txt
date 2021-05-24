@@ -22,13 +22,13 @@ option(BUILD_SHARED_LIBS "Build shared or static libraries" "${_shared_default}"
 
 vtk_module_scan(
   MODULE_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/versalib/vtk.module"
-  REQUEST_MODULES   VersaLib::VersaFilters
+  REQUEST_MODULES   VersaLib
   PROVIDES_MODULES  modules
   ENABLE_TESTS      OFF)
 
 # Build the module we just scanned.
 vtk_module_build(MODULES ${modules})
-add_subdirectory(${CMAKE_SOURCE_DIR}/versalibpython)
+add_subdirectory(${CMAKE_SOURCE_DIR}/wrapping)
 
 #if(${BUILD_TESTING})
 #add_subdirectory(${CMAKE_SOURCE_DIR}/test)

@@ -1,6 +1,6 @@
 set(
     LIB_SRC_WRAP
-    src/VersaLib_wrapper.cc
+    src/VersaLibWrapper.cc
 )
 
 set(
@@ -14,5 +14,5 @@ pybind11_add_module(_versalib_wrapped MODULE
 )
 
 target_include_directories(_versalib_wrapped PRIVATE include)
-target_link_libraries(_versalib_wrapped PRIVATE ${VTK_LIBRARIES} VersaFilters)
+target_link_libraries(_versalib_wrapped PRIVATE ${VTK_LIBRARIES} VersaLib)
 install(TARGETS _versalib_wrapped DESTINATION .)

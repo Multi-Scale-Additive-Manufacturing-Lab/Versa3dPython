@@ -1,7 +1,7 @@
 NAME
-  VersaLib::VersaFilters
+  VersaLib
 LIBRARY_NAME
-  VersaFilters
+  VersaLib
 DEPENDS
   VTK::CommonExecutionModel
   VTK::ImagingCore

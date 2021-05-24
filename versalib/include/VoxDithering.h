@@ -38,7 +38,7 @@
 #ifndef VOXDITHERING_H
 #define VOXDITHERING_H
 
-#include "VersaFiltersModule.h" // for export macro
+#include "VersaLibModule.h" // for export macro
 
 #include <map>
 #include "vtkThreadedImageAlgorithm.h"
@@ -49,7 +49,7 @@ using namespace std;
 
 #define DitherMap map<pair<int, int>, float>
 
-class VERSAFILTERS_EXPORT VoxDithering : public vtkThreadedImageAlgorithm
+class VERSALIB_EXPORT VoxDithering : public vtkThreadedImageAlgorithm
 {
 public:
     vtkTypeMacro(VoxDithering, vtkThreadedImageAlgorithm);

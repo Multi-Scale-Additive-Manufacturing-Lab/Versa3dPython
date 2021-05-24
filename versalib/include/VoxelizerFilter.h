@@ -38,13 +38,13 @@
 #ifndef VOXELIZERFILTER_H
 #define VOXELIZERFILTER_H
 
-#include "VersaFiltersModule.h" // for export macro
+#include "VersaLibModule.h" // for export macro
 
 #include "vtkImageAlgorithm.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 
-class VERSAFILTERS_EXPORT VoxelizerFilter : public vtkImageAlgorithm
+class VERSALIB_EXPORT VoxelizerFilter : public vtkImageAlgorithm
 {
 public:
     vtkTypeMacro(VoxelizerFilter, vtkImageAlgorithm);

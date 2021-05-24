@@ -10,6 +10,6 @@ setup(
     author="Marc Wang",
     author_email="marc.wang@uwaterloo.ca",
     description="STL Viewer",
-    packages=['versalibpython', 'versa3d'],
+    packages=['versalib', 'versa3d'],
     long_description="STL Viewer for the MSAM Lab. Still alpha phase"
 )

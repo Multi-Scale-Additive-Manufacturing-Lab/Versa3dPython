@@ -38,13 +38,13 @@
 #ifndef VOXSHELLING_H
 #define VOXSHELLING_H
 
-#include "VersaFiltersModule.h" // for export macro
+#include "VersaLibModule.h" // for export macro
 
 #include "vtkThreadedImageAlgorithm.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 
-class VERSAFILTERS_EXPORT VoxShelling : public vtkThreadedImageAlgorithm
+class VERSALIB_EXPORT VoxShelling : public vtkThreadedImageAlgorithm
 {
 public:
     vtkTypeMacro(VoxShelling, vtkThreadedImageAlgorithm);
