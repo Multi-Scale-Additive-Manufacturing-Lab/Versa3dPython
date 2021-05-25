@@ -42,17 +42,26 @@
 #include "vtkNew.h"
 #include "vtkImageData.h"
 #include "vtkAlgorithmOutput.h"
+#include "vtkObjectBase.h"
 
 namespace py = pybind11;
 using rvp = py::return_value_policy;
+
+struct VtkDeleter
+{
+    void operator()(vtkObjectBase *p)
+    {
+        p->Delete();
+    }
+};
 
 PYBIND11_MODULE(OasisLib, m)
 {
     m.doc() = "VersaLib";
 
-    py::class_<VoxelizerFilter, std::unique_ptr<VoxelizerFilter, py::nodelete>>(m, "VoxelizerFilter")
-        .def(py::init([](){
-            return vtkNew<VoxelizerFilter>();
+    py::class_<VoxelizerFilter, std::unique_ptr<VoxelizerFilter, VtkDeleter>>(m, "VoxelizerFilter")
+        .def(py::init([]() {
+            return VoxelizerFilter::New();
         }))
         .def("GetOutput", py::overload_cast<int>(&VoxelizerFilter::GetOutput), rvp::reference)
         .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference);
