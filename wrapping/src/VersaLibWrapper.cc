@@ -44,6 +44,7 @@
 #include "vtkAlgorithmOutput.h"
 #include "vtkDataObject.h"
 #include "vtkObjectBase.h"
+#include "vtkPolyData.h"
 
 namespace py = pybind11;
 using rvp = py::return_value_policy;
@@ -56,17 +57,41 @@ struct VtkDeleter
     }
 };
 
+struct CppOwned
+{
+    vtkNew<vtkPolyData> poly;
+
+    vtkPolyData *get_poly_ptr() { return poly.GetPointer(); }
+    const vtkPolyData *get_poly_cptr() { return poly.GetPointer(); }
+    vtkPolyData &get_poly_ref() { return *poly; }
+    const vtkPolyData &get_poly_cref() { return *poly; }
+};
+
+vtkImageData* vtktest(vtkAlgorithmOutput* port){
+    vtkNew<VoxelizerFilter> filter;
+    filter->SetInputConnection(port);
+    filter->Update();
+    return filter->GetOutput();
+}
+
 PYBIND11_MODULE(_versalib, m)
 {
     m.doc() = "VersaLib";
 
     py::class_<VoxelizerFilter, std::unique_ptr<VoxelizerFilter, VtkDeleter>>(m, "VoxelizerFilter")
-        .def(py::init([]() {
-            return VoxelizerFilter::New();
-        }))
+        .def(py::init(&VoxelizerFilter::New))
         .def("GetOutput", py::overload_cast<int>(&VoxelizerFilter::GetOutput), rvp::reference)
         .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference)
-        .def("SetInputConnection", py::overload_cast<vtkAlgorithmOutput*>(&VoxelizerFilter::SetInputConnection))
-        .def("SetInputData", py::overload_cast<vtkDataObject*>(&VoxelizerFilter::SetInputData))
+        .def("GetOutputPort", py::overload_cast<>(&VoxelizerFilter::GetOutputPort), rvp::reference)
+        .def("SetInputConnection", py::overload_cast<vtkAlgorithmOutput *>(&VoxelizerFilter::SetInputConnection))
+        .def("SetInputData", py::overload_cast<vtkDataObject *>(&VoxelizerFilter::SetInputData))
         .def("Update", py::overload_cast<int>(&VoxelizerFilter::Update));
+    m.def("pass_port", &vtktest);
+    py::class_<CppOwned>(m, "CppOwned")
+        .def(py::init())
+        .def_readonly("poly", &CppOwned::poly) // test access to `vtkNew<T>`
+        .def("get_poly_ptr", &CppOwned::get_poly_ptr)
+        .def("get_poly_cptr", &CppOwned::get_poly_cptr)
+        .def("get_poly_ref", &CppOwned::get_poly_ref, rvp::reference)
+        .def("get_poly_cref", &CppOwned::get_poly_cref, rvp::reference);
 }
