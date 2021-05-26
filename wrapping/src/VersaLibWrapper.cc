@@ -42,6 +42,7 @@
 #include "vtkNew.h"
 #include "vtkImageData.h"
 #include "vtkAlgorithmOutput.h"
+#include "vtkDataObject.h"
 #include "vtkObjectBase.h"
 
 namespace py = pybind11;
@@ -66,5 +67,6 @@ PYBIND11_MODULE(_versalib, m)
         .def("GetOutput", py::overload_cast<int>(&VoxelizerFilter::GetOutput), rvp::reference)
         .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference)
         .def("SetInputConnection", py::overload_cast<vtkAlgorithmOutput*>(&VoxelizerFilter::SetInputConnection))
+        .def("SetInputData", py::overload_cast<vtkDataObject*>(&VoxelizerFilter::SetInputData))
         .def("Update", py::overload_cast<int>(&VoxelizerFilter::Update));
 }
