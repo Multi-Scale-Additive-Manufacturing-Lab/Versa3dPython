@@ -12,22 +12,7 @@ find_package(pybind11 REQUIRED)
 
 include(GNUInstallDirs)
 
-set(_shared_default ON)
-get_target_property(_vtk_libtype VTK::CommonCore TYPE)
-if (_vtk_libtype STREQUAL "STATIC_LIBRARY")
-  set(_shared_default OFF)
-endif ()
-
-option(BUILD_SHARED_LIBS "Build shared or static libraries" "${_shared_default}")
-
-vtk_module_scan(
-  MODULE_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/versalib/vtk.module"
-  REQUEST_MODULES   VersaLib
-  PROVIDES_MODULES  modules
-  ENABLE_TESTS      OFF)
-
-# Build the module we just scanned.
-vtk_module_build(MODULES ${modules})
+add_subdirectory(${CMAKE_SOURCE_DIR}/versalib)
 add_subdirectory(${CMAKE_SOURCE_DIR}/wrapping)
 
 #if(${BUILD_TESTING})

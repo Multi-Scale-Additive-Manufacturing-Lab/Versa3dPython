@@ -55,7 +55,7 @@ struct VtkDeleter
     }
 };
 
-PYBIND11_MODULE(OasisLib, m)
+PYBIND11_MODULE(_versalib, m)
 {
     m.doc() = "VersaLib";
 
@@ -64,5 +64,7 @@ PYBIND11_MODULE(OasisLib, m)
             return VoxelizerFilter::New();
         }))
         .def("GetOutput", py::overload_cast<int>(&VoxelizerFilter::GetOutput), rvp::reference)
-        .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference);
+        .def("GetOutputPort", py::overload_cast<int>(&VoxelizerFilter::GetOutputPort), rvp::reference)
+        .def("SetInputConnection", py::overload_cast<vtkAlgorithmOutput*>(&VoxelizerFilter::SetInputConnection))
+        .def("Update", py::overload_cast<int>(&VoxelizerFilter::Update));
 }

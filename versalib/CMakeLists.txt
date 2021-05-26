@@ -11,11 +11,6 @@ set(HEADER_FILES
     include/VoxShelling.h
 )
 
-vtk_module_add_module(VersaLib
-  SOURCES ${SRC_FILES}
-  HEADERS ${HEADER_FILES}
-)
-
-vtk_module_include(VersaLib
-    PUBLIC "include/"
-)
+add_library(VersaLib ${SRC_FILES} ${HEADER_FILES})
+target_link_libraries(VersaLib ${VTK_LIBRARIES})
+target_include_directories(VersaLib PUBLIC include)
