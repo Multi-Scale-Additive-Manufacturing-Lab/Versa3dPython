@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 project(VersaLib)
 
 include(GNUInstallDirs)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
 # We just need the CommonCore and Python modules here.
 find_package(VTK COMPONENTS CommonCore Python)
@@ -35,6 +32,8 @@ vtk_module_scan(
   ENABLE_TESTS      OFF)
 
 vtk_module_python_default_destination(python_destination)
+
+message(STATUS "python_destination=${python_destination}")
 
 # Build the module we just scanned.
 vtk_module_build(MODULES ${modules})
