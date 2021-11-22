@@ -1,10 +1,21 @@
 [build-system]
 requires = [
     "setuptools>=42",
+    "ninja",
     "wheel",
     "cmake>=3.12",
-    "ninja",
+    "scikit-build",
     "pybind11",
-    "scikit-build"
+    "pyinstaller"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+dependencies = [
+    'attrs',
+    'vtk',
+    'pyqt',
+    'numpy',
+    'pillow',
+    'nomkl',
+]

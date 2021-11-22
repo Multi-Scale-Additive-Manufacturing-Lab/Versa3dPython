@@ -1,0 +1,13 @@
+NAME
+  versa3d::versalib
+LIBRARY_NAME
+  versalib
+DEPENDS
+  VTK::CommonExecutionModel
+  VTK::ImagingCore
+PRIVATE_DEPENDS
+  VTK::CommonCore
+  VTK::CommonDataModel
+  VTK::ImagingGeneral
+  VTK::ImagingStatistics
+  VTK::ImagingStencil

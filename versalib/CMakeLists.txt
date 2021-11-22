@@ -11,6 +11,11 @@ set(HEADER_FILES
     include/VoxShelling.h
 )
 
-add_library(VersaLib ${SRC_FILES} ${HEADER_FILES})
-target_link_libraries(VersaLib ${VTK_LIBRARIES})
-target_include_directories(VersaLib PUBLIC include)
+vtk_module_add_module(versa3d::versalib
+  SOURCES ${SRC_FILES}
+  HEADERS ${HEADER_FILES}
+)
+
+vtk_module_include(versa3d::versalib
+    PUBLIC "include/"
+)
